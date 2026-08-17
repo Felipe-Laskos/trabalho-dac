@@ -1,0 +1,73 @@
+services:
+
+  postgres:
+    image: postgres:16
+    mem_limit: 384m
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+      POSTGRES_DB: bantads
+    command: ["postgres", "-c", "shared_buffers=128MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/sql:/docker-entrypoint-initdb.d:ro
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bantads"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mongo:
+    image: mongo:7
+    mem_limit: 384m
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongodata:/data/db
+      - ./scripts/mongo:/docker-entrypoint-initdb.d:ro
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    mem_limit: 128m
+    command:
+      - redis-server
+      - --maxmemory
+      - 100mb
+      - --maxmemory-policy
+      - noeviction
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    mem_limit: 512m
+    volumes:
+      - ./config/rabbitmq/20-bantads.conf:/etc/rabbitmq/conf.d/20-bantads.conf:ro
+    ports:
+      - "15672:15672"
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+networks:
+  bantads:
+    driver: bridge
+
+volumes:
+  pgdata:
+  mongodata:
