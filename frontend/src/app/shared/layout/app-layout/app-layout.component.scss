@@ -1,0 +1,38 @@
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.app-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--spacing-lg);
+  background: var(--color-background);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 0.5px;
+}
+
+.header-user {
+  font-size: 14px;
+  font-weight: var(--font-weight-label);
+}

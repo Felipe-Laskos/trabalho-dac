@@ -1,0 +1,14 @@
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.loading-message {
+  font-size: 14px;
+  font-weight: var(--font-weight-body);
+}
