@@ -1,0 +1,33 @@
+<div class="app-layout">
+
+  <p-toolbar>
+
+    <ng-template #start>
+      <span class="brand-name">BANTADS</span>
+    </ng-template>
+
+    <ng-template #end>
+      <span class="header-user">teste user</span>
+    </ng-template>
+
+  </p-toolbar>
+
+  <div class="app-body">
+
+    <aside class="app-sidebar">
+
+      <p-menu [model]="menuItems"></p-menu>
+
+    </aside>
+
+    <main class="app-content">
+
+      <router-outlet></router-outlet>
+
+    </main>
+
+  </div>
+
+  <app-toast></app-toast>
+
+</div>

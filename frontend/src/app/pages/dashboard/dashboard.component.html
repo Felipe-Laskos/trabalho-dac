@@ -1,0 +1,27 @@
+<p-card header="Teste de Toast">
+
+  <div class="toast-buttons">
+
+    <p-button
+      label="Sucesso"
+      icon="pi pi-check"
+      (onClick)="testarSucesso()">
+    </p-button>
+
+    <p-button
+      label="Erro"
+      icon="pi pi-times"
+      severity="danger"
+      (onClick)="testarErro()">
+    </p-button>
+
+    <p-button
+      label="Vazio"
+      icon="pi pi-info-circle"
+      severity="secondary"
+      (onClick)="testarVazio()">
+    </p-button>
+
+  </div>
+
+</p-card>
