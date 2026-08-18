@@ -2,8 +2,8 @@
 
 CREATE TABLE cliente.clientes (
     cpf VARCHAR(11) PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    nome VARCHAR(120) NOT NULL,
+    email VARCHAR(120) NOT NULL UNIQUE,
     telefone VARCHAR(20) NOT NULL,
     salario NUMERIC(19,4) NOT NULL,
     logradouro VARCHAR(120) NOT NULL,
