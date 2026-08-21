@@ -81,7 +81,6 @@ export const BantadsTheme = definePreset(Aura, {
       padding: '10px 12px',
       borderRadius: '8px',
       gap: '10px',
-
       focusBackground: '#E6F7FA',
       focusColor: '#0B3B45',
 
@@ -106,7 +105,31 @@ export const BantadsTheme = definePreset(Aura, {
       colorTwo: '#095969',
       colorThree: '#00B4D8',
       colorFour: '#095969'
-    },
+    }
+  },
+   button: {
+      colorScheme: {
+        light: {
+         root: {
+          primary: {
+            background: '#0B3B45',
+            hoverBackground: '#09323B',
+            borderColor: '#0B3B45',
+            hoverBorderColor: '#09323B',
+            color: '#FFFFFF',
+            hoverColor: '#FFFFFF'
+          },
+          secondary: {
+            background: 'transparent',
+            hoverBackground: '#F4F7F8', 
+            borderColor: '#E2E8F0',
+            hoverBorderColor: '#0B3B45',
+            color: '#1A242B',
+            hoverColor: '#0B3B45'
+          }
+        }
+      }
+    }
   }
   }
 });

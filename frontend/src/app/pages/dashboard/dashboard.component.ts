@@ -1,19 +1,17 @@
 import { Component } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { Button } from 'primeng/button';
-import { ToastService } from '../../shared/toast/toast.service';
+import { ToastService } from '../../shared/components/toast/toast.service';
 
-import { LoadingComponent } from '../../shared/loading/loading.component';
-import { MessageComponent } from '../../shared/message/message.component';
+import { LoadingComponent } from '../../shared/components/loading/loading.component';
+import { MessageComponent } from '../../shared/components/message/message.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     CardModule,
-    Button,
-    LoadingComponent,
-    MessageComponent
+    Button
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
