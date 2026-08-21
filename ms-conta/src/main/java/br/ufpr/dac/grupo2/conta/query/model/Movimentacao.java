@@ -6,10 +6,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "movimentacoes", schema = "conta_query")
 public class Movimentacao {
@@ -55,58 +62,4 @@ public class Movimentacao {
     @Column(name = "nome_destino", length = 120)
     private String nomeDestino;
 
-    protected Movimentacao() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getEventoId() {
-        return eventoId;
-    }
-
-    public String getNumeroConta() {
-        return numeroConta;
-    }
-
-    public LocalDateTime getDataHora() {
-        return dataHora;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public BigDecimal getValor() {
-        return valor;
-    }
-
-    public BigDecimal getSaldoApos() {
-        return saldoApos;
-    }
-
-    public String getContaOrigem() {
-        return contaOrigem;
-    }
-
-    public String getCpfOrigem() {
-        return cpfOrigem;
-    }
-
-    public String getNomeOrigem() {
-        return nomeOrigem;
-    }
-
-    public String getContaDestino() {
-        return contaDestino;
-    }
-
-    public String getCpfDestino() {
-        return cpfDestino;
-    }
-
-    public String getNomeDestino() {
-        return nomeDestino;
-    }
 }

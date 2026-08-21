@@ -7,12 +7,19 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(
         name = "eventos",
@@ -45,43 +52,17 @@ public class Evento {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
-    protected Evento() {
-    }
-
     public Evento(
             String objetoId,
             String tipo,
             Map<String, Object> payload,
             Integer versao,
             LocalDateTime timestamp) {
+
         this.objetoId = objetoId;
         this.tipo = tipo;
         this.payload = payload;
         this.versao = versao;
         this.timestamp = timestamp;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getObjetoId() {
-        return objetoId;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public Map<String, Object> getPayload() {
-        return payload;
-    }
-
-    public Integer getVersao() {
-        return versao;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
     }
 }

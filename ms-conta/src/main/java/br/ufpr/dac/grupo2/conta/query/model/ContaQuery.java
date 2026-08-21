@@ -4,10 +4,17 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "contas", schema = "conta_query")
 public class ContaQuery {
@@ -31,31 +38,5 @@ public class ContaQuery {
     @Column(name = "ultima_versao", nullable = false)
     private Integer ultimaVersao;
 
-    protected ContaQuery() {
-    }
-
-    public String getNumero() {
-        return numero;
-    }
-
-    public String getCpfCliente() {
-        return cpfCliente;
-    }
-
-    public String getCpfGerente() {
-        return cpfGerente;
-    }
-
-    public LocalDate getDataCriacao() {
-        return dataCriacao;
-    }
-
-    public BigDecimal getSaldo() {
-        return saldo;
-    }
-
-    public Integer getUltimaVersao() {
-        return ultimaVersao;
-    }
 }
 
