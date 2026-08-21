@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-SERVICOS=(postgres mongo redis rabbitmq)
+SERVICOS=(postgres mongo redis rabbitmq ms-conta)
 TENTATIVAS=60          # até 2 min esperando healthcheck
 
 echo "-> Script de inicialização da Infra"
@@ -20,7 +20,7 @@ echo "-> Derrubando containers antigos ..."
 docker compose down --remove-orphans
 
 echo "-> Subindo a infra ..."
-docker compose up -d
+docker compose up -d --build
 
 echo "-> Aguardando healthchecks ..."
 for _ in $(seq 1 "$TENTATIVAS"); do
