@@ -1,0 +1,306 @@
+<div class="autocadastro-page">
+
+  <header class="public-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="pi pi-building-columns"></i>
+      </div>
+      <span class="brand-name">
+        BANTADS
+      </span>
+    </div>
+
+    <div class="header-login">
+      <span>
+        Já tem conta?
+      </span>
+      <p-button
+        label="Entrar"
+        variant="outlined"
+        routerLink="/login">
+      </p-button>
+    </div>
+  </header>
+
+  <main class="autocadastro-content">
+
+    @if (!sucesso) {
+      
+      <div class="page-heading">
+        <h1>Abrir conta</h1>
+        <p>Um gerente analisa a solicitação e você recebe uma senha por e-mail depois da aprovação.</p>
+      </div>
+
+      @if (erro) {
+        <div class="form-feedback-slot">
+          <app-message
+            type="error"
+            message="Não foi possível enviar sua solicitação. Verifique os campos e tente novamente."/>
+        </div>
+      }
+
+      <form
+        class="form-card"
+        [formGroup]="form"
+        (ngSubmit)="enviar()">
+
+        <div class="form-section">
+          <div class="section-title">
+            <span>DADOS PESSOAIS</span>
+          </div>
+
+          <div class="form-grid personal-grid">
+            <div class="field field-name">
+              <label for="nome"> Nome completo <span>*</span></label>
+              <input
+                pInputText
+                id="nome"
+                formControlName="nome"
+                placeholder="João da Silva"
+                fluid/>
+
+              @if (campoComErro('nome', 'required')) {
+                <small class="field-error">Nome completo é obrigatório.</small>
+              }
+            </div>
+
+            <div class="field field-cpf">
+              <label for="cpf">CPF<span>*</span></label>
+              <p-inputmask
+                id="cpf"
+                formControlName="cpf"
+                mask="999.999.999-99"
+                placeholder="111.222.333-44"
+                fluid/>
+
+              @if (campoComErro('cpf', 'required')) {
+                <small class="field-error">CPF é obrigatório.</small>
+              }
+              @if (campoComErro('cpf', 'quantidadeDigitos')) {
+                <small class="field-error">CPF deve possuir 11 dígitos.</small>
+              }
+            </div>
+
+            <div class="field field-email">
+              <label for="email">E-mail<span>*</span></label>
+              <input
+                pInputText
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="joao@exemplo.com"
+                fluid/>
+              <small>Este será o seu login!</small>
+
+              @if (campoComErro('email', 'required')) {
+                <small class="field-error">E-mail é obrigatório.</small>
+              }
+              @if (campoComErro('email', 'email')) {
+                <small class="field-error">Informe um e-mail válido.</small>
+              }
+            </div>
+
+            <div class="field field-telefone">
+              <label for="telefone">Telefone<span>*</span></label>
+              <p-inputmask
+                id="telefone"
+                formControlName="telefone"
+                mask="(99) 99999-9999"
+                placeholder="(41) 99999-0000"
+                fluid/>
+
+              @if (campoComErro('telefone', 'required')) {
+                <small class="field-error">Telefone é obrigatório.</small>
+              }
+              @if (campoComErro('telefone', 'quantidadeDigitosEntre')) {
+                <small class="field-error">Telefone inválido.</small>
+              }
+            </div>
+
+            <div class="field field-salario">
+              <label for="salario">Salário<span>*</span></label>
+              <p-inputnumber
+                inputId="salario"
+                formControlName="salario"
+                mode="currency"
+                currency="BRL"
+                locale="pt-BR"
+                [min]="0.01"
+                [minFractionDigits]="2"
+                [maxFractionDigits]="2"
+                placeholder="R$ 2.300,00"
+                fluid/>
+
+              @if (campoComErro('salario', 'required')) {
+                <small class="field-error">Salário é obrigatório.</small>
+              }
+              @if (campoComErro('salario', 'min')) {
+                <small class="field-error">Salário deve ser maior que zero.</small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section" formGroupName="endereco">
+          <div class="section-title">
+            <span>ENDEREÇO</span>
+          </div>
+
+          <div class="form-grid address-grid">
+            <div class="field field-logradouro">
+              <label for="logradouro">Logradouro<span>*</span></label>
+              <input
+                pInputText
+                id="logradouro"
+                formControlName="logradouro"
+                placeholder="Rua tal de tal"
+                fluid/>
+
+              @if (campoComErro('endereco.logradouro','required')) {
+                <small class="field-error">Logradouro é obrigatório.</small>
+              }
+            </div>
+
+            <div class="field field-numero">
+              <label for="numero">Número<span>*</span></label>
+              <input
+                pInputText
+                pKeyFilter="int"
+                id="numero"
+                formControlName="numero"
+                placeholder="1111"
+                fluid/>
+
+              @if (campoComErro('endereco.numero','required')) {
+                <small class="field-error">Número é obrigatório.</small>
+              }
+            </div>
+
+            <div class="field field-complemento">
+              <label for="complemento">Complemento</label>
+              <input
+                pInputText
+                id="complemento"
+                formControlName="complemento"
+                placeholder="Apto, bloco, sala..."
+                fluid/>
+              <small>Opcional</small>
+            </div>
+
+            <div class="field field-cep">
+              <label for="cep">CEP<span>*</span></label>
+              <p-inputmask
+                id="cep"
+                formControlName="cep"
+                mask="99999-999"
+                placeholder="80000-000"
+                fluid/>
+
+              @if (campoComErro('endereco.cep','required')) {
+                <small class="field-error">CEP é obrigatório.</small>
+              }
+              @if (campoComErro('endereco.cep','quantidadeDigitos')) {
+                <small class="field-error">CEP deve possuir 8 dígitos.</small>
+              }
+            </div>
+
+            <div class="field field-cidade">
+              <label for="cidade">Cidade<span>*</span></label>
+              <input
+                pInputText
+                id="cidade"
+                formControlName="cidade"
+                placeholder="Sua cidade"
+                fluid/>
+
+              @if (campoComErro('endereco.cidade','required')) {
+                <small class="field-error">Cidade é obrigatória.</small>
+              }
+            </div>
+
+            <div class="field field-uf">
+              <label for="uf">UF<span>*</span></label>
+              <p-select
+                formControlName="uf"
+                [options]="ufs"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Selecione"
+                [filter]="true" 
+                filterBy="label"
+                fluid/>
+
+              @if (campoComErro('endereco.uf','required')) {
+                <small class="field-error">UF é obrigatória.</small>
+              }
+              @if (campoComErro('endereco.uf','pattern')) {
+                <small class="field-error">UF inválida.</small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <span class="required-info">Campos com <strong>*</strong> são obrigatórios</span>
+
+          <div class="action-buttons">
+            <p-button
+              type="button"
+              label="Cancelar"
+              severity="secondary"
+              variant="outlined"
+              [disabled]="enviando"
+              (onClick)="cancelar()"/>
+
+            <p-button
+              type="submit"
+              label="Enviar solicitação"
+              [loading]="enviando"
+              [disabled]="enviando || sucesso"
+              (onClick)="enviar()"/>
+          </div>
+        </div>
+
+      </form>
+    
+    } @else {
+      
+      <div class="sucesso-card">
+        <div class="icone-envio">
+          <i class="pi pi-send"></i>
+        </div>
+    
+        <h2>Solicitação enviada</h2>
+        
+        <p class="sucesso-descricao">
+          Um gerente vai analisar seus dados. Assim que a conta for aprovada você recebe a 
+          <strong>senha de acesso por e-mail</strong>, em <strong>{{ emailInformado }}</strong>
+        </p>
+    
+        <div class="info-box">
+          <div class="info-item pr">
+            <span>CPF</span>
+            <strong>{{ cpfFormatado }}</strong>
+          </div>
+          <div class="info-divisor"></div>
+          <div class="info-item pl">
+            <span>Situação</span>
+            <strong class="situacao-pendente">
+              <i class="pi pi-clock"></i> Pendente de análise
+            </strong>
+          </div>
+        </div>
+  
+        <p-button 
+          label="Voltar ao início" 
+          variant="outlined" 
+          severity="secondary"
+          (onClick)="cancelar()">
+        </p-button>
+        
+      </div>
+
+    }
+
+  </main>
+</div>

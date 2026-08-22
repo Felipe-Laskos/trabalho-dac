@@ -1,4 +1,5 @@
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
@@ -10,6 +11,7 @@ import { MessageComponent } from '../../../shared/components/message/message.com
   standalone: true,
   imports: [
     Button,
+    RouterLink,
     InputText,
     Password,
     MessageComponent,
