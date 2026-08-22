@@ -11,6 +11,12 @@ export const routes: Routes = [
       )
   },
   {
+  path: 'autocadastro',
+  loadComponent: () =>
+    import('./features/auth/autocadastro/autocadastro.component')
+      .then(m => m.AutocadastroComponent)
+  },
+  {
     path: '',
     component: AppLayoutComponent,
     children: [
