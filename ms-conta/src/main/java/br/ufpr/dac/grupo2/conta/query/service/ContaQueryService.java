@@ -1,12 +1,15 @@
 package br.ufpr.dac.grupo2.conta.query.service;
 
 import br.ufpr.dac.grupo2.conta.query.dto.ContaDTO;
+import br.ufpr.dac.grupo2.conta.query.dto.Link;
 import br.ufpr.dac.grupo2.conta.query.model.ContaQuery;
 import br.ufpr.dac.grupo2.conta.query.repository.ContaQueryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.RoundingMode;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -32,12 +35,30 @@ public class ContaQueryService {
                 .setScale(2, RoundingMode.HALF_UP)
                 .toPlainString();
 
+        String base = "/contas/" + conta.getNumero();
+
+        Map<String, Link> links = new LinkedHashMap<>();
+
+        links.put("self", new Link(base));
+        links.put(
+                "cliente",
+                new Link("/clientes/" + conta.getCpfCliente())
+        );
+        links.put("deposito", new Link(base + "/deposito"));
+        links.put("saque", new Link(base + "/saque"));
+        links.put(
+                "transferencia",
+                new Link(base + "/transferencia")
+        );
+        links.put("extrato", new Link(base + "/extrato"));
+
         return new ContaDTO(
                 conta.getNumero(),
                 conta.getCpfCliente(),
                 conta.getCpfGerente(),
                 saldoFormatado,
-                conta.getDataCriacao().toString()
+                conta.getDataCriacao().toString(),
+                links
         );
     }
 }
