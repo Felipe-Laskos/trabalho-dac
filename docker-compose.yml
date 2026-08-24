@@ -64,6 +64,29 @@ services:
       retries: 10
       start_period: 30s
 
+  ms-conta:
+    build:
+      context: ./ms-conta
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      CONTA_COMMAND_DB_URL: jdbc:postgresql://postgres:5432/bantads
+      CONTA_COMMAND_DB_USER: postgres
+      CONTA_COMMAND_DB_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+      CONTA_QUERY_DB_URL: jdbc:postgresql://postgres:5432/bantads
+      CONTA_QUERY_DB_USER: postgres
+      CONTA_QUERY_DB_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 networks:
   bantads:
     driver: bridge
