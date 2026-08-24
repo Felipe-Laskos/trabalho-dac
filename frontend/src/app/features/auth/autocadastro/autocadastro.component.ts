@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
@@ -31,13 +31,10 @@ type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
 })
 export class AutocadastroComponent implements OnInit {
 
-  private cdr = inject(ChangeDetectorRef);
-
-  hasFormError: boolean = false;
-  
+  private readonly hasFormError = signal(false);
   private readonly fb = inject(FormBuilder);
 
-  estado: TelaEstado = 'preenchendo';
+  protected readonly estado = signal<TelaEstado>('preenchendo');
 
   readonly ufs = [
     { label: 'AC', value: 'AC' },
@@ -86,25 +83,24 @@ export class AutocadastroComponent implements OnInit {
 
   ngOnInit(): void {
     this.form.valueChanges.subscribe(() => {
-      if (this.hasFormError) {
-        this.hasFormError = false;
-        if (this.estado === 'erro') {
-          this.estado = 'preenchendo';
+      if (this.hasFormError()) {
+        this.hasFormError.set(false);
+        if (this.estado() === 'erro') { this.estado.set('preenchendo'); 
         }
       }
     });
   }
 
   get enviando(): boolean {
-    return this.estado === 'enviando';
+    return this.estado() === 'enviando';
   }
 
   get sucesso(): boolean {
-    return this.estado === 'sucesso';
+    return this.estado() === 'sucesso';
   }
 
   get erro(): boolean {
-    return this.estado === 'erro';
+    return this.estado() === 'erro';
   }
 
   campoComErro(
@@ -171,27 +167,25 @@ export class AutocadastroComponent implements OnInit {
   }
 
   enviar(): void {
-    this.estado = 'enviando';
-    this.hasFormError = false;
+    this.estado.set('enviando');
+    this.hasFormError.set(false);
     this.form.markAllAsTouched();
 
     if (this.form.invalid) {
-      this.estado = 'erro';
-      this.hasFormError = true;
-      this.cdr.detectChanges(); 
+      this.estado.set('erro');
+      this.hasFormError.set(true);
       return; 
     }
 
     setTimeout(() => {
       try {
         const payload = this.montarPayload();
-        this.estado = 'sucesso'; 
+        this.estado.set('sucesso'); 
       } catch (erroDeExecucao) {
         console.error('Erro interno ao montar payload:', erroDeExecucao);
-        this.estado = 'erro';
-        this.hasFormError = true;
+        this.estado.set('erro');
+        this.hasFormError.set(true);
       }
-      this.cdr.detectChanges(); 
     }, 500);
   }
 
@@ -253,7 +247,7 @@ export class AutocadastroComponent implements OnInit {
 
   cancelar(): void {
     this.form.reset();
-    this.hasFormError = false;
-    this.estado = 'preenchendo';
+    this.hasFormError.set(false);
+    this.estado.set('preenchendo');
   }
 }
