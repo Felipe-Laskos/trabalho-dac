@@ -112,12 +112,12 @@ export const BantadsTheme = definePreset(Aura, {
         light: {
          root: {
           primary: {
-            background: '#0B3B45',
-            hoverBackground: '#09323B',
-            borderColor: '#0B3B45',
-            hoverBorderColor: '#09323B',
-            color: '#FFFFFF',
-            hoverColor: '#FFFFFF'
+            background: 'var(--color-primary)',
+            hoverBackground: 'var(--color-third)',
+            borderColor: 'var(--color-primary)',
+            hoverBorderColor: 'var(--color-third)',
+            color: 'var(--color-surface)',
+            hoverColor: 'var(--color-surface)'
           },
           secondary: {
             background: 'transparent',

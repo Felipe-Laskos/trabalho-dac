@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
@@ -19,30 +19,21 @@ import { MessageComponent } from '../../../shared/components/message/message.com
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  private cdr = inject(ChangeDetectorRef);
 
-  hasLoginError: boolean = false;
-  isLoading: boolean = false;
-  passwordValue: string = '';
+  protected readonly hasLoginError = signal(false);
+  protected readonly isLoading = signal(false);
+  protected readonly passwordValue = signal('');
 
   fazerLogin() { //TODO: Implementar lógica de autenticação real
-    this.isLoading = true;
-    this.hasLoginError = false;
+    this.isLoading.set(true);
+    this.hasLoginError.set(false);
 
     setTimeout(() => {
-      this.isLoading = false; 
-
-      if (!this.passwordValue || this.passwordValue.length < 6) {
-        this.hasLoginError = true;
-      } else {
-        console.log('Sucesso!');
-      }
-      this.cdr.detectChanges(); 
-
+      this.isLoading.set(false);
     }, 500); 
   }
 
   esconderErro() {
-    this.hasLoginError = false;
+    this.hasLoginError.set(false);
   }
 }
