@@ -41,7 +41,7 @@
       </div>
 
     <div class="login-error">
-    @if (hasLoginError) {
+    @if (hasLoginError()) {
     <app-message
       type="error"
       message="Login inválido. Confira o e-mail e a senha e tente de novo."/>
@@ -75,16 +75,16 @@
             [toggleMask]="true"
             fluid
             inputStyleClass="w-full p-inputtext-lg"
-            [(ngModel)]="passwordValue"
-            (ngModelChange)="esconderErro()">
+            [ngModel]="passwordValue()"
+            (ngModelChange)="passwordValue.set($event); esconderErro()">
           </p-password>
 
         </div>
       </div>
 
         <p-button
-        [label]="isLoading ? 'Entrando...' : 'Entrar'"
-        [loading]="isLoading"
+        [label]="isLoading() ? 'Entrando...' : 'Entrar'"
+        [loading]="isLoading()"
         severity="primary"
         size="large"
         fluid
