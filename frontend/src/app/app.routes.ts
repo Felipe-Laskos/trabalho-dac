@@ -1,5 +1,8 @@
 import { Routes } from '@angular/router';
 import { AppLayoutComponent } from './shared/layout/app-layout/app-layout.component';
+import { authGuard } from './core/guards/auth.guard';
+import { clienteGuard, gerenteGuard } from './core/guards/perfil.guard';
+import { convidadoGuard } from './core/guards/convidado.guard';
 
 const emConstrucao = () =>
   import('./features/em-construcao.component').then((m) => m.EmConstrucaoComponent);
@@ -7,9 +10,9 @@ const emConstrucao = () =>
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // Rotas Públicas
   {
     path: 'login',
+    canActivate: [convidadoGuard],
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
@@ -20,12 +23,19 @@ export const routes: Routes = [
         (m) => m.AutocadastroComponent,
       ),
   },
-  { path: 'acesso-negado', loadComponent: emConstrucao },
+  {
+    path: 'acesso-negado',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/acesso-negado/acesso-negado.component').then(
+        (m) => m.AcessoNegadoComponent,
+      ),
+  },
 
-  // Rotas Cliente
   {
     path: 'cliente',
     component: AppLayoutComponent,
+    canActivate: [authGuard, clienteGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       { path: 'home', loadComponent: emConstrucao },
@@ -36,10 +46,10 @@ export const routes: Routes = [
     ],
   },
 
-  // Rotas gerente
   {
     path: 'gerente',
     component: AppLayoutComponent,
+    canActivate: [authGuard, gerenteGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'solicitacoes' },
       { path: 'solicitacoes', loadComponent: emConstrucao },
@@ -48,20 +58,6 @@ export const routes: Routes = [
       { path: 'gerentes/novo', loadComponent: emConstrucao },
       { path: 'gerentes/:cpf/editar', loadComponent: emConstrucao },
       { path: 'relatorio', loadComponent: emConstrucao },
-    ],
-  },
-
-  // Página de teste
-  // TO DO - REMOVER
-  {
-    path: 'dashboard',
-    component: AppLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-      },
     ],
   },
 

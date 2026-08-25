@@ -7,7 +7,13 @@
     </ng-template>
 
     <ng-template #end>
-      <span class="header-user">teste user</span>
+      <span class="header-user">{{ nomeUsuario() }}</span>
+      <p-button
+        label="Sair"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        variant="text"
+        (onClick)="sair()" />
     </ng-template>
 
   </p-toolbar>
@@ -16,7 +22,7 @@
 
     <aside class="app-sidebar">
 
-      <p-menu [model]="menuItems"></p-menu>
+      <p-menu [model]="menuItems()"></p-menu>
 
     </aside>
 

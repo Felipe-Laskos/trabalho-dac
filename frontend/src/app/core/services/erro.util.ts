@@ -4,12 +4,19 @@ import type { Erro } from '../models/comum.model';
 export function normalizarErro(e: HttpErrorResponse): Erro {
   const corpo = e.error as Partial<Erro> | string | null;
 
-  if (corpo && typeof corpo === 'object' && typeof corpo.mensagem === 'string') {
-    return {
-      status: corpo.status ?? e.status,
-      erro: corpo.erro ?? e.statusText,
-      mensagem: corpo.mensagem,
-    };
+  if (corpo && typeof corpo === 'object') {
+    if (typeof corpo.mensagem === 'string') {
+      return {
+        status: corpo.status ?? e.status,
+        erro: corpo.erro ?? e.statusText,
+        mensagem: corpo.mensagem,
+      };
+    }
+
+    const avisoLogin = (corpo as { message?: string }).message;
+    if (typeof avisoLogin === 'string' && avisoLogin.length > 0) {
+      return { status: e.status, erro: 'NaoAutorizado', mensagem: avisoLogin };
+    }
   }
 
   return { status: e.status, erro: e.statusText, mensagem: mensagemPadrao(e.status) };
