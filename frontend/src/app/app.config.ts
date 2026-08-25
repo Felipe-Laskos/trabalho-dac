@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 
-import { provideRouter } from '@angular/router';
+import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
@@ -15,7 +15,7 @@ export const appConfig: ApplicationConfig = {
     MessageService,
     provideBrowserGlobalErrorListeners(),
 
-    provideRouter(routes),
+    provideRouter(routes, withViewTransitions()),
 
     provideHttpClient(withInterceptors([tokenInterceptor, erroInterceptor])),
 

@@ -8,8 +8,18 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
   // Rotas Públicas
-  { path: 'login', loadComponent: emConstrucao },
-  { path: 'autocadastro', loadComponent: emConstrucao },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'autocadastro',
+    loadComponent: () =>
+      import('./features/auth/autocadastro/autocadastro.component').then(
+        (m) => m.AutocadastroComponent,
+      ),
+  },
   { path: 'acesso-negado', loadComponent: emConstrucao },
 
   // Rotas Cliente

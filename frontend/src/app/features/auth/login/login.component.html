@@ -1,0 +1,112 @@
+<div class="login-page">
+
+  <section class="login-brand">
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="pi pi-building-columns"></i>
+      </div>
+      <span class="brand-name">
+        BANTADS
+      </span>
+    </div>
+
+    <div class="brand-content">
+      <h1> Seu banco,<br/> do jeito simples.</h1>
+      <p>Abra a conta em minutos e acompanhe o saldo, <br/>depósitos, saques e transferências em um só lugar.</p>
+    </div>
+
+    <div class="benefits">
+      <div class="benefit">
+        <i class="pi pi-check"></i>
+        <span> Conta completa e fácil de usar</span>
+      </div>
+
+      <div class="benefit">
+        <i class="pi pi-check"></i>
+        <span> Transferência entre contas na hora </span>
+      </div>
+
+      <div class="benefit">
+        <i class="pi pi-check"></i>
+        <span> Um gerente responsável por você </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="login-content">
+    <div class="login-card">
+      <div class="login-header">
+        <h2> Entrar </h2>
+        <p> Use o e-mail e a senha da sua conta BANTADS. </p>
+      </div>
+
+    <div class="login-error">
+    @if (hasLoginError()) {
+    <app-message
+      type="error"
+      message="Login inválido. Confira o e-mail e a senha e tente de novo."/>
+    } 
+    </div>
+
+      <div class="login-fields">
+        <div class="field">
+          <label for="email">
+            E-mail
+          </label>
+
+          <input
+            pInputText
+            id="email"
+            type="email"
+            placeholder="Digite seu e-mail"
+            fluid
+            class="p-inputtext-lg"/>
+        </div>
+
+        <div class="field">
+          <label for="password">
+            Senha
+          </label>
+
+          <p-password
+            inputId="password"
+            placeholder="Digite sua senha"
+            [feedback]="false"
+            [toggleMask]="true"
+            fluid
+            inputStyleClass="w-full p-inputtext-lg"
+            [ngModel]="passwordValue()"
+            (ngModelChange)="passwordValue.set($event); esconderErro()">
+          </p-password>
+
+        </div>
+      </div>
+
+        <p-button
+        [label]="isLoading() ? 'Entrando...' : 'Entrar'"
+        [loading]="isLoading()"
+        severity="primary"
+        size="large"
+        fluid
+        (onClick)="fazerLogin()">
+        </p-button>
+      
+      <div class="divider">
+        <span>ainda não tem conta?</span>
+      </div>
+
+      <p-button
+        label="Abrir conta no BANTADS"
+        severity="secondary"
+        variant="outlined"
+        size="large"
+        routerLink="/autocadastro"
+        fluid/>
+
+      <p class="account-info">
+        A abertura passa pela análise de um gerente. Você recebe a senha por e-mail assim que for aprovada.
+      </p>
+    </div>
+  </section>
+
+</div>

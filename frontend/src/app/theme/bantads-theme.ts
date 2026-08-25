@@ -20,34 +20,34 @@ export const BantadsTheme = definePreset(Aura, {
     colorScheme: {
       light: {
         surface: {
-          0: '#FFFFFF',
-          50: '#F4F7F8',
-          100: '#FFFFFF'
+          0: 'var(--color-surface)',
+          50: 'var(--color-background)',
+          100: 'var(--color-surface)'
         },
 
         formField: {
-          background: '#FFFFFF',
-          borderColor: '#E2E8F0',
-          hoverBorderColor: '#0B3B45',
-          focusBorderColor: '#2563EB',
-          color: '#1A242B',
-          placeholderColor: '#64748B'
+          background: 'var(--color-surface)',
+          borderColor: 'var(--color-border)',
+          hoverBorderColor: 'var(--color-primary)',
+          focusBorderColor: 'var(--color-focus)',
+          color: 'var(--color-text)',
+          placeholderColor: 'var(--color-text-secondary)'
         },
 
         text: {
-          color: '#1A242B',
-          mutedColor: '#64748B'
+          color: 'var(--color-text)',
+          mutedColor: 'var(--color-text-secondary)'
         },
 
         highlight: {
-          background: '#E6F7FA',
-          focusBackground: '#CCF0F5'
+          background: 'var(--color-highlight)',
+          focusBackground: 'var(--color-highlight-focus)'
         },
 
         focusRing: {
           width: '2px',
           style: 'solid',
-          color: '#2563EB',
+          color: 'var(--color-focus)',
           offset: '1px'
         }
       }
@@ -56,17 +56,17 @@ export const BantadsTheme = definePreset(Aura, {
     components: {
     toolbar: {
       root: {
-        background: '#0B3B45',
-        color: '#FFFFFF',
-        borderColor: '#0B3B45',
+        background: 'var(--color-primary)',
+        color: 'var(--color-surface)',
+        borderColor: 'var(--color-primary)',
         borderRadius: '0'
       }
     },
     menu: {
     root: {
-      background: '#FFFFFF',
-      borderColor: '#E2E8F0',
-      color: '#1A242B',
+      background: 'var(--color-surface)',
+      borderColor: 'var(--color-border)',
+      color: 'var(--color-text)',
       borderRadius: '8px',
       shadow: 'none'
     },
@@ -77,17 +77,16 @@ export const BantadsTheme = definePreset(Aura, {
     },
 
     item: {
-      color: '#64748B',
+      color: 'var(--color-text-secondary)',
       padding: '10px 12px',
       borderRadius: '8px',
       gap: '10px',
-
-      focusBackground: '#E6F7FA',
-      focusColor: '#0B3B45',
+      focusBackground: 'var(--color-highlight)',
+      focusColor: 'var(--color-primary)',
 
       icon: {
-        color: '#64748B',
-        focusColor: '#0B3B45',
+        color: 'var(--color-text-secondary)',
+        focusColor: 'var(--color-primary)',
         size: '18px'
       },
 
@@ -97,16 +96,40 @@ export const BantadsTheme = definePreset(Aura, {
       }
     },
     separator: {
-      borderColor: '#E2E8F0'
+      borderColor: 'var(--color-border)'
     }
     },
     progressspinner: {
       root: {
-      colorOne: '#00B4D8',
-      colorTwo: '#095969',
-      colorThree: '#00B4D8',
-      colorFour: '#095969'
-    },
+      colorOne: 'var(--color-secondary)',
+      colorTwo: 'var(--color-secondary-dark)',
+      colorThree: 'var(--color-secondary)',
+      colorFour: 'var(--color-secondary-dark)'
+    }
+  },
+   button: {
+      colorScheme: {
+        light: {
+         root: {
+          primary: {
+            background: 'var(--color-primary)',
+            hoverBackground: 'var(--color-third)',
+            borderColor: 'var(--color-primary)',
+            hoverBorderColor: 'var(--color-third)',
+            color: 'var(--color-surface)',
+            hoverColor: 'var(--color-surface)'
+          },
+          secondary: {
+            background: 'transparent',
+            hoverBackground: 'var(--color-background)', 
+            borderColor: 'var(--color-border)',
+            hoverBorderColor: 'var(--color-primary)',
+            color: 'var(--color-text)',
+            hoverColor: 'var(--color-primary)'
+          }
+        }
+      }
+    }
   }
   }
 });
