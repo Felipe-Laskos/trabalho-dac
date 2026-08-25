@@ -58,15 +58,101 @@ services:
       - "15672:15672"
     networks: [bantads]
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 10s
       timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # Microsserviços
+
+  ms-auth:
+    build:
+      context: ./ms-auth
+    image: bantads/ms-auth
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_MONGODB_URI: mongodb://mongo:27017/bantads_auth
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  ms-orquestrador:
+    build:
+      context: ./ms-orquestrador
+    image: bantads/ms-orquestrador
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_DATA_REDIS_HOST: redis
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  ms-cliente:
+    build:
+      context: ./ms-cliente
+    image: bantads/ms-cliente
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=cliente
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8080/health || wget -qO- http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  ms-gerente:
+    build:
+      context: ./ms-gerente
+    image: bantads/ms-gerente
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=gerente
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8080/health || wget -qO- http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
       retries: 10
       start_period: 30s
 
   ms-conta:
     build:
       context: ./ms-conta
+    image: bantads/ms-conta
     mem_limit: 512m
     environment:
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
@@ -81,11 +167,66 @@ services:
         condition: service_healthy
     networks: [bantads]
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # Gateway
+
+  gateway:
+    build:
+      context: ./gateway
+    image: bantads/gateway
+    mem_limit: 256m
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=192"
+      PORT: 8000
+      REDIS_URL: redis://redis:6379
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-auth:
+        condition: service_healthy
+      ms-cliente:
+        condition: service_healthy
+      ms-gerente:
+        condition: service_healthy
+      ms-conta:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Frontend
+
+  front:
+    build:
+      context: ./frontend
+    image: bantads/front
+    mem_limit: 64m
+    ports:
+      - "4200:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   bantads:

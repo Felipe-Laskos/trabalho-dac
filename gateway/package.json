@@ -1,0 +1,22 @@
+{
+  "name": "bantads-gateway",
+  "version": "0.1.0",
+  "description": "API Gateway do BANTADS — ponto unico de entrada (porta 8000)",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "cors": "^2.8.5",
+    "dotenv-safe": "^9.1.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "redis": "^5.10.0"
+  }
+}
