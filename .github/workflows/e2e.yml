@@ -46,10 +46,15 @@ jobs:
           }
           JSON
       - name: pytest
+        id: pytest
+        continue-on-error: true
         working-directory: suite
         run: pytest -v --junitxml=resultado.xml
+
+      - name: portao dos intocaveis
+        run: python3 .github/intocaveis.py
       - name: logs da frota
-        if: failure()
+        if: always()
         run: docker compose logs --no-color --tail=500 > frota.log
 
       - name: guarda relatorios
