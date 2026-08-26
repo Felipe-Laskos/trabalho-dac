@@ -1,0 +1,40 @@
+name: test
+
+on:
+  pull_request:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ms: [ms-auth, ms-cliente, ms-conta, ms-gerente, ms-orquestrador]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: teste de ${{ matrix.ms }}
+        working-directory: ${{ matrix.ms }}
+        run: mvn -B -ntp verify
+      - name: guarda os relatorios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ matrix.ms }}
+          path: ${{ matrix.ms }}/target/surefire-reports
+          if-no-files-found: ignore
+
+  test-ok:
+    if: always()
+    needs: [unit]
+    runs-on: ubuntu-latest
+    steps:
+      - run: '[ "${{ needs.unit.result }}" = "success" ] || exit 1'
