@@ -31,10 +31,30 @@ jobs:
           name: surefire-${{ matrix.ms }}
           path: ${{ matrix.ms }}/target/surefire-reports
           if-no-files-found: ignore
+  
+  front:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: instala
+        working-directory: frontend
+        run: npm ci
+      - name: ng test
+        working-directory: frontend
+        run: npx ng test --watch=false
 
   test-ok:
     if: always()
-    needs: [unit]
+    needs: [unit, front]
     runs-on: ubuntu-latest
     steps:
-      - run: '[ "${{ needs.unit.result }}" = "success" ] || exit 1'
+      - name: portao
+        run: |
+          [ "${{ needs.unit.result }}" = "success" ] || exit 1
+          [ "${{ needs.front.result }}" = "success" ] || exit 1
