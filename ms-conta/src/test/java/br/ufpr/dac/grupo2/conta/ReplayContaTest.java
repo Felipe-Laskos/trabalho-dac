@@ -15,9 +15,33 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.jdbc.Sql;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
+@Testcontainers(disabledWithoutDocker = true)
+@Sql(scripts = "/db/ddl-conta.sql")
 class ReplayContaTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+            .withDatabaseName("bantads")
+            .withUsername("postgres")
+            .withPassword("postgres");
+
+    @DynamicPropertySource
+    static void configurarDataSources(DynamicPropertyRegistry registry) {
+        registry.add("app.datasource.command.jdbc-url", postgres::getJdbcUrl);
+        registry.add("app.datasource.command.username", postgres::getUsername);
+        registry.add("app.datasource.command.password", postgres::getPassword);
+        registry.add("app.datasource.query.jdbc-url", postgres::getJdbcUrl);
+        registry.add("app.datasource.query.username", postgres::getUsername);
+        registry.add("app.datasource.query.password", postgres::getPassword);
+    }
 
     @Autowired
     private SeedService seedService;
