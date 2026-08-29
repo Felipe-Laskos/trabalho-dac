@@ -1,0 +1,120 @@
+<div class="home-cliente">
+
+  <div class="page-header">
+    <span class="role-badge">CLIENTE</span>
+    <h1>Olá, {{ usuario.nome }}!</h1>
+  </div>
+
+  <div class="main-grid">
+    
+    <div class="account-column">
+      <p-card styleClass="dark-account-card">
+        <div class="dark-card-content">
+          
+          <div class="dark-card-header">
+            <div class="info-group">
+              <span class="dark-label">CONTA CORRENTE</span>
+              <span class="dark-value account-number">{{ conta.numero }}</span>
+            </div>
+            <div class="info-group align-right">
+              <span class="dark-label">ABERTA EM</span>
+              <span class="dark-value-small">{{ conta.dataAbertura }}</span>
+            </div>
+          </div>
+
+          <div class="dark-card-body">
+            <span class="dark-label">Saldo disponível</span>
+            <span class="dark-balance">R$ {{ conta.saldo }}</span>
+          </div>
+
+          <div class="dark-card-footer">
+            <i class="pi pi-info-circle"></i>
+            <span>Consultado agora, direto do lado de leitura da conta.</span>
+          </div>
+
+        </div>
+      </p-card>
+    </div>
+
+    <div class="operations-column">
+      <span class="section-label">O QUE VOCÊ QUER FAZER?</span>
+      
+      <div class="operation-grid">
+        
+        <a routerLink="/cliente/deposito" class="action-link">
+          <p-card styleClass="action-card">
+            <div class="action-content">
+              <div class="icon-wrapper icon-blue">
+                <i class="pi pi-arrow-down"></i>
+              </div>
+              <h3>Depositar</h3>
+              <p>Entrada de dinheiro na sua conta</p>
+            </div>
+          </p-card>
+        </a>
+
+        <a routerLink="/cliente/saque" class="action-link">
+          <p-card styleClass="action-card">
+            <div class="action-content">
+              <div class="icon-wrapper icon-red">
+                <i class="pi pi-arrow-up"></i>
+              </div>
+              <h3>Sacar</h3>
+              <p>Até o limite do seu saldo</p>
+            </div>
+          </p-card>
+        </a>
+
+        <a routerLink="/cliente/transferencia" class="action-link">
+          <p-card styleClass="action-card">
+            <div class="action-content">
+              <div class="icon-wrapper icon-teal">
+                <i class="pi pi-arrow-right-arrow-left"></i>
+              </div>
+              <h3>Transferir</h3>
+              <p>Para outra conta do BANTADS</p>
+            </div>
+          </p-card>
+        </a>
+
+        <a routerLink="/cliente/extrato" class="action-link">
+          <p-card styleClass="action-card">
+            <div class="action-content">
+              <div class="icon-wrapper icon-gray">
+                <i class="pi pi-file"></i>
+              </div>
+              <h3>Ver extrato</h3>
+              <p>Últimos 30 dias, dia a dia</p>
+            </div>
+          </p-card>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="user-info-section">
+    <p-card styleClass="user-info-card">
+      <div class="info-footer-grid">
+        <div class="info-data">
+          <div class="info-item">
+            <span class="info-label">TITULAR</span>
+            <span class="info-value">{{ usuario.nome }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">CPF</span>
+            <span class="info-value">{{ usuario.cpf }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">E-MAIL</span>
+            <span class="info-value">{{ usuario.email }}</span>
+          </div>
+        </div>
+        <div class="info-disclaimer">
+          Dados vêm do objeto usuario do login — sem segunda chamada.
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+</div>

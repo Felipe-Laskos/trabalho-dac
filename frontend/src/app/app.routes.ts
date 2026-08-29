@@ -28,7 +28,10 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
-      { path: 'home', loadComponent: emConstrucao },
+      { path: 'home', 
+        loadComponent: () =>
+          import('./features/cliente/home/home-cliente.component').then(
+            (m) => m.HomeClienteComponent) },
       { path: 'deposito', loadComponent: emConstrucao },
       { path: 'saque', loadComponent: emConstrucao },
       { path: 'transferencia', loadComponent: emConstrucao },
@@ -42,26 +45,14 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'solicitacoes' },
-      { path: 'solicitacoes', loadComponent: emConstrucao },
+      { path: 'solicitacoes', loadComponent: () =>
+          import('./features/gerente/home/home-gerente.component').then(
+            (m) => m.HomeGerenteComponent) },
       { path: 'clientes', loadComponent: emConstrucao },
       { path: 'gerentes', loadComponent: emConstrucao },
       { path: 'gerentes/novo', loadComponent: emConstrucao },
       { path: 'gerentes/:cpf/editar', loadComponent: emConstrucao },
       { path: 'relatorio', loadComponent: emConstrucao },
-    ],
-  },
-
-  // Página de teste
-  // TO DO - REMOVER
-  {
-    path: 'dashboard',
-    component: AppLayoutComponent,
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-      },
     ],
   },
 
