@@ -24,8 +24,8 @@
     <button class="filter-pill" [class.active]="filtroAtual === 'APROVADA'" (click)="setFiltro('APROVADA')">
       Aprovadas · {{ totais.aprovadas }}
     </button>
-    <button class="filter-pill" [class.active]="filtroAtual === 'REJEITADA'" (click)="setFiltro('REJEITADA')">
-      Não aprovadas · {{ totais.rejeitadas }}
+    <button class="filter-pill" [class.active]="filtroAtual === 'NAO_APROVADA'" (click)="setFiltro('NAO_APROVADA')">
+      Não aprovadas · {{ totais.naoAprovadas }}
     </button>
   </div>
 
@@ -35,7 +35,7 @@
         <tr>
           <th>CPF</th>
           <th>NOME <i class="pi pi-angle-up sort-icon"></i></th>
-          <th class="text-right">SALÁRIO</th>
+          <th class="salary-column">SALÁRIO</th>
           <th class="text-center">STATUS</th>
           <th class="text-center">PROCESSADA EM</th>
           <th class="text-right">AÇÕES</th>
@@ -48,32 +48,34 @@
           <td>
             <div class="name-cell">
               <span class="user-name">{{ row.nome }}</span>
-              @if (row.motivoRejeicao) {
+              @if (row.motivo) {
                 <div class="rejection-reason">
                   <i class="pi pi-comment"></i>
-                  <span>{{ row.motivoRejeicao }}</span>
+                  <span>{{ row.motivo }}</span>
                 </div>
               }
             </div>
           </td>
      
-          <td class="text-right font-medium">R$ {{ row.salario | number:'1.2-2' }}</td>
+          <td class="salary-column font-medium salary-cell"> 
+            <span class="salary-value">{{ row.salario | dinheiro }}</span>
+          </td>
           <td class="text-center">
             <span class="status-badge" 
                   [class.pendente]="row.status === 'PENDENTE'"
                   [class.aprovada]="row.status === 'APROVADA'"
-                  [class.rejeitada]="row.status === 'REJEITADA'">
+                  [class.nao-aprovada]="row.status === 'NAO_APROVADA'">
               <i class="pi" 
                  [class.pi-clock]="row.status === 'PENDENTE'"
                  [class.pi-check]="row.status === 'APROVADA'"
-                 [class.pi-times]="row.status === 'REJEITADA'">
+                 [class.pi-times]="row.status === 'NAO_APROVADA'">
               </i>
-              {{ row.status === 'REJEITADA' ? 'Não aprovada' : (row.status | titlecase) }}
+              {{ row.status === 'NAO_APROVADA' ? 'Não aprovada' : (row.status | titlecase) }}
             </span>
           </td>
-          <td class="text-center text-muted">{{ row.processadaEm || '—' }}</td>
+          <td class="text-center text-muted">{{ row.dataHoraProcessamento || '—' }}</td>
           <td class="text-right actions-cell">
-            @if (row._links?.aprovacao && row._links?.rejeicao) {
+            @if (row._links['aprovacao'] && row._links['rejeicao']) {
               <div class="actions-group">
                 <p-button label="Aprovar" styleClass="btn-aprovar"></p-button>
                 <p-button label="Recusar" styleClass="btn-recusar"></p-button>

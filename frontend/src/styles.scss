@@ -22,9 +22,12 @@
   /* tons de destaque e de apoio usados pelo preset do PrimeNG */
   --color-highlight: #E6F7FA;
   --color-highlight-focus: #CCF0F5;
+  --color-primary-light: #8bb4b5;
   --color-secondary-dark: #095969;
 
- 
+  --shadow-sm: 0 1px 2px rgba(11, 59, 69, .06);
+  --shadow-md: 0 2px 8px rgba(11, 59, 69, .10);
+
   --font-family: 'Inter', sans-serif;
 
   --font-weight-heading: 700;
@@ -39,6 +42,7 @@
   --spacing-xl: 32px;
 
   --border-radius: 8px;
+  --border-radius-lg: 12px;
 }
 
 * {

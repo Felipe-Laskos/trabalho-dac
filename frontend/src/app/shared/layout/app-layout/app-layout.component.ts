@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { MenuItem } from 'primeng/api';
 import { ToastComponent } from '../../components/toast/toast.component';
+import { SessaoService } from '../../../core/services/sessao.service';
 
 type Perfil = 'CLIENTE' | 'GERENTE';
 
@@ -33,11 +34,12 @@ interface Usuario {
 export class AppLayoutComponent {
 
   private router = inject(Router);
+  private readonly sessao = inject(SessaoService);
 
   // Mock temporário
   // TODO: Substituir pelo usuário fornecido pelo AuthService 
   private usuario = signal<Usuario>({
-    nome: 'Cliente',
+    nome: 'Catharyna',
     email: 'cli1@bantads.com.br',
     tipo: 'CLIENTE',
     cpf: '129.128.610-12'
@@ -106,10 +108,11 @@ export class AppLayoutComponent {
     ];
   });
 
+   // TODO: substituir pelo logout do AuthService futuramente
   logout(): void {
-    //TODO: Implementar this.authService.logout()
+    this.sessao.limparSessao(); 
+    this.router.navigate(['/login']);
   }
-
 
   // TODO: REMOVER - Botão temporário 
   alternarPerfilDev() {
@@ -122,7 +125,7 @@ export class AppLayoutComponent {
       this.router.navigate(['/gerente/solicitacoes']);
     } else {
       this.usuario.set({ 
-        nome: 'Cliente', 
+        nome: 'Catharyna', 
         tipo: 'CLIENTE', 
         cpf: '129.128.610-12', 
         email: 'cli1@bantads.com.br' 

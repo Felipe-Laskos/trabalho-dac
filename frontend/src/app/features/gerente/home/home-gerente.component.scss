@@ -112,34 +112,62 @@ th {
   }
 }
 
+.bantads-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* CPF */
 .bantads-table th:nth-child(1),
 .bantads-table td:nth-child(1) {
-  width: 16%;
+  width: 15%;
 }
 
+/* Nome */
 .bantads-table th:nth-child(2),
 .bantads-table td:nth-child(2) {
-  width: 25%;
+  width: 24%;
 }
 
+/* Salário */
 .bantads-table th:nth-child(3),
 .bantads-table td:nth-child(3) {
-  width: 14%;
+  width: 15%;
 }
 
+/* Status */
 .bantads-table th:nth-child(4),
 .bantads-table td:nth-child(4) {
   width: 15%;
 }
 
+/* Data */
 .bantads-table th:nth-child(5),
 .bantads-table td:nth-child(5) {
-  width: 14%;
+  width: 13%;
 }
 
+/* Ações */
 .bantads-table th:nth-child(6),
 .bantads-table td:nth-child(6) {
-  width: 16%;
+  width: 18%;
+}
+
+.salary-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.salary-value {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.salary-column {
+  text-align: left;
+  white-space: nowrap;
 }
 
 td {
@@ -148,7 +176,6 @@ td {
   vertical-align: middle;
   color: var(--color-text);
   overflow: hidden;
-  overflow-wrap: anywhere;
 }
 
 tr:last-child td {
@@ -166,6 +193,7 @@ tr:last-child td {
 .text-muted {
   color: var(--color-text-secondary);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .font-medium {

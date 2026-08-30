@@ -84,20 +84,34 @@
 }
 
 .app-body {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
+  flex-direction: row;
+  min-width: 0;
   min-height: 0;
+  width: 100%;
   background: var(--color-background);
 }
 
 .app-sidebar {
+  flex: 0 0 220px;
   width: 220px;
-  flex-shrink: 0;
+  min-width: 220px;
+  max-width: 220px;
   display: flex;
   flex-direction: column;
   padding: var(--spacing-lg) var(--spacing-sm);
   background: var(--color-surface);
   border-right: 1px solid var(--color-border);
+}
+
+.app-content {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+  padding: var(--spacing-xl);
+  background: var(--color-background);
+  overflow: auto;
 }
 
 .sidebar-title {
@@ -137,46 +151,17 @@
   font-size: 12px;
 }
 
-.app-content {
-  flex: 1;
-  min-width: 0;
-  padding: var(--spacing-xl);
-  background: var(--color-background);
-  overflow: auto;
-}
-
 .app-menu {
   width: 100%;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.app-menu .p-menu-item-link {
-  min-height: 42px;
-  border-radius: var(--border-radius);
-  color: var(--color-text-secondary);
-}
-
-.app-menu .p-menu-item-link:hover {
-  background: var(--color-highlight);
-  color: var(--color-primary);
-}
-
-.app-menu .p-menu-item-link-active {
-  background: var(--color-highlight);
-  color: var(--color-primary);
-}
-
-.app-menu .p-menu-item-icon {
-  color: inherit;
+  
 }
 
 @media (max-width: 1100px) {
   .app-sidebar {
+    flex-basis: 200px;
     width: 200px;
+    min-width: 200px;
+    max-width: 200px;
   }
   .app-content {
     padding: var(--spacing-lg);
@@ -185,7 +170,10 @@
 
 @media (max-width: 700px) {
   .app-sidebar {
+    flex-basis: 190px;
     width: 190px;
+    min-width: 190px;
+    max-width: 190px;
   }
   .user-info,
   .header-divider {
