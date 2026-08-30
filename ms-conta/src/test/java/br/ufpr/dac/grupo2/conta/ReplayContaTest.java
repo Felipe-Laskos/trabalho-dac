@@ -23,8 +23,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@Testcontainers(disabledWithoutDocker = true)
-@Sql(scripts = "/db/ddl-conta.sql")
+@Testcontainers
+@Sql(scripts = "/db/04-ddl-conta.sql")
 class ReplayContaTest {
 
     @Container
