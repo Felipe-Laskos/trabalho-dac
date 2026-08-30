@@ -3,7 +3,9 @@ import { RouterLink } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
+import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
 import { Conta } from '../../../core/models/conta.model';
+
 
 @Component({
   selector: 'app-home-cliente',
@@ -12,7 +14,8 @@ import { Conta } from '../../../core/models/conta.model';
     CommonModule,
     RouterLink,
     CardModule,
-    DinheiroPipe
+    DinheiroPipe,
+    DataHoraPipe
   ],
   templateUrl: './home-cliente.component.html',
   styleUrls: ['./home-cliente.component.scss']

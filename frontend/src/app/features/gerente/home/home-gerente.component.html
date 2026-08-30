@@ -73,7 +73,7 @@
               {{ row.status === 'NAO_APROVADA' ? 'Não aprovada' : (row.status | titlecase) }}
             </span>
           </td>
-          <td class="text-center text-muted">{{ row.dataHoraProcessamento || '—' }}</td>
+          <td class="text-center text-muted">{{ row.dataHoraProcessamento | dataHora }}</td>
           <td class="text-right actions-cell">
             @if (row._links['aprovacao'] && row._links['rejeicao']) {
               <div class="actions-group">

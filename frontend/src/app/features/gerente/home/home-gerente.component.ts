@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { formatarBRL } from '../../../shared/util/dinheiro.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
+import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
 
 import type { Solicitacao, StatusSolicitacao } from '../../../core/models/solicitacao.model';
 
@@ -20,6 +21,7 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     ButtonModule,
     CardModule,
     DinheiroPipe,
+    DataHoraPipe
   ],
   templateUrl: './home-gerente.component.html',
   styleUrls: ['./home-gerente.component.scss']

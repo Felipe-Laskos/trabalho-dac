@@ -18,13 +18,13 @@
             </div>
             <div class="info-group align-right">
               <span class="dark-label">ABERTA EM</span>
-              <span class="dark-value-small">{{ conta.dataCriacao }}</span>
+              <span class="dark-value-small">{{ conta.dataCriacao | dataHora }}</span>
             </div>
           </div>
 
           <div class="dark-card-body">
             <span class="dark-label">Saldo disponível</span>
-            <span class="dark-balance">R$ {{ conta.saldo | dinheiro }}</span>
+            <span class="dark-balance"> {{ conta.saldo | dinheiro }}</span>
           </div>
 
           <div class="dark-card-footer">
