@@ -20,6 +20,13 @@ export class ApiService {
     return firstValueFrom(this.http.post<T>(this.url(caminho), corpo));
   }
 
+  /** POST que espera 204 sem corpo JSON (logout). */
+  postVazio(caminho: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post(this.url(caminho), {}, { observe: 'response', responseType: 'text' }),
+    ).then(() => undefined);
+  }
+
   put<T>(caminho: string, corpo: unknown): Promise<T> {
     return firstValueFrom(this.http.put<T>(this.url(caminho), corpo));
   }

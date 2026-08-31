@@ -3,30 +3,16 @@
   <p-toolbar styleClass="app-header">
 
     <ng-template #start>
-
       <div class="brand">
         <div class="brand-icon">
           <i class="pi pi-building-columns"></i>
         </div>
-
-        <span class="brand-name">
-          BANTADS
-        </span>
+        <span class="brand-name">BANTADS</span>
       </div>
-
     </ng-template>
+
     <ng-template #end>
-
       <div class="header-user">
-
-        <!-- TODO: Remover botão temporário -->
-        <p-button
-          label="Trocar Perfil"
-          icon="pi pi-sync"
-          [text]="true"
-          (onClick)="alternarPerfilDev()">
-        </p-button>
-
         <p-avatar
           [label]="inicialUsuario()"
           shape="circle"
@@ -34,11 +20,7 @@
         </p-avatar>
 
         <div class="user-info">
-
-          <span class="user-name">
-            {{ nomeUsuario() }}
-          </span>
-
+          <span class="user-name">{{ nomeUsuario() }}</span>
           <span class="user-profile">
             {{ perfil() === 'CLIENTE' ? 'Cliente' : 'Gerente' }}
           </span>
@@ -54,8 +36,8 @@
         </p-button>
       </div>
     </ng-template>
-  </p-toolbar>
 
+  </p-toolbar>
 
   <div class="app-body">
     <aside class="app-sidebar">
@@ -67,30 +49,19 @@
         styleClass="app-menu">
       </p-menu>
 
-
       @if (perfil() === 'CLIENTE') {
         <div class="manager-card">
-          <span class="manager-label">
-            SEU GERENTE
-          </span>
-
-          <strong class="manager-name">
-            Geniéve
-          </strong>
-
-          <span class="manager-email">
-            ger1@bantads.com.br
-          </span>
-
+          <span class="manager-label">SEU GERENTE</span>
+          <strong class="manager-name">Geniéve</strong>
+          <span class="manager-email">ger1@bantads.com.br</span>
         </div>
       }
     </aside>
 
-
     <main class="app-content">
       <router-outlet></router-outlet>
     </main>
-
   </div>
+
   <app-toast></app-toast>
 </div>

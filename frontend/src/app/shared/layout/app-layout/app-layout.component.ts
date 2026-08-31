@@ -1,137 +1,61 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { ToolbarModule } from 'primeng/toolbar';
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
-import { MenuItem } from 'primeng/api';
+import type { MenuItem } from 'primeng/api';
 import { ToastComponent } from '../../components/toast/toast.component';
-import { SessaoService } from '../../../core/services/sessao.service';
-
-type Perfil = 'CLIENTE' | 'GERENTE';
-
-interface Usuario {
-  nome: string;
-  email: string;
-  tipo: Perfil;
-  cpf?: string; // Para suportar o mock do cliente
-}
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
   imports: [
     RouterOutlet,
+    RouterModule,
     ToolbarModule,
     MenuModule,
     ButtonModule,
     AvatarModule,
-    ToastComponent
+    ToastComponent,
   ],
   templateUrl: './app-layout.component.html',
-  styleUrl: './app-layout.component.scss'
+  styleUrl: './app-layout.component.scss',
 })
 export class AppLayoutComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  private router = inject(Router);
-  private readonly sessao = inject(SessaoService);
-
-  // Mock temporário
-  // TODO: Substituir pelo usuário fornecido pelo AuthService 
-  private usuario = signal<Usuario>({
-    nome: 'Catharyna',
-    email: 'cli1@bantads.com.br',
-    tipo: 'CLIENTE',
-    cpf: '129.128.610-12'
+  protected readonly perfil = computed(() => this.auth.tipo());
+  protected readonly nomeUsuario = computed(() => this.auth.nomeExibicao());
+  protected readonly inicialUsuario = computed(() => {
+    const nome = this.auth.nomeExibicao();
+    return nome ? nome.charAt(0).toUpperCase() : '?';
   });
 
-  constructor() {
-    if (window.location.pathname.includes('/gerente')) {
-      this.usuario.set({ 
-        nome: 'Geniéve', 
-        tipo: 'GERENTE', 
-        email: 'ger1@bantads.com.br' 
-      });
-    }
-  }
-
-  perfil = computed(() => this.usuario().tipo);
-  nomeUsuario = computed(() => this.usuario().nome);
-  emailUsuario = computed(() => this.usuario().email);
-  inicialUsuario = computed(() =>
-    this.usuario().nome.charAt(0).toUpperCase()
-  );
-
-  menuItems = computed<MenuItem[]>(() => {
-    if (this.perfil() === 'CLIENTE') {
+  protected readonly menuItems = computed<MenuItem[]>(() => {
+    if (this.auth.ehPerfil('GERENTE')) {
       return [
-        { label: 'Início',
-          icon: 'pi pi-home',
-          routerLink: '/cliente/home'
-        },
-        { label: 'Depósito',
-          icon: 'pi pi-arrow-down',
-          routerLink: '/cliente/deposito'
-        },
-        { label: 'Saque',
-          icon: 'pi pi-arrow-up',
-          routerLink: '/cliente/saque'
-        },
-        { label: 'Transferência',
-          icon: 'pi pi-arrow-right-arrow-left',
-          routerLink: '/cliente/transferencia'
-        },
-        { label: 'Extrato',
-          icon: 'pi pi-file',
-          routerLink: '/cliente/extrato'
-        }
+        { label: 'Início', icon: 'pi pi-home', routerLink: '/gerente/home' },
+        { label: 'Solicitações', icon: 'pi pi-inbox', routerLink: '/gerente/solicitacoes' },
+        { label: 'Clientes', icon: 'pi pi-users', routerLink: '/gerente/clientes' },
+        { label: 'Gerentes', icon: 'pi pi-user', routerLink: '/gerente/gerentes' },
+        { label: 'Relatório', icon: 'pi pi-chart-bar', routerLink: '/gerente/relatorio' },
       ];
     }
 
     return [
-      { label: 'Solicitações',
-        icon: 'pi pi-inbox',
-        routerLink: '/gerente/solicitacoes'
-      },
-      { label: 'Clientes',
-        icon: 'pi pi-users',
-        routerLink: '/gerente/clientes'
-      },
-      { label: 'Gerentes',
-        icon: 'pi pi-user',
-        routerLink: '/gerente/gerentes'
-      },
-      { label: 'Relatório',
-        icon: 'pi pi-chart-bar',
-        routerLink: '/gerente/relatorio'
-      }
+      { label: 'Início', icon: 'pi pi-home', routerLink: '/cliente/home' },
+      { label: 'Depósito', icon: 'pi pi-arrow-down', routerLink: '/cliente/deposito' },
+      { label: 'Saque', icon: 'pi pi-arrow-up', routerLink: '/cliente/saque' },
+      { label: 'Transferência', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/cliente/transferencia' },
+      { label: 'Extrato', icon: 'pi pi-file', routerLink: '/cliente/extrato' },
     ];
   });
 
-   // TODO: substituir pelo logout do AuthService futuramente
-  logout(): void {
-    this.sessao.limparSessao(); 
-    this.router.navigate(['/login']);
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login');
   }
-
-  // TODO: REMOVER - Botão temporário 
-  alternarPerfilDev() {
-    if (this.usuario().tipo === 'CLIENTE') {
-      this.usuario.set({ 
-        nome: 'Geniéve', 
-        tipo: 'GERENTE', 
-        email: 'ger1@bantads.com.br' 
-      });
-      this.router.navigate(['/gerente/solicitacoes']);
-    } else {
-      this.usuario.set({ 
-        nome: 'Catharyna', 
-        tipo: 'CLIENTE', 
-        cpf: '129.128.610-12', 
-        email: 'cli1@bantads.com.br' 
-      });
-      this.router.navigate(['/cliente/home']);
-    }
-  }
-
 }
