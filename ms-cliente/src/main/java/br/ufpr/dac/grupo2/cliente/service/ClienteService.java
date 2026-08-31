@@ -134,7 +134,7 @@ public class ClienteService {
         solicitacaoRepository.deleteAll();
         clienteRepository.deleteAll();
 
-        clienteRepository.flush()
+        clienteRepository.flush();
 
         List<Cliente> clientes = clientesSeed();
 
