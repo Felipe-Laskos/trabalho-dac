@@ -16,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: .env efemero do CI
-        run: echo "DB_PASS=ci_$(openssl rand -hex 8)" > .env
+        run: |
+          echo "DB_PASS=ci_$(openssl rand -hex 8)" >> .env
+          echo "SECRET=$(openssl rand -hex 32)" >> .env
 
 
       - name: sobe a frota
