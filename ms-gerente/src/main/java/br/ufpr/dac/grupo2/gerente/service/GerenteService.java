@@ -85,7 +85,7 @@ public class GerenteService {
         comandosProcessadosRepository.deleteAll();
         gerenteRepository.deleteAll();
 
-        gerenteRepository.flush()
+        gerenteRepository.flush();
 
         List<Gerente> gerentes = gerentesSeed();
 
