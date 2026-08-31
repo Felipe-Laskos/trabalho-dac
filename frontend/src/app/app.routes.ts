@@ -7,6 +7,9 @@ import { convidadoGuard } from './core/guards/convidado.guard';
 const emConstrucao = () =>
   import('./features/em-construcao.component').then((m) => m.EmConstrucaoComponent);
 
+const homeGerente = () =>
+  import('./features/gerente/home/home-gerente.component').then((m) => m.HomeGerenteComponent);
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -38,7 +41,13 @@ export const routes: Routes = [
     canActivate: [authGuard, clienteGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
-      { path: 'home', loadComponent: emConstrucao },
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/cliente/home/home-cliente.component').then(
+            (m) => m.HomeClienteComponent,
+          ),
+      },
       { path: 'deposito', loadComponent: emConstrucao },
       { path: 'saque', loadComponent: emConstrucao },
       { path: 'transferencia', loadComponent: emConstrucao },
@@ -52,8 +61,8 @@ export const routes: Routes = [
     canActivate: [authGuard, gerenteGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
-      { path: 'home', loadComponent: emConstrucao },
-      { path: 'solicitacoes', loadComponent: emConstrucao },
+      { path: 'home', loadComponent: homeGerente },
+      { path: 'solicitacoes', loadComponent: homeGerente },
       { path: 'clientes', loadComponent: emConstrucao },
       { path: 'gerentes', loadComponent: emConstrucao },
       { path: 'gerentes/novo', loadComponent: emConstrucao },

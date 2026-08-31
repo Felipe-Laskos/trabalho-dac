@@ -1,0 +1,68 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: .env efemero do CI
+        run: echo "DB_PASS=ci_$(openssl rand -hex 8)" > .env
+
+
+      - name: sobe a frota
+        run: docker compose up -d --wait --wait-timeout 480 gateway ms-orquestrador
+
+      - name: clona a suite oficial
+        run: git clone --depth 1 https://github.com/razeranthom/test_bantads.git suite
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: instala pytest
+        working-directory: suite
+        run: pip install -r requirements.txt
+
+      - name: config.json do CI
+        working-directory: suite
+        run: |
+          cat > config.json << 'JSON'
+          {
+            "server": "http://localhost",
+            "port": 8000,
+            "novos_clientes": ["cliente.novo1@bantads.com.br", "cliente.novo2@bantads.com.br"],
+            "novos_gerentes": ["gerente.novo1@bantads.com.br", "gerente.novo2@bantads.com.br"],
+            "job_timeout": 150,
+            "read_timeout": 40
+          }
+          JSON
+      - name: pytest
+        id: pytest
+        continue-on-error: true
+        working-directory: suite
+        run: pytest -v --junitxml=resultado.xml
+
+      - name: portao dos intocaveis
+        run: python3 .github/intocaveis.py
+      - name: logs da frota
+        if: always()
+        run: docker compose logs --no-color --tail=500 > frota.log
+
+      - name: guarda relatorios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e
+          path: |
+            suite/resultado.xml
+            frota.log
+          if-no-files-found: ignore

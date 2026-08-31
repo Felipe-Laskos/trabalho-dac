@@ -64,22 +64,22 @@ export const BantadsTheme = definePreset(Aura, {
     },
     menu: {
     root: {
-      background: 'var(--color-surface)',
-      borderColor: 'var(--color-border)',
+      background: 'transparent',
+      borderColor: 'transparent',
       color: 'var(--color-text)',
-      borderRadius: '8px',
+      borderRadius: '0',
       shadow: 'none'
     },
 
     list: {
-      padding: '8px',
+      padding: '0',
       gap: '4px'
     },
 
     item: {
       color: 'var(--color-text-secondary)',
       padding: '10px 12px',
-      borderRadius: '8px',
+      borderRadius: 'var(--border-radius)',
       gap: '10px',
       focusBackground: 'var(--color-highlight)',
       focusColor: 'var(--color-primary)',

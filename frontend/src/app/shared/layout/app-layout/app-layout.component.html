@@ -1,39 +1,67 @@
 <div class="app-layout">
 
-  <p-toolbar>
+  <p-toolbar styleClass="app-header">
 
     <ng-template #start>
-      <span class="brand-name">BANTADS</span>
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="pi pi-building-columns"></i>
+        </div>
+        <span class="brand-name">BANTADS</span>
+      </div>
     </ng-template>
 
     <ng-template #end>
-      <span class="header-user">{{ nomeUsuario() }}</span>
-      <p-button
-        label="Sair"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        variant="text"
-        (onClick)="sair()" />
+      <div class="header-user">
+        <p-avatar
+          [label]="inicialUsuario()"
+          shape="circle"
+          styleClass="user-avatar">
+        </p-avatar>
+
+        <div class="user-info">
+          <span class="user-name">{{ nomeUsuario() }}</span>
+          <span class="user-profile">
+            {{ perfil() === 'CLIENTE' ? 'Cliente' : 'Gerente' }}
+          </span>
+        </div>
+
+        <div class="header-divider"></div>
+        <p-button
+          label="Sair"
+          icon="pi pi-sign-out"
+          [text]="true"
+          styleClass="logout-button"
+          (onClick)="logout()">
+        </p-button>
+      </div>
     </ng-template>
 
   </p-toolbar>
 
   <div class="app-body">
-
     <aside class="app-sidebar">
+      <div class="sidebar-title">
+        {{ perfil() === 'CLIENTE' ? 'MINHA CONTA' : 'MENU' }}
+      </div>
+      <p-menu
+        [model]="menuItems()"
+        styleClass="app-menu">
+      </p-menu>
 
-      <p-menu [model]="menuItems()"></p-menu>
-
+      @if (perfil() === 'CLIENTE') {
+        <div class="manager-card">
+          <span class="manager-label">SEU GERENTE</span>
+          <strong class="manager-name">Geniéve</strong>
+          <span class="manager-email">ger1@bantads.com.br</span>
+        </div>
+      }
     </aside>
 
     <main class="app-content">
-
       <router-outlet></router-outlet>
-
     </main>
-
   </div>
 
   <app-toast></app-toast>
-
 </div>
