@@ -51,7 +51,8 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     canActivate: [authGuard, gerenteGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'solicitacoes' },
+      { path: '', pathMatch: 'full', redirectTo: 'home' },
+      { path: 'home', loadComponent: emConstrucao },
       { path: 'solicitacoes', loadComponent: emConstrucao },
       { path: 'clientes', loadComponent: emConstrucao },
       { path: 'gerentes', loadComponent: emConstrucao },

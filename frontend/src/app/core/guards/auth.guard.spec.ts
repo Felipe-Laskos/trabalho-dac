@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { authGuard } from './auth.guard';
@@ -17,14 +18,14 @@ describe('guards de autenticação', () => {
   }
 
   it('authGuard bloqueia visitante', () => {
-    configurar({ autenticado: () => false } as Partial<AuthService>);
+    configurar({ autenticado: signal(false) } as Partial<AuthService>);
     const resultado = TestBed.runInInjectionContext(() => authGuard({} as never, {} as never));
     expect(resultado).toEqual(router.createUrlTree(['/login']));
   });
 
   it('clienteGuard recusa gerente', () => {
     configurar({
-      autenticado: () => true,
+      autenticado: signal(true),
       ehPerfil: (p: string) => p === 'GERENTE',
     } as Partial<AuthService>);
     const resultado = TestBed.runInInjectionContext(() => clienteGuard({} as never, {} as never));
@@ -33,7 +34,7 @@ describe('guards de autenticação', () => {
 
   it('gerenteGuard aceita gerente', () => {
     configurar({
-      autenticado: () => true,
+      autenticado: signal(true),
       ehPerfil: (p: string) => p === 'GERENTE',
     } as Partial<AuthService>);
     const resultado = TestBed.runInInjectionContext(() => gerenteGuard({} as never, {} as never));

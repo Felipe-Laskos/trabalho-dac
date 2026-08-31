@@ -14,7 +14,11 @@ export class AuthService {
   readonly usuario = this.sessao.usuario;
   readonly autenticado = this.sessao.autenticado;
 
-  async entrar(email: string, senha: string): Promise<LoginResponse> {
+  limparSessao(): void {
+    this.sessao.limparSessao();
+  }
+
+  async login(email: string, senha: string): Promise<LoginResponse> {
     const corpo: LoginInput = { email: email.trim(), senha };
     const resposta = await this.api.post<LoginResponse>('/login', corpo);
 
@@ -26,7 +30,7 @@ export class AuthService {
     return resposta;
   }
 
-  async sair(): Promise<void> {
+  async logout(): Promise<void> {
     try {
       if (this.sessao.token()) {
         await this.api.postVazio('/logout');
@@ -36,12 +40,12 @@ export class AuthService {
         console.warn('Logout remoto falhou; a sessão local será encerrada mesmo assim.', erro);
       }
     } finally {
-      this.sessao.limparSessao();
+      this.limparSessao();
     }
   }
 
   rotaInicial(tipo: TipoUsuario | null = this.sessao.tipo()): string {
-    return tipo === 'GERENTE' ? '/gerente/solicitacoes' : '/cliente/home';
+    return tipo === 'GERENTE' ? '/gerente/home' : '/cliente/home';
   }
 
   ehPerfil(esperado: TipoUsuario): boolean {

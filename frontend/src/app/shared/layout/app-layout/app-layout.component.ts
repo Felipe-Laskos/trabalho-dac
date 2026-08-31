@@ -30,6 +30,7 @@ export class AppLayoutComponent {
   protected readonly menuItems = computed<MenuItem[]>(() => {
     if (this.auth.ehPerfil('GERENTE')) {
       return [
+        { label: 'Início', icon: 'pi pi-home', routerLink: '/gerente/home' },
         { label: 'Solicitações', icon: 'pi pi-inbox', routerLink: '/gerente/solicitacoes' },
         { label: 'Clientes', icon: 'pi pi-users', routerLink: '/gerente/clientes' },
         { label: 'Gerentes', icon: 'pi pi-id-card', routerLink: '/gerente/gerentes' },
@@ -47,7 +48,7 @@ export class AppLayoutComponent {
   });
 
   async sair(): Promise<void> {
-    await this.auth.sair();
+    await this.auth.logout();
     await this.router.navigateByUrl('/login');
   }
 }

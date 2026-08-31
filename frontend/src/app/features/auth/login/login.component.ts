@@ -56,7 +56,7 @@ export class LoginComponent {
     this.isLoading.set(true);
 
     try {
-      const sessao = await this.auth.entrar(email, senha);
+      const sessao = await this.auth.login(email, senha);
       await this.router.navigateByUrl(this.auth.rotaInicial(sessao.tipo));
     } catch (erro) {
       const padrao = 'Login inválido. Confira o e-mail e a senha e tente de novo.';
