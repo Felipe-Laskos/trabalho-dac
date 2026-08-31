@@ -1,25 +1,41 @@
-require('dotenv-safe').config({ quiet: true });
+require("dotenv-safe").config({ quiet: true });
 
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const morgan = require("morgan");
 
-const redis = require('./redis');
-const rabbit = require('./rabbit');
+const redis = require("./redis");
+const rabbit = require("./rabbit");
+const { verifyJWT, limparIdentidade } = require("./auth");
+const { login, logout } = require("./login");
 
 const PORTA = Number(process.env.PORT);
 
 const app = express();
 
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(limparIdentidade);
 
-app.get('/health', (_req, res) => res.json({ status: 'UP' }));
+app.get("/health", (_req, res) => res.json({ status: "UP" }));
 
-app.post('/reboot', (_req, res) => res.json({ status: 'ok' }));
+app.post("/reboot", (_req, res) => res.json({ status: "ok" }));
+
+app.post("/login", login);
+
+app.use(verifyJWT);
+
+app.post("/logout", logout);
+
+app.use((erro, _req, res, _next) => {
+  console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
+  res.status(500).json({
+    status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
+  });
+});
 
 async function subir() {
   await redis.conectar();
