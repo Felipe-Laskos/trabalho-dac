@@ -4,9 +4,9 @@ const { cliente: redis } = require("./redis");
 
 const TTL_SESSAO = 30 * 60;
 
-const SEM_TOKEN = { auth: false, message: "Token não fornecido"};
+const SEM_TOKEN = { auth: false, message: "Token não fornecido."};
 
-const TOKEN_RUIM = { auth: false, message: "Falha ao validar token"};
+const TOKEN_RUIM = { auth: false, message: "Falha ao autenticar o token."};
 
 async function verifyJWT(req, res, next) {
   const token = req.headers["x-access-token"];

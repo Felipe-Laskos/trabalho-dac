@@ -4,11 +4,14 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
+const httpProxy = require("express-http-proxy");
 
 const redis = require("./redis");
 const rabbit = require("./rabbit");
-const { verifyJWT, limparIdentidade } = require("./auth");
+const { verifyJWT, limparIdentidade, exigirPerfil, injetarIdentidade } = require("./auth");
 const { login, logout } = require("./login");
+
+const proxyGerente = httpProxy(process.env.MS_GERENTE_URL);
 
 const PORTA = Number(process.env.PORT);
 
@@ -27,6 +30,8 @@ app.post("/reboot", (_req, res) => res.json({ status: "ok" }));
 app.post("/login", login);
 
 app.use(verifyJWT);
+
+app.get("/gerentes", exigirPerfil("GERENTE"), injetarIdentidade, proxyGerente);
 
 app.post("/logout", logout);
 

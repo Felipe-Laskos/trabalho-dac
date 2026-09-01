@@ -3,4 +3,9 @@
 # Progresso nao mexe neste arquivo: o CI lista os candidatos a promover
 # no resumo do job, e voce move para ca quando quiser.
 test_00_reboot::REBOOT_1
+test_00_reboot::REBOOT_verifica_login_seed_2
 test_01_health::HEALTH_status_1
+test_02_login::R02_login_sucesso_1
+test_02_login::R02_login_invalido_2
+test_02_login::R02_token_nao_fornecido_3
+test_02_login::R02_token_invalido_4

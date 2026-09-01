@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const { cliente: redis } = require("./redis");
 const { TTL_SESSAO } = require("./auth");
 
-const LOGIN_INVALIDO = { auth: false, message: "Login inválido" };
+const LOGIN_INVALIDO = { auth: false, message: "Login inválido!" };
 
 async function login(req, res) {
   const { email, senha } = req.body || {};
@@ -54,6 +54,11 @@ async function login(req, res) {
   );
 
   const sessao = JSON.stringify({ cpf: credencial.cpf, tipo: credencial.tipo });
+
+  const jtiAnterior = await redis.get(`sessao:cpf:${credencial.cpf}`);
+
+  if (jtiAnterior) await redis.del(`sessao:${jtiAnterior}`);
+
   await Promise.all([
     redis.setEx(`sessao:${jti}`, TTL_SESSAO, sessao),
     redis.setEx(`sessao:cpf:${credencial.cpf}`, TTL_SESSAO, jti)
