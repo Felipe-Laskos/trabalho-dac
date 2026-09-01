@@ -183,8 +183,13 @@ services:
     environment:
       NODE_OPTIONS: "--max-old-space-size=192"
       PORT: 8000
+      SECRET: ${SECRET:?defina SECRET no .env}
+      JWT_EXPIRES_IN: 8h
       REDIS_URL: redis://redis:6379
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      MS_AUTH_URL: http://ms-auth:8080
+      MS_CLIENTE_URL: http://ms-cliente:8080
+      MS_GERENTE_URL: http://ms-gerente:8080
     ports:
       - "8000:8000"
     depends_on:
