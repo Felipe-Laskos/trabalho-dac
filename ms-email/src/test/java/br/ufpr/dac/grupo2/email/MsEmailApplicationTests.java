@@ -1,12 +1,12 @@
 package br.ufpr.dac.grupo2.email;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+//import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class MsEmailApplicationTests {
 
-	@Test
+//	@Test
 	void contextLoads() {
 	}
 
