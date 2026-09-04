@@ -107,6 +107,27 @@ services:
       retries: 10
       start_period: 30s
 
+  ms-email:
+    build:
+      context: ./ms-email
+    image: bantads/ms-email
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   ms-cliente:
     build:
       context: ./ms-cliente
