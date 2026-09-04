@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ContaCommandService {
 
+    private static final int MAX_TENTATIVAS_APPEND = 3;
+
     private static final Set<String> EVENTOS_COM_DINHEIRO = Set.of(
             "Depósito",
             "Saque",
@@ -57,31 +59,38 @@ public class ContaCommandService {
             String tipo,
             Map<String, Object> payload) {
 
-        EstadoConta estado = replay(numeroConta);
-        validar(tipo, payload, estado);
+        for (int tentativa = 1;
+                tentativa <= MAX_TENTATIVAS_APPEND;
+                tentativa++) {
+            EstadoConta estado = replay(numeroConta);
+            validar(tipo, payload, estado);
 
-        int novaVersao = estado.getVersao() + 1;
-
-        Evento evento = new Evento(
-                numeroConta,
-                tipo,
-                payload,
-                novaVersao,
-                LocalDateTime.now()
-        );
-
-        try {
-            eventoRepository.saveAndFlush(evento);
-        } catch (DataIntegrityViolationException e) {
-            throw new ConflitoDeVersaoException(
+            Evento evento = new Evento(
                     numeroConta,
-                    novaVersao,
-                    e
+                    tipo,
+                    payload,
+                    estado.getVersao() + 1,
+                    LocalDateTime.now()
             );
+
+            try {
+                eventoRepository.saveAndFlush(evento);
+                eventoPublisher.publicarDepoisDoCommit(evento);
+                return evento;
+            } catch (DataIntegrityViolationException e) {
+                if (tentativa == MAX_TENTATIVAS_APPEND) {
+                    throw new ConflitoDeVersaoException(
+                            numeroConta,
+                            evento.getVersao(),
+                            e
+                    );
+                }
+            }
         }
 
-        eventoPublisher.publicarDepoisDoCommit(evento);
-        return evento;
+        throw new IllegalStateException(
+                "Fluxo de tentativas de append encerrado inesperadamente"
+        );
     }
 
     private EstadoConta fold(
@@ -167,8 +176,20 @@ public class ContaCommandService {
                     || tipo.equals("TransferênciaOrigem"))
                     && estado.getSaldo().compareTo(valor) < 0) {
                 throw new EventoInvalidoException(
-                        "Saldo insuficiente"
+                    "Saldo insuficiente"
                 );
+            }
+
+            if (tipo.startsWith("Transfer")) {
+                Map<String, Object> origem = parte(payload, "origem");
+                Map<String, Object> destino = parte(payload, "destino");
+
+                texto(origem, "numeroConta");
+                texto(origem, "cpf");
+                texto(origem, "nome");
+                texto(destino, "numeroConta");
+                texto(destino, "cpf");
+                texto(destino, "nome");
             }
         } else if (tipo.equals("GerenteAlterado")) {
             texto(payload, "cpfGerente");
@@ -219,5 +240,23 @@ public class ContaCommandService {
         }
 
         return texto;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> parte(
+            Map<String, Object> payload,
+            String campo) {
+
+        Object valor = payload.get(campo);
+
+        if (!(valor instanceof Map<?, ?> mapa)
+                || mapa.keySet().stream()
+                        .anyMatch(chave -> !(chave instanceof String))) {
+            throw new EventoInvalidoException(
+                    "Campo obrigatorio invalido: " + campo
+            );
+        }
+
+        return (Map<String, Object>) valor;
     }
 }

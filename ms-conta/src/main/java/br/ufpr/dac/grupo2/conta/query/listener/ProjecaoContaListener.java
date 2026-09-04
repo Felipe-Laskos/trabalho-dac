@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 
-import br.ufpr.dac.grupo2.conta.command.dto.EventoPublicado;
+import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.query.exception.EventoForaDeOrdemException;
 import br.ufpr.dac.grupo2.conta.query.model.ContaQuery;
 import br.ufpr.dac.grupo2.conta.query.model.Movimentacao;

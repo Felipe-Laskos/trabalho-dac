@@ -1,10 +1,11 @@
 package br.ufpr.dac.grupo2.conta.admin.controller;
 
 import br.ufpr.dac.grupo2.conta.admin.dto.AppendEventoRequest;
-import br.ufpr.dac.grupo2.conta.command.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.service.ContaCommandService;
+import br.ufpr.dac.grupo2.conta.command.service.ReprojecaoService;
+import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,17 +14,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
 public class AdminEventoController {
 
     private final ContaCommandService contaCommandService;
+    private final ReprojecaoService reprojecaoService;
 
     public AdminEventoController(
-            ContaCommandService contaCommandService) {
+            ContaCommandService contaCommandService,
+            ReprojecaoService reprojecaoService) {
         this.contaCommandService = contaCommandService;
+        this.reprojecaoService = reprojecaoService;
     }
 
     @PostMapping("/eventos")
@@ -47,5 +54,16 @@ public class AdminEventoController {
         return ResponseEntity.ok(
                 contaCommandService.replay(numero)
         );
+    }
+
+    @PostMapping("/reprojetar")
+    public ResponseEntity<Map<String, Integer>> reprojetar(
+            @RequestParam(required = false) String conta) {
+
+        int total = conta == null
+                ? reprojecaoService.republicarTudo()
+                : reprojecaoService.republicar(conta);
+
+        return ResponseEntity.ok(Map.of("eventos", total));
     }
 }

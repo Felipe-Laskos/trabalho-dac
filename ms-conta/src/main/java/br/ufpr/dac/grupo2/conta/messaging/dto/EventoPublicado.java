@@ -1,9 +1,9 @@
-package br.ufpr.dac.grupo2.conta.command.dto;
+package br.ufpr.dac.grupo2.conta.messaging.dto;
+
+import br.ufpr.dac.grupo2.conta.command.model.Evento;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
-import br.ufpr.dac.grupo2.conta.command.model.Evento;
 
 public record EventoPublicado(
         Long id,

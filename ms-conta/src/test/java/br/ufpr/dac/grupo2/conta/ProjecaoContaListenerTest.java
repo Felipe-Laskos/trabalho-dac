@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import br.ufpr.dac.grupo2.conta.command.dto.EventoPublicado;
+import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.query.listener.ProjecaoContaListener;
 import br.ufpr.dac.grupo2.conta.query.model.Movimentacao;
 import br.ufpr.dac.grupo2.conta.query.repository.ContaQueryRepository;

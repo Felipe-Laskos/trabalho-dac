@@ -1,10 +1,13 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
-import br.ufpr.dac.grupo2.conta.command.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
+import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -14,6 +17,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class EventoPublisher {
 
     public static final String FILA_EVENTOS = "ms.conta.events";
+
+    private static final Logger log =
+            LoggerFactory.getLogger(EventoPublisher.class);
 
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
@@ -41,12 +47,31 @@ public class EventoPublisher {
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
-                        rabbitTemplate.convertAndSend(
-                                FILA_EVENTOS,
-                                json
-                        );
+                        try {
+                            rabbitTemplate.convertAndSend(
+                                    FILA_EVENTOS,
+                                    json
+                            );
+                        } catch (AmqpException e) {
+                            log.error(
+                                    "Evento {} da conta {} commitado mas "
+                                            + "NAO publicado - rode POST "
+                                            + "/admin/reprojetar?conta={}",
+                                    evento.getId(),
+                                    evento.getObjetoId(),
+                                    evento.getObjetoId(),
+                                    e
+                            );
+                        }
                     }
                 }
+        );
+    }
+
+    public void publicarAgora(Evento evento) {
+        rabbitTemplate.convertAndSend(
+                FILA_EVENTOS,
+                serializar(EventoPublicado.de(evento))
         );
     }
 
