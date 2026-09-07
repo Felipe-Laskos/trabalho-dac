@@ -4,20 +4,19 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
-const httpProxy = require("express-http-proxy");
 
 const redis = require("./redis");
 const rabbit = require("./rabbit");
-const { verifyJWT, limparIdentidade, exigirPerfil, injetarIdentidade } = require("./auth");
+const { verifyJWT, limparIdentidade } = require("./auth");
+const { reescreverRespostas } = require("./links");
 const { login, logout } = require("./login");
-const axios = require("axios");
-const { buscarCliente } = require("./cliente")
+const { reboot } = require("./reboot");
 
-const proxyGerente = httpProxy(process.env.MS_GERENTE_URL);
+const rotasClientes = require("./rotas/clientes");
+const rotasContas = require("./rotas/contas");
+const rotasGerentes = require("./rotas/gerentes");
 
 const PORTA = Number(process.env.PORT);
-
-const REBOOT_REDIS = ["sessao:*", "job:*", "cache:*", "revogado:*", "saga:*"];
 
 const app = express();
 
@@ -35,11 +34,21 @@ app.post("/login", login);
 
 app.use(verifyJWT);
 
-app.get("/clientes/:cpf", exigirPerfil("CLIENTE"), injetarIdentidade, buscarCliente);
-
-app.get("/gerentes", exigirPerfil("GERENTE"), injetarIdentidade, proxyGerente);
+app.use(reescreverRespostas);
 
 app.post("/logout", logout);
+
+app.use("/clientes", rotasClientes);
+
+app.use("/contas", rotasContas);
+
+app.use("/gerentes", rotasGerentes);
+
+app.use((_req, res) => {
+  res.status(404).json({
+    status: 404, erro: "Not Found", mensagem: "Rota inexistente"
+  });
+});
 
 app.use((erro, _req, res, _next) => {
   console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
@@ -47,28 +56,6 @@ app.use((erro, _req, res, _next) => {
     status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
   });
 });
-
-async function reboot(req, res) {
-  const chavesRemovidas = await redis.limpar(...REBOOT_REDIS);
-
-  const ROTA_SEED = "/admin/seed";
-
-  const [ms_cliente, ms_gerente, ms_conta, ms_auth] = await Promise.all([
-    axios.post(process.env.MS_CLIENTE_URL + ROTA_SEED),
-    axios.post(process.env.MS_GERENTE_URL + ROTA_SEED),
-    axios.post(process.env.MS_CONTA_URL + ROTA_SEED),
-    axios.post(process.env.MS_AUTH_URL + ROTA_SEED),
-  ]);
-
-  // console.log(ms_cliente.data, ms_gerente.data, ms_conta.data, ms_auth.data);
-
-  return res.status(200).json({
-    status: "ok",
-    clientes: ms_cliente.data.total,
-    gerentes: ms_gerente.data.total,
-    contas: ms_conta.data.total
-  });
-}
 
 async function subir() {
   await redis.conectar();

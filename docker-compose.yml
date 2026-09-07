@@ -214,6 +214,7 @@ services:
       MS_CLIENTE_URL: http://ms-cliente:8080
       MS_GERENTE_URL: http://ms-gerente:8080
       MS_CONTA_URL: http://ms-conta:8080
+      PUBLIC_URL: http://localhost:8000
     ports:
       - "8000:8000"
     depends_on:
