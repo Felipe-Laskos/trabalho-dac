@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink} from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { InputMask } from 'primeng/inputmask';
@@ -9,6 +10,9 @@ import { Select } from 'primeng/select';
 import { KeyFilter } from 'primeng/keyfilter';
 import { MessageComponent } from '../../../shared/components/message/message.component';
 import { paraContrato, paraDecimal } from '../../../shared/util/dinheiro.util';
+
+import { SolicitacaoService } from '../../../core/services/solicitacao.service';
+import  { Autocadastro } from '../../../core/models/autocadastro.model';
 
 type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
 
@@ -31,8 +35,13 @@ type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
 })
 export class AutocadastroComponent implements OnInit {
 
+  protected readonly mensagemErro = signal<string | null>(null);
+  protected readonly errosCampos = signal<Record<string, string>>({});
+  
   private readonly hasFormError = signal(false);
   private readonly fb = inject(FormBuilder);
+
+  private readonly solicitacaoService = inject(SolicitacaoService);
 
   protected readonly estado = signal<TelaEstado>('preenchendo');
 
@@ -166,85 +175,175 @@ export class AutocadastroComponent implements OnInit {
     };
   }
 
-  enviar(): void {
-    this.estado.set('enviando');
-    this.hasFormError.set(false);
-    this.form.markAllAsTouched();
+  private montarPayload(): Autocadastro {
+  const valor = this.form.controls.salario.value;
+  const complemento =
+    this.form.controls.endereco.controls.complemento.value;
 
-    if (this.form.invalid) {
-      this.estado.set('erro');
-      this.hasFormError.set(true);
-      return; 
+  return {
+    cpf: this.somenteDigitos(
+      this.form.controls.cpf.value
+    ),
+    nome: this.form.controls.nome.value!,
+    email: this.form.controls.email.value!,
+    telefone: this.somenteDigitos(
+      this.form.controls.telefone.value
+    ),
+    salario: valor !== null
+      ? paraContrato(
+          paraDecimal(valor.toString())
+        )
+      : '',
+    endereco: {
+      logradouro:
+        this.form.controls.endereco.controls.logradouro.value!,
+      numero:
+        this.form.controls.endereco.controls.numero.value!,
+      complemento:
+        complemento?.trim()
+          ? complemento.trim()
+          : null,
+      cep: this.somenteDigitos(
+        this.form.controls.endereco.controls.cep.value
+      ),
+      cidade:
+        this.form.controls.endereco.controls.cidade.value!,
+      uf:
+        this.form.controls.endereco.controls.uf.value!
     }
+  };
+}
 
-    setTimeout(() => {
-      try {
-        const payload = this.montarPayload();
-        this.estado.set('sucesso'); 
-      } catch (erroDeExecucao) {
-        console.error('Erro interno ao montar payload:', erroDeExecucao);
-        this.estado.set('erro');
-        this.hasFormError.set(true);
-      }
-    }, 500);
+  async enviar(): Promise<void> {
+  if (this.enviando) {
+    return;
+  }
+  this.form.markAllAsTouched();
+  this.hasFormError.set(false);
+  this.mensagemErro.set(null);
+  this.errosCampos.set({});
+  if (this.form.invalid) {
+    this.estado.set('erro');
+    this.hasFormError.set(true);
+    return;
+  }
+  this.estado.set('enviando');
+  try {
+    const payload = this.montarPayload();
+    await this.solicitacaoService.criar(payload);
+    this.estado.set('sucesso');
+  } catch (erro) {
+    console.error('Erro ao enviar solicitação:', erro);
+    this.tratarErro(erro);
+  }
+}
+
+  private tratarErro(erro: unknown): void {
+  this.estado.set('erro');
+
+  if (!(erro instanceof HttpErrorResponse)) {
+    this.mensagemErro.set(
+      'Não foi possível enviar sua solicitação. Tente novamente.'
+    );
+    return;
   }
 
-  private montarPayload() {
-    const valor = this.form.controls.salario.value;
-
-    const complemento =
-      this.form.controls.endereco.controls.complemento.value;
-
-    return {
-      cpf: this.somenteDigitos(
-        this.form.controls.cpf.value
-      ),
-
-      nome: this.form.controls.nome.value,
-
-      email: this.form.controls.email.value,
-
-      telefone: this.somenteDigitos(
-        this.form.controls.telefone.value
-      ),
-
-      salario: valor !== null
-        ? paraContrato(
-            paraDecimal(valor.toString())
-          )
-        : null,
-
-      endereco: {
-        logradouro:
-          this.form.controls.endereco.controls.logradouro.value,
-
-        numero:
-          this.form.controls.endereco.controls.numero.value,
-
-        complemento:
-          complemento?.trim()
-            ? complemento.trim()
-            : null,
-
-        cep: this.somenteDigitos(
-          this.form.controls.endereco.controls.cep.value
-        ),
-
-        cidade:
-          this.form.controls.endereco.controls.cidade.value,
-
-        uf:
-          this.form.controls.endereco.controls.uf.value
-      }
-    };
+  switch (erro.status) {
+    case 400:
+      this.tratarErro400(erro);
+      break;
+    case 409:
+      this.tratarErro409(erro);
+      break;
+    default:
+      this.mensagemErro.set(
+        'Não foi possível enviar sua solicitação. Tente novamente.'
+      );
+      break;
   }
+}
+ 
+  private tratarErro409(erro: HttpErrorResponse): void {
+  const mensagem = this.extrairMensagemErro(erro).toLowerCase();
+  if (mensagem.includes('cpf')) {
+    this.mensagemErro.set(
+      'Já existe solicitação para este CPF.'
+    );
+    this.form.controls.cpf.markAsTouched();
+    return;
+  }
+  if (mensagem.includes('e-mail') || mensagem.includes('email')) {
+    this.mensagemErro.set(
+      'Este e-mail já está sendo utilizado.'
+    );
+    this.form.controls.email.markAsTouched();
+    return;
+  }
+  this.mensagemErro.set(
+    'Já existe uma solicitação para os dados informados.'
+  );
+}
+
+  private extrairMensagemErro(erro: HttpErrorResponse): string {
+  if (typeof erro.error === 'string') {
+    return erro.error;
+  }
+  if (erro.error?.message) {
+    return erro.error.message;
+  }
+  if (erro.error?.mensagem) {
+    return erro.error.mensagem;
+  }
+  return erro.message || '';
+}
+
+  private tratarErro400(erro: HttpErrorResponse): void {
+  const mensagem = this.extrairMensagemErro(erro);
+  this.mensagemErro.set(
+    mensagem || 'Verifique os campos informados.'
+  );
+  const campos = this.extrairCamposInvalidos(erro);
+  this.errosCampos.set(campos);
+  Object.keys(campos).forEach(campo => {
+    const control = this.form.get(campo);
+    if (control) {
+      control.markAsTouched();
+      control.setErrors({
+        ...(control.errors ?? {}),
+        backend: true
+      });
+    }
+  });
+}
+
+
+  private extrairCamposInvalidos(
+  erro: HttpErrorResponse
+): Record<string, string> {
+  const resultado: Record<string, string> = {};
+  const campos = erro.error?.fields
+    ?? erro.error?.errors
+    ?? erro.error?.fieldErrors;
+  if (Array.isArray(campos)) {
+    for (const item of campos) {
+      if (item.field) {
+        resultado[item.field] = item.message || 'Campo inválido.';
+      }
+    }
+  }
+  if (campos && !Array.isArray(campos) && typeof campos === 'object') {
+    Object.entries(campos).forEach(([campo, mensagem]) => {
+      resultado[campo] = String(mensagem);
+    });
+  }
+  return resultado;
+}
 
   private somenteDigitos(
     valor: string | null
   ): string {
     return (valor ?? '').replace(/\D/g, '');
   }
-
   cancelar(): void {
     this.form.reset();
     this.hasFormError.set(false);
