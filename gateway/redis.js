@@ -10,4 +10,16 @@ async function conectar() {
   return cliente;
 }
 
-module.exports = { cliente, conectar };
+async function limpar(...padroes) {
+  let removidas = 0;
+
+  for (const padrao of padroes) {
+    for await (const chaves of cliente.scanIterator({ MATCH: padrao, COUNT: 500 })) {
+      if (chaves.length) removidas += await cliente.unlink(chaves);
+    }
+  }
+
+  return removidas;
+}
+
+module.exports = { cliente, conectar, limpar };
