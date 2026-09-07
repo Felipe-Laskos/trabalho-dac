@@ -11,6 +11,7 @@ const rabbit = require("./rabbit");
 const { verifyJWT, limparIdentidade, exigirPerfil, injetarIdentidade } = require("./auth");
 const { login, logout } = require("./login");
 const axios = require("axios");
+const { buscarCliente } = require("./cliente")
 
 const proxyGerente = httpProxy(process.env.MS_GERENTE_URL);
 
@@ -33,6 +34,8 @@ app.post("/reboot", reboot);
 app.post("/login", login);
 
 app.use(verifyJWT);
+
+app.get("/clientes/:cpf", exigirPerfil("CLIENTE"), injetarIdentidade, buscarCliente);
 
 app.get("/gerentes", exigirPerfil("GERENTE"), injetarIdentidade, proxyGerente);
 
