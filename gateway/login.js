@@ -55,10 +55,6 @@ async function login(req, res) {
 
   const sessao = JSON.stringify({ cpf: credencial.cpf, tipo: credencial.tipo });
 
-  const jtiAnterior = await redis.get(`sessao:cpf:${credencial.cpf}`);
-
-  if (jtiAnterior) await redis.del(`sessao:${jtiAnterior}`);
-
   await Promise.all([
     redis.setEx(`sessao:${jti}`, TTL_SESSAO, sessao),
     redis.setEx(`sessao:cpf:${credencial.cpf}`, TTL_SESSAO, jti)
