@@ -58,6 +58,34 @@ function exigirPerfil(...perfis) {
   };
 }
 
+function exigirGerenteOuProprio(param) {
+  return (req, res, next) => {
+    const { tipo, cpf } = req.usuario;
+
+    if (tipo === "GERENTE") return next();
+
+    if (tipo === "CLIENTE" && cpf === req.params[param]) return next();
+
+    return res.status(403).json({
+      status: 403, erro: "Forbidden", mensagem: "Perfil sem permissão"
+    });
+  };
+}
+
+const CPF = /^\d{11}$/;
+
+const NUMERO_CONTA = /^\d+$/;
+
+function exigirFormato(param, formato) {
+  return (req, res, next) => {
+    if (formato.test(req.params[param])) return next();
+
+    return res.status(404).json({
+      status: 404, erro: "Not Found", mensagem: "Recurso não encontrado"
+    });
+  };
+}
+
 function limparIdentidade(req, _res, next) {
   delete req.headers["x-user-cpf"];
   delete req.headers["x-user-tipo"];
@@ -70,4 +98,14 @@ function injetarIdentidade(req, _res, next) {
   return next();
 }
 
-module.exports = { TTL_SESSAO, verifyJWT, exigirPerfil, limparIdentidade, injetarIdentidade };
+module.exports = {
+  TTL_SESSAO,
+  CPF,
+  NUMERO_CONTA,
+  verifyJWT,
+  exigirPerfil,
+  exigirGerenteOuProprio,
+  exigirFormato,
+  limparIdentidade,
+  injetarIdentidade
+};

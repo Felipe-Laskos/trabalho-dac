@@ -7,8 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-COPY .env.example ./
-COPY *.js ./
+COPY . ./
 
 EXPOSE 8000
 
