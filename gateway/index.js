@@ -4,15 +4,17 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
-const httpProxy = require("express-http-proxy");
 
 const redis = require("./redis");
 const rabbit = require("./rabbit");
-const { verifyJWT, limparIdentidade, exigirPerfil, injetarIdentidade } = require("./auth");
+const { verifyJWT, limparIdentidade } = require("./auth");
+const { reescreverRespostas } = require("./links");
 const { login, logout } = require("./login");
+const { reboot } = require("./reboot");
 
-const proxyGerente = httpProxy(process.env.MS_GERENTE_URL);
-const proxyConta = httpProxy(process.env.MS_CONTA_URL);
+const rotasClientes = require("./rotas/clientes");
+const rotasContas = require("./rotas/contas");
+const rotasGerentes = require("./rotas/gerentes");
 
 const PORTA = Number(process.env.PORT);
 
@@ -26,30 +28,27 @@ app.use(limparIdentidade);
 
 app.get("/health", (_req, res) => res.json({ status: "UP" }));
 
-app.post("/reboot", (_req, res) => res.json({ status: "ok" }));
+app.post("/reboot", reboot);
 
 app.post("/login", login);
 
 app.use(verifyJWT);
 
-app.get("/gerentes", exigirPerfil("GERENTE"), injetarIdentidade, proxyGerente);
-
-app.get(
-  "/clientes/:cpf/conta",
-  exigirPerfil("CLIENTE", "GERENTE"),
-  (req, res, next) => {
-    if (req.usuario.tipo === "GERENTE" || req.params.cpf === req.usuario.cpf) {
-      return next();
-    }
-    return res.status(403).json({
-      status: 403, erro: "Forbidden", mensagem: "Perfil sem permissão"
-    });
-  },
-  injetarIdentidade,
-  proxyConta
-);
+app.use(reescreverRespostas);
 
 app.post("/logout", logout);
+
+app.use("/clientes", rotasClientes);
+
+app.use("/contas", rotasContas);
+
+app.use("/gerentes", rotasGerentes);
+
+app.use((_req, res) => {
+  res.status(404).json({
+    status: 404, erro: "Not Found", mensagem: "Rota inexistente"
+  });
+});
 
 app.use((erro, _req, res, _next) => {
   console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
