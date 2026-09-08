@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { HomeClienteComponent } from './home-cliente.component';
@@ -32,7 +33,7 @@ describe('HomeClienteComponent', () => {
         {
           provide: AuthService,
           useValue: {
-            usuarioAtual: () => ({
+            usuario: signal({
               cpf: '12912861012',
               nome: 'Catharyna',
               email: 'cli1@bantads.com.br',

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Button } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
@@ -20,6 +21,7 @@ type EstadoTela = 'carregando' | 'ok' | 'erro';
   standalone: true,
   imports: [
     RouterLink,
+    Button,
     CardModule,
     DinheiroPipe,
     DataHoraPipe,
@@ -34,7 +36,7 @@ export class HomeClienteComponent {
   private readonly auth = inject(AuthService);
   private readonly contas = inject(ContaService);
 
-  protected readonly usuario = this.auth.usuarioAtual();
+  protected readonly usuario = this.auth.usuario;
   protected readonly estado = signal<EstadoTela>('carregando');
   protected readonly mensagemErro = signal('');
   protected readonly conta = signal<Conta | null>(null);
@@ -47,7 +49,7 @@ export class HomeClienteComponent {
   }
 
   async recarregarSaldo(): Promise<void> {
-    const cpf = this.usuario?.cpf;
+    const cpf = this.usuario()?.cpf;
     if (!cpf) {
       this.estado.set('erro');
       this.mensagemErro.set('Não encontramos o CPF da sessão.');
@@ -67,8 +69,10 @@ export class HomeClienteComponent {
       this.conta.set(atual);
       this.estado.set('ok');
     } catch (erro) {
-      this.estado.set('erro');
       this.mensagemErro.set(this.textoDeErro(erro));
+      if (!jaTemConta) {
+        this.estado.set('erro');
+      }
     } finally {
       this.atualizandoSaldo.set(false);
     }
