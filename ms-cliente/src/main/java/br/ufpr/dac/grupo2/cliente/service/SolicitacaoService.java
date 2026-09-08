@@ -90,7 +90,7 @@ public class SolicitacaoService {
         solicitacao.setCidade(request.getEndereco().getCidade());
         solicitacao.setUf(request.getEndereco().getUf());
         solicitacao.setStatus("PENDENTE");
-        solicitacao.setMotive(null);
+        solicitacao.setMotivo(null);
         solicitacao.setDataHoraProcessamento(null);
 
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
