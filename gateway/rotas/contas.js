@@ -1,7 +1,7 @@
 const express = require("express");
 
-const { exigirPerfil, injetarIdentidade } = require("../auth");
-const { identidadeDe, consultar, responderErro } = require("../microsservicos");
+const { NUMERO_CONTA, exigirPerfil, exigirFormato, injetarIdentidade } = require("../auth");
+const { montarUrl, identidadeDe, consultar, responderErro } = require("../microsservicos");
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ async function buscarConta(req, res) {
 
   try {
     const conta = await consultar(
-      `${process.env.MS_CONTA_URL}/contas/${numero}`, identidadeDe(req)
+      montarUrl(process.env.MS_CONTA_URL, "contas", numero), identidadeDe(req)
     );
 
     if (req.usuario.tipo === "CLIENTE" && conta.cpfCliente !== req.usuario.cpf) {
@@ -28,6 +28,8 @@ async function buscarConta(req, res) {
   }
 }
 
-router.get("/:numero", exigirPerfil("CLIENTE", "GERENTE"), injetarIdentidade, buscarConta);
+router.get("/:numero",
+  exigirPerfil("CLIENTE", "GERENTE"), exigirFormato("numero", NUMERO_CONTA), injetarIdentidade,
+  buscarConta);
 
 module.exports = router;

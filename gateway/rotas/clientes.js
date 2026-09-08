@@ -1,8 +1,8 @@
 const express = require("express");
 
-const { exigirGerenteOuProprio, injetarIdentidade } = require("../auth");
+const { CPF, exigirGerenteOuProprio, exigirFormato, injetarIdentidade } = require("../auth");
 const { cacheAside } = require("../redis");
-const { identidadeDe, consultar, responderErro } = require("../microsservicos");
+const { montarUrl, identidadeDe, consultar, responderErro } = require("../microsservicos");
 
 const router = express.Router();
 
@@ -11,7 +11,9 @@ async function buscarCliente(req, res) {
 
   try {
     const cliente = await cacheAside(`cache:cliente:${cpf}`,
-      () => consultar(`${process.env.MS_CLIENTE_URL}/clientes/${cpf}`, identidadeDe(req))
+      () => consultar(
+        montarUrl(process.env.MS_CLIENTE_URL, "clientes", cpf), identidadeDe(req)
+      )
     );
 
     return res.json(cliente);
@@ -20,12 +22,13 @@ async function buscarCliente(req, res) {
   }
 }
 
+// sem cache: lado query do CQRS
 async function buscarContaDoCliente(req, res) {
   const { cpf } = req.params;
 
   try {
     const conta = await consultar(
-      `${process.env.MS_CONTA_URL}/clientes/${cpf}/conta`, identidadeDe(req)
+      montarUrl(process.env.MS_CONTA_URL, "clientes", cpf, "conta"), identidadeDe(req)
     );
 
     return res.json(conta);
@@ -34,8 +37,12 @@ async function buscarContaDoCliente(req, res) {
   }
 }
 
-router.get("/:cpf", exigirGerenteOuProprio("cpf"), injetarIdentidade, buscarCliente);
+router.get("/:cpf",
+  exigirGerenteOuProprio("cpf"), exigirFormato("cpf", CPF), injetarIdentidade,
+  buscarCliente);
 
-router.get("/:cpf/conta", exigirGerenteOuProprio("cpf"), injetarIdentidade, buscarContaDoCliente);
+router.get("/:cpf/conta",
+  exigirGerenteOuProprio("cpf"), exigirFormato("cpf", CPF), injetarIdentidade,
+  buscarContaDoCliente);
 
 module.exports = router;

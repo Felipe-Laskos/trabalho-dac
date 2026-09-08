@@ -23,4 +23,4 @@ async function reboot(_req, res) {
   });
 }
 
-module.exports = { CHAVES, reboot };
+module.exports = { reboot };

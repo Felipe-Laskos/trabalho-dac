@@ -3,9 +3,11 @@ const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:8000";
 function prefixar(href) {
   if (typeof href !== "string") return href;
 
-  const caminho = href.startsWith("http") ? new URL(href).pathname : href;
+  if (!href.startsWith("http")) return PUBLIC_URL + href;
 
-  return PUBLIC_URL + caminho;
+  const { pathname, search } = new URL(href);
+
+  return PUBLIC_URL + pathname + search;
 }
 
 function reescreverLinks(obj) {
@@ -34,4 +36,4 @@ function reescreverRespostas(_req, res, next) {
   return next();
 }
 
-module.exports = { PUBLIC_URL, reescreverLinks, reescreverRespostas };
+module.exports = { reescreverRespostas };

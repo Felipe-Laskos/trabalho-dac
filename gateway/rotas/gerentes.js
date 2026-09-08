@@ -1,8 +1,8 @@
 const express = require("express");
 
-const { exigirPerfil, injetarIdentidade } = require("../auth");
+const { CPF, exigirPerfil, exigirFormato, injetarIdentidade } = require("../auth");
 const { cacheAside } = require("../redis");
-const { identidadeDe, consultar, responderErro } = require("../microsservicos");
+const { montarUrl, identidadeDe, consultar, responderErro } = require("../microsservicos");
 
 const router = express.Router();
 
@@ -11,7 +11,9 @@ async function buscarGerente(req, res) {
 
   try {
     const gerente = await cacheAside(`cache:gerente:${cpf}`,
-      () => consultar(`${process.env.MS_GERENTE_URL}/gerentes/${cpf}`, identidadeDe(req))
+      () => consultar(
+        montarUrl(process.env.MS_GERENTE_URL, "gerentes", cpf), identidadeDe(req)
+      )
     );
 
     return res.json(gerente);
@@ -20,6 +22,8 @@ async function buscarGerente(req, res) {
   }
 }
 
-router.get("/:cpf", exigirPerfil("GERENTE"), injetarIdentidade, buscarGerente);
+router.get("/:cpf",
+  exigirPerfil("GERENTE"), exigirFormato("cpf", CPF), injetarIdentidade,
+  buscarGerente);
 
 module.exports = router;
