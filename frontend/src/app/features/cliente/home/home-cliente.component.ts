@@ -1,44 +1,87 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Button } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { CommonModule } from '@angular/common';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
-import { Conta } from '../../../core/models/conta.model';
+import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { MessageComponent } from '../../../shared/components/message/message.component';
+import { AuthService } from '../../../core/services/auth.service';
+import { ContaService } from '../../../core/services/conta.service';
+import { mensagemDeErro } from '../../../core/services/erro.util';
+import type { Conta } from '../../../core/models/conta.model';
+import { acoesDaConta } from '../../../shared/util/acoes-conta.util';
 
+type EstadoTela = 'carregando' | 'ok' | 'erro';
 
 @Component({
   selector: 'app-home-cliente',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
+    Button,
     CardModule,
     DinheiroPipe,
-    DataHoraPipe
+    DataHoraPipe,
+    CpfPipe,
+    LoadingComponent,
+    MessageComponent,
   ],
   templateUrl: './home-cliente.component.html',
-  styleUrls: ['./home-cliente.component.scss']
+  styleUrls: ['./home-cliente.component.scss'],
 })
-export class HomeClienteComponent implements OnInit {
+export class HomeClienteComponent {
+  private readonly auth = inject(AuthService);
+  private readonly contas = inject(ContaService);
 
-  // Mock temporário
-  usuario = {
-    nome: 'Catharyna',
-    cpf: '129.128.610-12',
-    email: 'cli1@bantads.com.br'
-  };
+  protected readonly usuario = this.auth.usuario;
+  protected readonly estado = signal<EstadoTela>('carregando');
+  protected readonly mensagemErro = signal('');
+  protected readonly conta = signal<Conta | null>(null);
+  protected readonly atualizandoSaldo = signal(false);
 
-  conta: Conta = {
-    numero: '1291',
-    cpfCliente: '129.128.610-12',
-    cpfGerente: '',
-    saldo: '800.00',
-    dataCriacao: '2000-01-01',
-    _links: {}
-  };
+  protected readonly acoes = computed(() => acoesDaConta(this.conta()?._links));
 
-  ngOnInit(): void {
+  constructor() {
+    void this.recarregarSaldo();
+  }
+
+  async recarregarSaldo(): Promise<void> {
+    const cpf = this.usuario()?.cpf;
+    if (!cpf) {
+      this.estado.set('erro');
+      this.mensagemErro.set('Não encontramos o CPF da sessão.');
+      return;
+    }
+
+    const jaTemConta = this.conta() !== null;
+    if (jaTemConta) {
+      this.atualizandoSaldo.set(true);
+    } else {
+      this.estado.set('carregando');
+    }
+    this.mensagemErro.set('');
+
+    try {
+      const atual = await this.contas.recarregarSaldo(cpf);
+      this.conta.set(atual);
+      this.estado.set('ok');
+    } catch (erro) {
+      this.mensagemErro.set(this.textoDeErro(erro));
+      if (!jaTemConta) {
+        this.estado.set('erro');
+      }
+    } finally {
+      this.atualizandoSaldo.set(false);
+    }
+  }
+
+  private textoDeErro(erro: unknown): string {
+    if (erro instanceof HttpErrorResponse && erro.status === 403) {
+      return 'Você não tem permissão para ver esta conta.';
+    }
+    return mensagemDeErro(erro);
   }
 }
-

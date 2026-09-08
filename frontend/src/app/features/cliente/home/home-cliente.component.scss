@@ -6,6 +6,13 @@
   width: 100%;
 }
 
+.erro-bloco {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
 .page-header {
   display: flex;
   flex-direction: column;
