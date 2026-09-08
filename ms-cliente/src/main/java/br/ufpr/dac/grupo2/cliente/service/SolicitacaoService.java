@@ -68,7 +68,7 @@ public class SolicitacaoService {
 
     @Transactional
     public SolicitacaoResponseDTO criarSolicitacao(SolicitacaoRequestDTO request) {
-        if (solicitacaoRepository.existById(request.getCpf())) {
+        if (solicitacaoRepository.existsById(request.getCpf())) {
             throw new IllegalArgumentException("Solicitação já existe para o CPF: " + request.getCpf());
         }
 
