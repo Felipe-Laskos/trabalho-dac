@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
 import br.ufpr.dac.grupo2.cliente.service.SolicitacaoService;
+import br.ufpr.dac.grupo2.cliente.dto.Link;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
