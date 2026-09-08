@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting
-} from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { tokenInterceptor } from '../../../core/interceptors/token.interceptor';
+import { erroInterceptor } from '../../../core/interceptors/erro.interceptor';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AutocadastroComponent } from './autocadastro.component';
 
@@ -26,8 +25,8 @@ describe('AutocadastroComponent', () => {
         complemento: '',
         cep: '80000000',
         cidade: 'Curitiba',
-        uf: 'PR'
-      }
+        uf: 'PR',
+      },
     });
   };
 
@@ -36,9 +35,9 @@ describe('AutocadastroComponent', () => {
       imports: [AutocadastroComponent],
       providers: [
         provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting()
-      ]
+        provideHttpClient(withInterceptors([tokenInterceptor, erroInterceptor])),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AutocadastroComponent);
@@ -85,8 +84,8 @@ describe('AutocadastroComponent', () => {
         complemento: null,
         cep: '80000000',
         cidade: 'Curitiba',
-        uf: 'PR'
-      }
+        uf: 'PR',
+      },
     });
 
     req.flush({
@@ -101,19 +100,19 @@ describe('AutocadastroComponent', () => {
         complemento: null,
         cep: '80000000',
         cidade: 'Curitiba',
-        uf: 'PR'
+        uf: 'PR',
       },
       status: 'PENDENTE',
       motivo: null,
       dataHoraProcessamento: null,
       _links: {
         aprovacao: {
-          href: '/solicitacoes/12345678901/aprovacao'
+          href: '/solicitacoes/12345678901/aprovacao',
         },
         rejeicao: {
-          href: '/solicitacoes/12345678901/rejeicao'
-        }
-      }
+          href: '/solicitacoes/12345678901/rejeicao',
+        },
+      },
     });
 
     await promise;
@@ -134,14 +133,14 @@ describe('AutocadastroComponent', () => {
         status: 'PENDENTE',
         _links: {
           aprovacao: {
-            href: '/solicitacoes/12345678901/aprovacao'
-          }
-        }
+            href: '/solicitacoes/12345678901/aprovacao',
+          },
+        },
       },
       {
         status: 201,
-        statusText: 'Created'
-      }
+        statusText: 'Created',
+      },
     );
 
     await promise;
@@ -158,18 +157,18 @@ describe('AutocadastroComponent', () => {
 
     req.flush(
       {
-        mensagem: 'Dados inválidos'
+        mensagem: 'Dados inválidos',
       },
       {
         status: 400,
-        statusText: 'Bad Request'
-      }
+        statusText: 'Bad Request',
+      },
     );
 
     await promise;
 
     expect(component['estado']()).toBe('erro');
-    expect(component['mensagemErro']()).toBeTruthy();
+    expect(component['mensagemErro']()).toBe('Dados inválidos');
   });
 
   it('5. deve mostrar erro quando a API retornar 409', async () => {
@@ -181,12 +180,12 @@ describe('AutocadastroComponent', () => {
 
     req.flush(
       {
-        mensagem: 'Já existe uma solicitação para este CPF.'
+        mensagem: 'Já existe uma solicitação para este CPF.',
       },
       {
         status: 409,
-        statusText: 'Conflict'
-      }
+        statusText: 'Conflict',
+      },
     );
 
     await promise;
@@ -213,9 +212,9 @@ describe('AutocadastroComponent', () => {
       status: 'PENDENTE',
       _links: {
         aprovacao: {
-          href: '/solicitacoes/12345678901/aprovacao'
-        }
-      }
+          href: '/solicitacoes/12345678901/aprovacao',
+        },
+      },
     });
 
     await primeira;
@@ -223,5 +222,18 @@ describe('AutocadastroComponent', () => {
 
     expect(component['estado']()).toBe('sucesso');
   });
-});
 
+  it('7. formulário vazio: avisa no banner e em cada campo obrigatório', async () => {
+    const botao: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    botao.click();
+
+    await fixture.whenStable();
+
+    const tela: HTMLElement = fixture.nativeElement;
+
+    expect(tela.querySelector('app-message')).toBeTruthy();
+    expect(tela.querySelectorAll('small.field-error').length).toBe(10);
+
+    httpMock.expectNone('http://localhost:8000/solicitacoes');
+  });
+});

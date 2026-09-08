@@ -1,14 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  provideHttpClient,
-} from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { tokenInterceptor } from '../../core/interceptors/token.interceptor';
+import { erroInterceptor } from '../../core/interceptors/erro.interceptor';
 
 import { SolicitacaoService } from './solicitacao.service';
-import { Autocadastro } from '../models/autocadastro.model';
+import { AutocadastroInput } from '../models/cliente.model';
 
 describe('SolicitacaoService', () => {
   let service: SolicitacaoService;
@@ -18,7 +15,7 @@ describe('SolicitacaoService', () => {
     TestBed.configureTestingModule({
       providers: [
         SolicitacaoService,
-        provideHttpClient(),
+        provideHttpClient(withInterceptors([tokenInterceptor, erroInterceptor])),
         provideHttpClientTesting(),
       ],
     });
@@ -32,7 +29,7 @@ describe('SolicitacaoService', () => {
   });
 
   it(' deve criar uma solicitação de autocadastro', async () => {
-    const dados: Autocadastro = {
+    const dados: AutocadastroInput = {
       cpf: '12345678901',
       nome: 'Maria Silva',
       email: 'maria@email.com',
@@ -60,7 +57,6 @@ describe('SolicitacaoService', () => {
       },
     };
 
-
     const promise = service.criar(dados);
 
     const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
@@ -77,81 +73,80 @@ describe('SolicitacaoService', () => {
   });
 
   it('deve rejeitar quando a API retornar 400', async () => {
-  const dados: Autocadastro = {
-    cpf: '12345678901',
-    nome: 'Maria Silva',
-    email: 'maria@email.com',
-    telefone: '41999999999',
-    salario: '4500.00',
-    endereco: {
-      logradouro: 'Rua das Flores',
-      numero: '100',
-      complemento: null,
-      cep: '80000000',
-      cidade: 'Curitiba',
-      uf: 'PR',
-    },
-  };
+    const dados: AutocadastroInput = {
+      cpf: '12345678901',
+      nome: 'Maria Silva',
+      email: 'maria@email.com',
+      telefone: '41999999999',
+      salario: '4500.00',
+      endereco: {
+        logradouro: 'Rua das Flores',
+        numero: '100',
+        complemento: null,
+        cep: '80000000',
+        cidade: 'Curitiba',
+        uf: 'PR',
+      },
+    };
 
-  const promise = service.criar(dados);
+    const promise = service.criar(dados);
 
-  const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
+    const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
 
-  expect(requisicao.request.method).toBe('POST');
+    expect(requisicao.request.method).toBe('POST');
 
-  requisicao.flush(
-    {
+    requisicao.flush(
+      {
+        status: 400,
+        mensagem: 'Dados inválidos',
+      },
+      {
+        status: 400,
+        statusText: 'Bad Request',
+      },
+    );
+
+    await expect(promise).rejects.toMatchObject({
       status: 400,
-      mensagem: 'Dados inválidos',
-    },
-    {
-      status: 400,
-      statusText: 'Bad Request',
-    },
-  );
-
-  await expect(promise).rejects.toMatchObject({
-    status: 400,
+    });
   });
-});
 
-it('deve rejeitar quando a API retornar 409', async () => {
-  const dados: Autocadastro = {
-    cpf: '12345678901',
-    nome: 'Maria Silva',
-    email: 'maria@email.com',
-    telefone: '41999999999',
-    salario: '4500.00',
-    endereco: {
-      logradouro: 'Rua das Flores',
-      numero: '100',
-      complemento: null,
-      cep: '80000000',
-      cidade: 'Curitiba',
-      uf: 'PR',
-    },
-  };
+  it('deve rejeitar quando a API retornar 409', async () => {
+    const dados: AutocadastroInput = {
+      cpf: '12345678901',
+      nome: 'Maria Silva',
+      email: 'maria@email.com',
+      telefone: '41999999999',
+      salario: '4500.00',
+      endereco: {
+        logradouro: 'Rua das Flores',
+        numero: '100',
+        complemento: null,
+        cep: '80000000',
+        cidade: 'Curitiba',
+        uf: 'PR',
+      },
+    };
 
-  const promise = service.criar(dados);
+    const promise = service.criar(dados);
 
-  const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
+    const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
 
-  expect(requisicao.request.method).toBe('POST');
+    expect(requisicao.request.method).toBe('POST');
 
-  requisicao.flush(
-    {
+    requisicao.flush(
+      {
+        status: 409,
+        mensagem: 'Já existe solicitação para este CPF.',
+      },
+      {
+        status: 409,
+        statusText: 'Conflict',
+      },
+    );
+
+    await expect(promise).rejects.toMatchObject({
       status: 409,
-      mensagem: 'Já existe solicitação para este CPF.',
-    },
-    {
-      status: 409,
-      statusText: 'Conflict',
-    },
-  );
-
-  await expect(promise).rejects.toMatchObject({
-    status: 409,
+    });
   });
-});
-
 });

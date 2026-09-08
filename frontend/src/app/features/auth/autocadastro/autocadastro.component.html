@@ -1,48 +1,34 @@
 <div class="autocadastro-page">
-
   <header class="public-header">
     <div class="brand">
       <div class="brand-icon">
         <i class="pi pi-building-columns"></i>
       </div>
-      <span class="brand-name">
-        BANTADS
-      </span>
+      <span class="brand-name"> BANTADS </span>
     </div>
 
     <div class="header-login">
-      <span>
-        Já tem conta?
-      </span>
-      <p-button
-        label="Entrar"
-        variant="outlined"
-        routerLink="/login">
-      </p-button>
+      <span> Já tem conta? </span>
+      <p-button label="Entrar" variant="outlined" routerLink="/login"> </p-button>
     </div>
   </header>
 
   <main class="autocadastro-content">
-
     @if (!sucesso) {
       <div class="page-heading">
         <h1>Abrir conta</h1>
-        <p>Um gerente analisa a solicitação e você recebe uma senha por e-mail depois da aprovação.</p>
+        <p>
+          Um gerente analisa a solicitação e você recebe uma senha por e-mail depois da aprovação.
+        </p>
       </div>
 
       @if (erro && mensagemErro()) {
-      <div class="form-feedback-slot">
-        <app-message
-          type="error"
-          [message]="mensagemErro()!"/>
-      </div>
-    }
+        <div class="form-feedback-slot">
+          <app-message type="error" [message]="mensagemErro()!" />
+        </div>
+      }
 
-      <form
-        class="form-card"
-        [formGroup]="form"
-        (ngSubmit)="enviar()">
-
+      <form class="form-card" [formGroup]="form" (ngSubmit)="enviar()">
         <div class="form-section">
           <div class="section-title">
             <span>DADOS PESSOAIS</span>
@@ -56,10 +42,11 @@
                 id="nome"
                 formControlName="nome"
                 placeholder="João da Silva"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('nome', 'backend')) {
-                <small class="field-error">{{ errosCampos()['nome'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('nome', 'required')) {
+                <small class="field-error">>Nome completo é obrigatório.</small>
               }
             </div>
 
@@ -70,10 +57,11 @@
                 formControlName="cpf"
                 mask="999.999.999-99"
                 placeholder="111.222.333-44"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('cpf', 'backend')) {
-                <small class="field-error">{{ errosCampos()['cpf'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('cpf', 'required')) {
+                <small class="field-error">CPF é obrigatório.</small>
               }
               @if (campoComErro('cpf', 'quantidadeDigitos')) {
                 <small class="field-error">CPF deve possuir 11 dígitos.</small>
@@ -88,11 +76,12 @@
                 type="email"
                 formControlName="email"
                 placeholder="joao@exemplo.com"
-                fluid/>
+                fluid
+              />
               <small>Este será o seu login!</small>
 
-              @if (campoComErro('email', 'backend')) {
-                <small class="field-error">{{ errosCampos()['email'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('email', 'required')) {
+                <small class="field-error">E-mail é obrigatório.</small>
               }
               @if (campoComErro('email', 'email')) {
                 <small class="field-error">Informe um e-mail válido.</small>
@@ -106,10 +95,11 @@
                 formControlName="telefone"
                 mask="(99) 99999-9999"
                 placeholder="(41) 99999-0000"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('telefone', 'backend')) {
-                <small class="field-error">{{ errosCampos()['telefone'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('telefone', 'required')) {
+                <small class="field-error">Telefone é obrigatório.</small>
               }
               @if (campoComErro('telefone', 'quantidadeDigitosEntre')) {
                 <small class="field-error">Telefone inválido.</small>
@@ -128,10 +118,11 @@
                 [minFractionDigits]="2"
                 [maxFractionDigits]="2"
                 placeholder="R$ 2.300,00"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('salario', 'backend')) {
-                <small class="field-error">{{ errosCampos()['salario'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('salario', 'required')) {
+                <small class="field-error">Salário é obrigatório.</small>
               }
               @if (campoComErro('salario', 'min')) {
                 <small class="field-error">Salário deve ser maior que zero.</small>
@@ -153,10 +144,11 @@
                 id="logradouro"
                 formControlName="logradouro"
                 placeholder="Rua tal de tal"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('endereco.logradouro','backend')) {
-                <small class="field-error">{{ errosCampos()['endereco.logradouro'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('endereco.logradouro', 'required')) {
+                <small class="field-error">Logradouro é obrigatório.</small>
               }
             </div>
 
@@ -168,10 +160,14 @@
                 id="numero"
                 formControlName="numero"
                 placeholder="1111"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('endereco.numero','backend')) {
-                <small class="field-error">{{ errosCampos()['endereco.numero'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('endereco.numero', 'required')) {
+                <small class="field-error">Número é obrigatório.</small>
+              }
+              @if (campoComErro('endereco.numero', 'pattern')) {
+                <small class="field-error">Informe somente números.</small>
               }
             </div>
 
@@ -182,7 +178,8 @@
                 id="complemento"
                 formControlName="complemento"
                 placeholder="Apto, bloco, sala..."
-                fluid/>
+                fluid
+              />
               <small>Opcional</small>
             </div>
 
@@ -193,12 +190,13 @@
                 formControlName="cep"
                 mask="99999-999"
                 placeholder="80000-000"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('endereco.cep','backend')) {
-                <small class="field-error">{{ errosCampos()['endereco.cep'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('endereco.cep', 'required')) {
+                <small class="field-error">CEP é obrigatório.</small>
               }
-              @if (campoComErro('endereco.cep','quantidadeDigitos')) {
+              @if (campoComErro('endereco.cep', 'quantidadeDigitos')) {
                 <small class="field-error">CEP deve possuir 8 dígitos.</small>
               }
             </div>
@@ -210,10 +208,11 @@
                 id="cidade"
                 formControlName="cidade"
                 placeholder="Sua cidade"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('endereco.cidade','backend')) {
-                <small class="field-error">{{ errosCampos()['endereco.cidade'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('endereco.cidade', 'required')) {
+                <small class="field-error">Cidade é obrigatória.</small>
               }
             </div>
 
@@ -225,14 +224,15 @@
                 optionLabel="label"
                 optionValue="value"
                 placeholder="Selecione"
-                [filter]="true" 
+                [filter]="true"
                 filterBy="label"
-                fluid/>
+                fluid
+              />
 
-              @if (campoComErro('endereco.uf','backend')) {
-                <small class="field-error">{{ errosCampos()['endereco.uf'] || 'Campo inválido.' }}</small>
+              @if (campoComErro('endereco.uf', 'required')) {
+                <small class="field-error">UF é obrigatória.</small>
               }
-              @if (campoComErro('endereco.uf','pattern')) {
+              @if (campoComErro('endereco.uf', 'pattern')) {
                 <small class="field-error">UF inválida.</small>
               }
             </div>
@@ -249,32 +249,33 @@
               severity="secondary"
               variant="outlined"
               [disabled]="enviando"
-              (onClick)="cancelar()"/>
+              (onClick)="cancelar()"
+            />
 
             <p-button
               type="submit"
               label="Enviar solicitação"
               [loading]="enviando"
-              [disabled]="enviando || sucesso"/>
+              [disabled]="enviando || sucesso"
+            />
           </div>
         </div>
-
       </form>
-    
     } @else {
-      
       <div class="sucesso-card">
         <div class="icone-envio">
           <i class="pi pi-send"></i>
         </div>
-    
+
         <h2>Solicitação enviada</h2>
-        
+
         <p class="sucesso-descricao">
-          Sua solicitação foi enviada e está pendente de análise por um gerente. A conta ainda não foi criada. Após a aprovação, a 
-          <strong>senha de acesso será enviada por e-mail</strong>, em <strong>{{ emailInformado }}</strong>
+          Sua solicitação foi enviada e está pendente de análise por um gerente. A conta ainda não
+          foi criada. Após a aprovação, a
+          <strong>senha de acesso será enviada por e-mail</strong>, em
+          <strong>{{ emailInformado }}</strong>
         </p>
-    
+
         <div class="info-box">
           <div class="info-item pr">
             <span>CPF</span>
@@ -288,17 +289,15 @@
             </strong>
           </div>
         </div>
-  
-        <p-button 
-          label="Voltar ao início" 
-          variant="outlined" 
+
+        <p-button
+          label="Voltar ao início"
+          variant="outlined"
           severity="secondary"
-          (onClick)="cancelar()">
+          routerLink="/login"
+        >
         </p-button>
-        
       </div>
-
     }
-
   </main>
 </div>
