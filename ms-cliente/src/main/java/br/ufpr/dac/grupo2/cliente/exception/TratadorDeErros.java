@@ -1,4 +1,11 @@
 package br.ufpr.dac.grupo2.cliente.exception;
+import br.ufpr.dac.grupo2.cliente.dto.ErroDTO;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class TratadorDeErros {
