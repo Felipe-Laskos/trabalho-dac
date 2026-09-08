@@ -2,7 +2,7 @@ package br.ufpr.dac.grupo2.cliente.service;
 
 import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
-
+import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoDuplicadaException;
 
 import br.ufpr.dac.grupo2.cliente.model.Solicitacao;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
@@ -68,12 +68,12 @@ public class SolicitacaoService {
 
     @Transactional
     public SolicitacaoResponseDTO criarSolicitacao(SolicitacaoRequestDTO request) {
-        if (solicitacaoRepository.existsById(request.getCpf())) {
-            throw new IllegalArgumentException("Solicitação já existe para o CPF: " + request.getCpf());
+        if (clienteRepository.existsById(request.getCpf())) {
+            throw new SolicitacaoDuplicadaException("CPF já possui conta: " + request.getCpf());
         }
 
         if (solicitacaoRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Solicitação já existe para o email: " + request.getEmail());
+            throw new SolicitacaoDuplicadaException("Solicitação já existe para o email: " + request.getEmail());
         }
 
         Solicitacao solicitacao = new Solicitacao();

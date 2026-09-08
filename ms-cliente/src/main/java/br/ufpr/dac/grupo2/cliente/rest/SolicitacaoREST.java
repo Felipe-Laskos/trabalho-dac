@@ -39,14 +39,14 @@ public class SolicitacaoREST {
         return ResponseEntity.created(location).body(response);
     }
 
-    @GetMapping("/solicitacoes/{cpf}")
+    @GetMapping("/{cpf}")
     public ResponseEntity<SolicitacaoResponseDTO> buscarSolicitacao(@PathVariable String cpf) {
         return service.buscarSolicitacaoPorCpf(cpf)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/solicitacoes")
+    @GetMapping
     public ResponseEntity<Map<String, Object>> listarSolicitacoes(@RequestParam(required = false) String status) {
         List<SolicitacaoResponseDTO> solicitacoes;
 
@@ -58,6 +58,7 @@ public class SolicitacaoREST {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("solicitacoes", solicitacoes);
+        response.put("_links", Map.of("self", new Link("/solicitacoes")));
         return ResponseEntity.ok(response);
     }
 }
