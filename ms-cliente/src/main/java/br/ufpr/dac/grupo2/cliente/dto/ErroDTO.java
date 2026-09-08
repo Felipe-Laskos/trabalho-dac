@@ -7,6 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ErroDTO {
     private int status;
-    private String error;
-    private String message;
+    private String erro;
+    private String mensagem;
 }

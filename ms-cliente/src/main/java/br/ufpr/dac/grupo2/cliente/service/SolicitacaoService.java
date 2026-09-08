@@ -68,6 +68,10 @@ public class SolicitacaoService {
 
     @Transactional
     public SolicitacaoResponseDTO criarSolicitacao(SolicitacaoRequestDTO request) {
+        if (solicitacaoRepository.existsById(request.getCpf())) {
+            throw new SolicitacaoDuplicadaException("Solicitação já existe para o CPF: " + request.getCpf());
+        }
+
         if (clienteRepository.existsById(request.getCpf())) {
             throw new SolicitacaoDuplicadaException("CPF já possui conta: " + request.getCpf());
         }
