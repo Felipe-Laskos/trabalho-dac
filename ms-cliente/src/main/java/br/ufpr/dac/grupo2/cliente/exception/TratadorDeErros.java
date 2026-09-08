@@ -14,4 +14,10 @@ public class TratadorDeErros {
         return ResponseEntity.status(409)
                 .body(new ErroDTO(409, "Conflict", "CPF ou e-mail já cadastrado"));
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroDTO> validacao(MethodArgumentNotValidException e) {
+        return ResponseEntity.badRequest()
+                .body(new ErroDTO(400, "Bad Request", "Requisição malformada"));
+    }
 }
