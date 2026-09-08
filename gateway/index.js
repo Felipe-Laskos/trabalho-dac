@@ -12,6 +12,7 @@ const { verifyJWT, limparIdentidade, exigirPerfil, injetarIdentidade } = require
 const { login, logout } = require("./login");
 
 const proxyGerente = httpProxy(process.env.MS_GERENTE_URL);
+const proxyConta = httpProxy(process.env.MS_CONTA_URL);
 
 const PORTA = Number(process.env.PORT);
 
@@ -32,6 +33,21 @@ app.post("/login", login);
 app.use(verifyJWT);
 
 app.get("/gerentes", exigirPerfil("GERENTE"), injetarIdentidade, proxyGerente);
+
+app.get(
+  "/clientes/:cpf/conta",
+  exigirPerfil("CLIENTE", "GERENTE"),
+  (req, res, next) => {
+    if (req.usuario.tipo === "GERENTE" || req.params.cpf === req.usuario.cpf) {
+      return next();
+    }
+    return res.status(403).json({
+      status: 403, erro: "Forbidden", mensagem: "Perfil sem permissão"
+    });
+  },
+  injetarIdentidade,
+  proxyConta
+);
 
 app.post("/logout", logout);
 
