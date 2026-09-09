@@ -23,10 +23,23 @@ function identidadeDe(req) {
   };
 }
 
-async function consultar(url, headers = {}) {
-  const resposta = await axios.get(url, { headers, timeout: TIMEOUT_MS });
+// corpo de erro por status repassado
+const DE_NEGOCIO = {
+  400: { erro: "Bad Request", mensagem: "Requisição malformada" },
+  409: { erro: "Conflict", mensagem: "Recurso já existe" }
+};
+
+async function consultar(url, headers = {}, params) {
+  const resposta = await axios.get(url, { headers, params, timeout: TIMEOUT_MS });
 
   return resposta.data;
+}
+
+// devolve o Location junto
+async function criar(url, corpo, headers = {}) {
+  const resposta = await axios.post(url, corpo, { headers, timeout: TIMEOUT_MS });
+
+  return { corpo: resposta.data, location: resposta.headers?.location };
 }
 
 async function recriarSeed(base) {
@@ -37,15 +50,31 @@ async function recriarSeed(base) {
   return resposta.data;
 }
 
-function responderErro(erro, res) {
-  if (erro.response?.status === 404) {
+function mensagemDoUpstream(corpo) {
+  if (typeof corpo === "string") return corpo.trim() || null;
+
+  return corpo?.mensagem || corpo?.message || null;
+}
+
+// repassar: os status que a rota chamadora realmente produz
+function responderErro(erro, res, repassar = []) {
+  const status = erro.response?.status;
+
+  if (status === 404) {
     return res.status(404).json(NAO_ENCONTRADO);
   }
 
-  const status = erro.response?.status ?? erro.code;
-  console.error(`[gateway] MS respondeu ${status}: ${erro.message}`);
+  if (repassar.includes(status) && DE_NEGOCIO[status]) {
+    return res.status(status).json({
+      status,
+      erro: DE_NEGOCIO[status].erro,
+      mensagem: mensagemDoUpstream(erro.response.data) ?? DE_NEGOCIO[status].mensagem
+    });
+  }
+
+  console.error(`[gateway] MS respondeu ${status ?? erro.code}: ${erro.message}`);
 
   return res.status(500).json(ERRO_INTERNO);
 }
 
-module.exports = { montarUrl, identidadeDe, consultar, recriarSeed, responderErro };
+module.exports = { montarUrl, identidadeDe, consultar, criar, recriarSeed, responderErro };
