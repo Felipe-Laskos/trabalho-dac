@@ -32,3 +32,6 @@ HELP.md
 /.nb-gradle/
 
 /.vscode/
+
+# Override local do Compose
+docker-compose.override.yml
