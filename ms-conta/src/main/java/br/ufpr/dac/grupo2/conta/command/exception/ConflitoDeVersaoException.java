@@ -1,6 +1,7 @@
 package br.ufpr.dac.grupo2.conta.command.exception;
 
-public class ConflitoDeVersaoException extends RuntimeException {
+public class ConflitoDeVersaoException
+        extends RuntimeException {
 
     public ConflitoDeVersaoException(
             String numero,
@@ -11,5 +12,11 @@ public class ConflitoDeVersaoException extends RuntimeException {
                         + " na versão " + versao,
                 causa
         );
+    }
+
+    public ConflitoDeVersaoException(
+            String mensagem,
+            Throwable causa) {
+        super(mensagem, causa);
     }
 }

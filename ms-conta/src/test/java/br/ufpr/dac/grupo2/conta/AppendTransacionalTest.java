@@ -55,7 +55,11 @@ class AppendTransacionalTest {
 
         when(eventoRepository.saveAndFlush(any(Evento.class)))
                 .thenThrow(new DataIntegrityViolationException(
-                        "uk_evento_versao"
+                        "versão duplicada",
+                        new org.hibernate.exception.ConstraintViolationException(
+                                "versão duplicada",
+                                new java.sql.SQLException("duplicado", "23505"),
+                                "uk_evento_versao")
                 ));
 
         assertThrows(

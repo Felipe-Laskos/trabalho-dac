@@ -47,6 +47,9 @@ public class AppendTransacional {
         try {
             eventoRepository.saveAndFlush(evento);
         } catch (DataIntegrityViolationException e) {
+            if (!ConflitosDeVersao.ehConflitoDeVersao(e)) {
+                throw e;
+            }
             throw new ConflitoDeVersaoException(
                     numeroConta,
                     evento.getVersao(),
