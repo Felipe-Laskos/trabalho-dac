@@ -26,10 +26,14 @@ public record OperacaoRealizada(
                 valor,
                 destino,
                 Map.of(
-                        "conta",
-                        Map.of(
-                                "href",
-                                "/contas/" + evento.getObjetoId()
+                        "conta", Map.of(
+                                "href", "/contas/"
+                                        + evento.getObjetoId()
+                        ),
+                        "extrato", Map.of(
+                                "href", "/contas/"
+                                        + evento.getObjetoId()
+                                        + "/extrato"
                         )
                 )
         );

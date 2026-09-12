@@ -57,12 +57,12 @@ class OperacaoTransacionalTest {
                 "0950",
                 "30.00",
                 new ParteTransferencia(
-                        "1291",
+                        "numero ignorado na origem",
                         "12912861012",
                         "Catharyna"
                 ),
                 new ParteTransferencia(
-                        "0950",
+                        "numero ignorado no destino",
                         "09506382000",
                         "Cleuddônio"
                 )
@@ -84,19 +84,26 @@ class OperacaoTransacionalTest {
         verify(eventoRepository).saveAllAndFlush(captor.capture());
 
         List<Evento> eventos = captor.getValue();
+        Evento eventoDestino = eventos.get(0);
+        Evento eventoOrigem = eventos.get(1);
 
         assertEquals(2, eventos.size());
-        assertEquals("TransferênciaOrigem", eventos.get(0).getTipo());
-        assertEquals("1291", eventos.get(0).getObjetoId());
-        assertEquals(9, eventos.get(0).getVersao());
-        assertEquals("TransferênciaDestino", eventos.get(1).getTipo());
-        assertEquals("0950", eventos.get(1).getObjetoId());
-        assertEquals(8, eventos.get(1).getVersao());
+        assertEquals("TransferênciaDestino", eventoDestino.getTipo());
+        assertEquals("0950", eventoDestino.getObjetoId());
+        assertEquals(8, eventoDestino.getVersao());
+        assertEquals("TransferênciaOrigem", eventoOrigem.getTipo());
+        assertEquals("1291", eventoOrigem.getObjetoId());
+        assertEquals(9, eventoOrigem.getVersao());
         assertEquals("TransferênciaOrigem", resultado.origem().getTipo());
         assertEquals("TransferênciaDestino", resultado.destino().getTipo());
+        assertEquals("1291", ((java.util.Map<?, ?>) eventoOrigem
+                .getPayload().get("origem")).get("numeroConta"));
+        assertEquals("0950", ((java.util.Map<?, ?>) eventoOrigem
+                .getPayload().get("destino")).get("numeroConta"));
+        assertEquals("0950", resultado.parteDestino().numeroConta());
 
-        verify(eventoPublisher).publicarDepoisDoCommit(eventos.get(0));
-        verify(eventoPublisher).publicarDepoisDoCommit(eventos.get(1));
+        verify(eventoPublisher).publicarDepoisDoCommit(eventoOrigem);
+        verify(eventoPublisher).publicarDepoisDoCommit(eventoDestino);
     }
 
     private EstadoConta estado(

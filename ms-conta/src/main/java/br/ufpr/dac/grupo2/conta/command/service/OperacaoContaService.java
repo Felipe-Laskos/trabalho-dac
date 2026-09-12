@@ -1,5 +1,6 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 import br.ufpr.dac.grupo2.conta.command.dto.OperacaoRealizada;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 public class OperacaoContaService {
 
     private static final int MAX_TENTATIVAS = 4;
+    private static final int JITTER_MIN_MS = 10;
+    private static final int JITTER_MAX_MS = 50;
 
     private final OperacaoTransacional transacao;
 
@@ -91,6 +94,10 @@ public class OperacaoContaService {
                 return operacao.get();
             } catch (ConflitoDeVersaoException e) {
                 ultimoConflito = e;
+
+                if (tentativa < MAX_TENTATIVAS) {
+                    esperarComJitter(tentativa, e);
+                }
             }
         }
 
@@ -98,5 +105,25 @@ public class OperacaoContaService {
                 MAX_TENTATIVAS,
                 ultimoConflito
         );
+    }
+
+    private void esperarComJitter(
+            int tentativa,
+            ConflitoDeVersaoException conflito) {
+
+        long esperaMs = ThreadLocalRandom.current().nextLong(
+                JITTER_MIN_MS,
+                JITTER_MAX_MS + 1L
+        );
+
+        try {
+            Thread.sleep(esperaMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TentativasEsgotadasException(
+                    tentativa,
+                    conflito
+            );
+        }
     }
 }

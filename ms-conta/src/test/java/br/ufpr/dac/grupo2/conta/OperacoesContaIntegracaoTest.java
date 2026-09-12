@@ -118,6 +118,13 @@ class OperacoesContaIntegracaoTest {
         mvc.perform(post("/contas/1291/saque").header("X-User-CPF", CPF)
                         .contentType("application/json").content("{\"valor\":\"99999999.00\"}"))
                 .andExpect(status().isUnprocessableEntity());
+        for (String valorInvalido : new String[]{"1.234", "1E+2"}) {
+            mvc.perform(post("/contas/1291/deposito")
+                            .header("X-User-CPF", CPF)
+                            .contentType("application/json")
+                            .content("{\"valor\":\"" + valorInvalido + "\"}"))
+                    .andExpect(status().isUnprocessableEntity());
+        }
         for (String operacao : new String[]{"deposito", "saque", "transferencia"}) {
             mvc.perform(post("/contas/1291/" + operacao).header("X-User-CPF", "09506382000")
                             .contentType("application/json")

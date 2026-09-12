@@ -1,4 +1,4 @@
-package br.ufpr.dac.grupo2.conta.controller;
+package br.ufpr.dac.grupo2.conta.command.controller;
 
 import br.ufpr.dac.grupo2.conta.command.dto.OperacaoRealizada;
 import br.ufpr.dac.grupo2.conta.command.dto.TransferenciaRequest;

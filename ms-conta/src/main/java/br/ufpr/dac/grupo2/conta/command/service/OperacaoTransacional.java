@@ -1,8 +1,10 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import br.ufpr.dac.grupo2.conta.command.dto.ParteTransferencia;
 import br.ufpr.dac.grupo2.conta.command.dto.TransferenciaRequest;
@@ -109,17 +111,28 @@ public class OperacaoTransacional {
             );
         }
 
-        validarPartesEnriquecidas(
+        ParteTransferencia parteOrigem = new ParteTransferencia(
                 contaOrigem,
+                request.origem().cpf(),
+                request.origem().nome()
+        );
+        ParteTransferencia parteDestino = new ParteTransferencia(
+                request.contaDestino(),
+                request.destino().cpf(),
+                request.destino().nome()
+        );
+
+        validarPartesEnriquecidas(
                 origem,
                 destino,
-                request
+                parteOrigem,
+                parteDestino
         );
 
         Map<String, Object> payload = Map.of(
                 "valor", request.valor(),
-                "origem", request.origem().comoMap(),
-                "destino", request.destino().comoMap()
+                "origem", parteOrigem.comoMap(),
+                "destino", parteDestino.comoMap()
         );
 
         leitura.validar(
@@ -151,10 +164,15 @@ public class OperacaoTransacional {
                 instante
         );
 
+        List<Evento> eventosOrdenados = Stream.of(
+                        eventoOrigem,
+                        eventoDestino
+                )
+                .sorted(Comparator.comparing(Evento::getObjetoId))
+                .toList();
+
         try {
-            eventoRepository.saveAllAndFlush(
-                    List.of(eventoOrigem, eventoDestino)
-            );
+            eventoRepository.saveAllAndFlush(eventosOrdenados);
         } catch (DataIntegrityViolationException e) {
             if (!ConflitosDeVersao.ehConflitoDeVersao(e)) {
                 throw e;
@@ -171,7 +189,7 @@ public class OperacaoTransacional {
         return new TransferenciaPersistida(
                 eventoOrigem,
                 eventoDestino,
-                request.destino()
+                parteDestino
         );
     }
 
@@ -185,27 +203,13 @@ public class OperacaoTransacional {
     }
 
     private void validarPartesEnriquecidas(
-            String contaOrigem,
             EstadoConta origem,
             EstadoConta destino,
-            TransferenciaRequest request) {
+            ParteTransferencia parteOrigem,
+            ParteTransferencia parteDestino) {
 
-        ParteTransferencia parteOrigem = request.origem();
-        ParteTransferencia parteDestino = request.destino();
-
-        boolean origemInvalida =
-                !contaOrigem.equals(parteOrigem.numeroConta())
-                || !origem.getCpfCliente().equals(parteOrigem.cpf());
-
-        boolean destinoInvalido =
-                !request.contaDestino().equals(
-                        parteDestino.numeroConta()
-                )
-                || !destino.getCpfCliente().equals(
-                        parteDestino.cpf()
-                );
-
-        if (origemInvalida || destinoInvalido) {
+        if (!origem.getCpfCliente().equals(parteOrigem.cpf())
+                || !destino.getCpfCliente().equals(parteDestino.cpf())) {
             throw new EventoInvalidoException(
                     "Dados de origem ou destino inconsistentes"
             );

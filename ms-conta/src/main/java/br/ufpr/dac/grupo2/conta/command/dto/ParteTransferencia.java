@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 public record ParteTransferencia(
-        @NotBlank
-        @Pattern(regexp = "\\d{4}")
         String numeroConta,
 
         @NotBlank
