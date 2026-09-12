@@ -2,9 +2,11 @@ package br.ufpr.dac.grupo2.conta.admin.controller;
 
 import java.util.Map;
 
+import br.ufpr.dac.grupo2.conta.command.exception.AcessoNegadoException;
 import br.ufpr.dac.grupo2.conta.command.exception.ConflitoDeVersaoException;
 import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
+import br.ufpr.dac.grupo2.conta.command.exception.TentativasEsgotadasException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,8 +23,14 @@ public class ContaExceptionHandler {
         return resposta(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String, String>> acessoNegado(
+            RuntimeException e) {
+        return resposta(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
     @ExceptionHandler(EventoInvalidoException.class)
-    public ResponseEntity<Map<String, String>> eventoInvalido(
+    public ResponseEntity<Map<String, String>> regraDeNegocio(
             RuntimeException e) {
         return resposta(
                 HttpStatus.UNPROCESSABLE_CONTENT,
@@ -30,7 +38,10 @@ public class ContaExceptionHandler {
         );
     }
 
-    @ExceptionHandler(ConflitoDeVersaoException.class)
+    @ExceptionHandler({
+            ConflitoDeVersaoException.class,
+            TentativasEsgotadasException.class
+    })
     public ResponseEntity<Map<String, String>> conflito(
             RuntimeException e) {
         return resposta(HttpStatus.CONFLICT, e.getMessage());
@@ -40,7 +51,7 @@ public class ContaExceptionHandler {
     public ResponseEntity<Map<String, String>> jsonInvalido() {
         return resposta(
                 HttpStatus.BAD_REQUEST,
-                "JSON inválido. Verifique aspas e formato do corpo da requisição."
+                "JSON inválido. Verifique o corpo da requisição."
         );
     }
 
@@ -48,7 +59,7 @@ public class ContaExceptionHandler {
     public ResponseEntity<Map<String, String>> validacaoInvalida() {
         return resposta(
                 HttpStatus.BAD_REQUEST,
-                "Campos obrigatórios inválidos: objetoId, tipo e payload são obrigatórios."
+                "Campos obrigatórios ausentes ou inválidos."
         );
     }
 
@@ -57,6 +68,6 @@ public class ContaExceptionHandler {
             String mensagem) {
         return ResponseEntity
                 .status(status)
-                .body(Map.of("erro", mensagem));
+                .body(Map.of("mensagem", mensagem));
     }
 }

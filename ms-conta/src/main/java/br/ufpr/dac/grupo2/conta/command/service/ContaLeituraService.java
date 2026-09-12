@@ -50,11 +50,20 @@ public class ContaLeituraService {
             EstadoConta estado) {
 
         if (EVENTOS_COM_DINHEIRO.contains(tipo)) {
+            String textoValor = texto(payload, "valor");
             BigDecimal valor = dinheiro(payload);
 
             if (valor.signum() <= 0) {
                 throw new EventoInvalidoException(
                         "O valor deve ser maior que zero"
+                );
+            }
+
+            if (valor.scale() > 2
+                    || valor.toPlainString().length()
+                            != textoValor.length()) {
+                throw new EventoInvalidoException(
+                        "O valor deve ter no máximo duas casas decimais"
                 );
             }
 
