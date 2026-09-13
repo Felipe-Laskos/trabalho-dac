@@ -13,6 +13,10 @@ const DESTINO_INEXISTENTE = {
   status: 422, erro: "Unprocessable Entity", mensagem: "Conta destino inexistente"
 };
 
+const CORPO_INVALIDO = {
+  status: 400, erro: "Bad Request", mensagem: "contaDestino é obrigatório"
+};
+
 const REPASSAR = [400, 403, 409, 422];
 
 // a posse só pode ser decidida depois da busca
@@ -52,7 +56,11 @@ function operacao(nome) {
 async function transferir(req, res) {
   const { contaDestino, valor } = req.body || {};
 
-  if(!NUMERO_CONTA.test(contaDestino ?? "")) {
+  if(typeof contaDestino !== "string" || !contaDestino) {
+    return res.status(400).json(CORPO_INVALIDO);
+  }
+
+  if(!NUMERO_CONTA.test(contaDestino)) {
     return res.status(422).json(DESTINO_INEXISTENTE);
   }
 
@@ -97,6 +105,14 @@ async function buscarExtrato(req, res) {
   const { numero } = req.params;
 
   try {
+    if (req.usuario.tipo === "CLIENTE") {
+      const conta = await consultar(
+        montarUrl(process.env.MS_CONTA_URL, "contas", numero), identidadeDe(req)
+      );
+
+      if(conta.cpfCliente !== req.usuario.cpf) return res.status(403).json(SEM_PERMISSAO);
+    }
+
     const extrato = await consultar(
       montarUrl(process.env.MS_CONTA_URL, "contas", numero, "extrato"),
       identidadeDe(req), req.query

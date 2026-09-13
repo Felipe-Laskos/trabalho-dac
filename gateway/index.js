@@ -56,11 +56,13 @@ app.use((_req, res) => {
   });
 });
 
-app.use((erro, _req, res, _next) => {
-  console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
-  res.status(500).json({
-    status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
-  });
+app.use((erro, _req, res, next) => {
+  if (erro instanceof SyntaxError && erro.status === 400 && "body" in erro) {
+    return res.status(400).json({
+      status: 400, erro: "Bad Request", mensagem: "Requisição malformada"
+    });
+  }
+  return next(erro);
 });
 
 async function subir() {
