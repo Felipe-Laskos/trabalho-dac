@@ -1,5 +1,6 @@
 package br.ufpr.dac.grupo2.cliente.service;
 
+import br.ufpr.dac.grupo2.cliente.dto.ClienteResumoDTO;
 import br.ufpr.dac.grupo2.cliente.dto.EnderecoDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.ClienteResponseDTO;
 import br.ufpr.dac.grupo2.cliente.model.Cliente;
@@ -31,11 +32,6 @@ public class ClienteService {
         this.mapper = mapper;
     }
 
-    @Transactional(readOnly = true)
-    public Optional<ClienteResponseDTO> buscarPorCpf(String cpf) {
-        return clienteRepository.findById(cpf).map(this::paraDTO);
-    }
-
     private ClienteResponseDTO paraDTO(Cliente cliente) {
         ClienteResponseDTO dto = mapper.map(cliente, ClienteResponseDTO.class);
 
@@ -47,6 +43,38 @@ public class ClienteService {
         dto.addLink("conta", "/clientes/" + cliente.getCpf() + "/conta");
 
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ClienteResponseDTO> buscarPorCpf(String cpf) {
+        return clienteRepository.findById(cpf).map(this::paraDTO);
+    }
+
+    private ClienteResumoDTO paraResumoDTO(Cliente cliente) {
+        ClienteResumoDTO dto = new ClienteResumoDTO();
+        dto.setCpf(cliente.getCpf());
+        dto.setNome(cliente.getNome());
+        dto.setCidade(cliente.getCidade());
+        dto.setEstado(cliente.getUf());
+        
+        dto.addLink("self", "/clientes/" + cliente.getCpf()); 
+        
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClienteResumoDTO> buscarPorCpfouNome(String busca) {
+        List<Cliente> clientes;
+
+        if (busca != null && !busca.isBlank()) {
+            clientes = clienteRepository.findByCpfContainingOrNomeContainingIgnoreCase(busca, busca);
+        } else {
+            clientes = clienteRepository.listarOrdenadoPorNome();
+        }
+
+        return clientes.stream()
+                .map(this::paraResumoDTO)
+                .toList();
     }
 
     private static String dinheiro(BigDecimal valor) {
