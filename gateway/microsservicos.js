@@ -26,7 +26,9 @@ function identidadeDe(req) {
 // corpo de erro por status repassado
 const DE_NEGOCIO = {
   400: { erro: "Bad Request", mensagem: "Requisição malformada" },
-  409: { erro: "Conflict", mensagem: "Recurso já existe" }
+  403: { erro: "Forbidden", mensagem: "Perfil sem permissão" },
+  409: { erro: "Conflict", mensagem: "Recurso já existe" },
+  422: { erro: "Unprocessable Entity", mensagem: "Operação não permitida" }
 };
 
 async function consultar(url, headers = {}, params) {
