@@ -65,6 +65,13 @@ app.use((erro, _req, res, next) => {
   return next(erro);
 });
 
+app.use((erro, _req, res, _next) => {
+  console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
+  res.status(erro.status && erro.status < 500 ? erro.status : 500).json({
+    status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
+  });
+});
+
 async function subir() {
   await redis.conectar();
   console.log(`Redis: conectado em ${process.env.REDIS_URL}`);

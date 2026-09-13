@@ -14,7 +14,7 @@ const DESTINO_INEXISTENTE = {
 };
 
 const CORPO_INVALIDO = {
-  status: 400, erro: "Bad Request", mensagem: "contaDestino é obrigatório"
+  status: 400, erro: "Bad Request", mensagem: "contaDestino deve ser uma string de dígitos"
 };
 
 const REPASSAR = [400, 403, 409, 422];
