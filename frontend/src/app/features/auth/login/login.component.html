@@ -44,7 +44,7 @@
     @if (hasLoginError()) {
     <app-message
       type="error"
-      message="Login inválido. Confira o e-mail e a senha e tente de novo."/>
+      [message]="mensagemErro()"/>
     } 
     </div>
 
@@ -60,7 +60,9 @@
             type="email"
             placeholder="Digite seu e-mail"
             fluid
-            class="p-inputtext-lg"/>
+            class="p-inputtext-lg"
+            [ngModel]="emailValue()"
+            (ngModelChange)="emailValue.set($event); esconderErro()"/>
         </div>
 
         <div class="field">

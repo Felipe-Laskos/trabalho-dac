@@ -1,5 +1,8 @@
 package br.ufpr.dac.grupo2.conta.query.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,9 +13,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -38,10 +38,20 @@ public class Movimentacao {
     @Column(name = "tipo", nullable = false, length = 20)
     private String tipo;
 
-    @Column(name = "valor", nullable = false, precision = 19, scale = 4)
+    @Column(
+            name = "valor",
+            nullable = false,
+            precision = 19,
+            scale = 4
+    )
     private BigDecimal valor;
 
-    @Column(name = "saldo_apos", nullable = false, precision = 19, scale = 4)
+    @Column(
+            name = "saldo_apos",
+            nullable = false,
+            precision = 19,
+            scale = 4
+    )
     private BigDecimal saldoApos;
 
     @Column(name = "conta_origem", length = 4)
@@ -62,4 +72,30 @@ public class Movimentacao {
     @Column(name = "nome_destino", length = 120)
     private String nomeDestino;
 
+    public Movimentacao(
+            Long eventoId,
+            String numeroConta,
+            LocalDateTime dataHora,
+            String tipo,
+            BigDecimal valor,
+            BigDecimal saldoApos,
+            String contaOrigem,
+            String cpfOrigem,
+            String nomeOrigem,
+            String contaDestino,
+            String cpfDestino,
+            String nomeDestino) {
+        this.eventoId = eventoId;
+        this.numeroConta = numeroConta;
+        this.dataHora = dataHora;
+        this.tipo = tipo;
+        this.valor = valor;
+        this.saldoApos = saldoApos;
+        this.contaOrigem = contaOrigem;
+        this.cpfOrigem = cpfOrigem;
+        this.nomeOrigem = nomeOrigem;
+        this.contaDestino = contaDestino;
+        this.cpfDestino = cpfDestino;
+        this.nomeDestino = nomeDestino;
+    }
 }

@@ -1,7 +1,37 @@
+HELP.md
 .env
 
+# Dependências e artefatos de build
 node_modules/
 target/
+build/
 dist/
 
 *.log
+HELP.md
+
+### Eclipse / STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+/.vscode/
+
+# Override local do Compose
+docker-compose.override.yml

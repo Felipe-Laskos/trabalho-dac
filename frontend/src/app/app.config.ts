@@ -10,6 +10,12 @@ import { erroInterceptor } from './core/interceptors/erro.interceptor';
 import { tokenInterceptor } from './core/interceptors/token.interceptor';
 import { BantadsTheme } from './theme/bantads-theme';
 
+import { LOCALE_ID } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+
+registerLocaleData(localePt, 'pt-BR');
+
 export const appConfig: ApplicationConfig = {
   providers: [
     MessageService,
@@ -27,6 +33,7 @@ export const appConfig: ApplicationConfig = {
           darkModeSelector: false
         }
       }
-    })
+    }),
+    { provide: LOCALE_ID, useValue: 'pt-BR' }
   ]
 };

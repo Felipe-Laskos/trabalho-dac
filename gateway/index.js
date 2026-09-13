@@ -1,25 +1,76 @@
-require('dotenv-safe').config({ quiet: true });
+require("dotenv-safe").config({ quiet: true });
 
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const morgan = require('morgan');
+const express = require("express");
+const helmet = require("helmet");
+const cors = require("cors");
+const morgan = require("morgan");
 
-const redis = require('./redis');
-const rabbit = require('./rabbit');
+const redis = require("./redis");
+const rabbit = require("./rabbit");
+const { verifyJWT, limparIdentidade } = require("./auth");
+const { reescreverRespostas } = require("./links");
+const { login, logout } = require("./login");
+const { reboot } = require("./reboot");
+
+const rotasClientes = require("./rotas/clientes");
+const rotasContas = require("./rotas/contas");
+const rotasGerentes = require("./rotas/gerentes");
+const rotasSolicitacoes = require("./rotas/solicitacoes");
 
 const PORTA = Number(process.env.PORT);
 
 const app = express();
 
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(limparIdentidade);
 
-app.get('/health', (_req, res) => res.json({ status: 'UP' }));
+// antes do verifyJWT: rota pública também devolve DTO com _links
+app.use(reescreverRespostas);
 
-app.post('/reboot', (_req, res) => res.json({ status: 'ok' }));
+app.get("/health", (_req, res) => res.json({ status: "UP" }));
+
+app.post("/reboot", reboot);
+
+app.post("/login", login);
+
+app.use("/solicitacoes", rotasSolicitacoes.publica);
+
+app.use(verifyJWT);
+
+app.post("/logout", logout);
+
+app.use("/clientes", rotasClientes);
+
+app.use("/contas", rotasContas);
+
+app.use("/gerentes", rotasGerentes);
+
+app.use("/solicitacoes", rotasSolicitacoes.gerente);
+
+app.use((_req, res) => {
+  res.status(404).json({
+    status: 404, erro: "Not Found", mensagem: "Rota inexistente"
+  });
+});
+
+app.use((erro, _req, res, next) => {
+  if (erro instanceof SyntaxError && erro.status === 400 && "body" in erro) {
+    return res.status(400).json({
+      status: 400, erro: "Bad Request", mensagem: "Requisição malformada"
+    });
+  }
+  return next(erro);
+});
+
+app.use((erro, _req, res, _next) => {
+  console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
+  res.status(500).json({
+    status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
+  });
+});
 
 async function subir() {
   await redis.conectar();

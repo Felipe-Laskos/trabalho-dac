@@ -11,7 +11,7 @@ export const erroInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((e: HttpErrorResponse) => {
-      if (e.status === 401) {
+      if (e.status === 401 && !req.url.includes('/login')) {
         sessao.limparSessao();
         void router.navigate(['/login'], { queryParams: { expirou: true } });
       }

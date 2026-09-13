@@ -107,6 +107,27 @@ services:
       retries: 10
       start_period: 30s
 
+  ms-email:
+    build:
+      context: ./ms-email
+    image: bantads/ms-email
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [bantads]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   ms-cliente:
     build:
       context: ./ms-cliente
@@ -165,6 +186,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks: [bantads]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
@@ -183,8 +206,15 @@ services:
     environment:
       NODE_OPTIONS: "--max-old-space-size=192"
       PORT: 8000
+      SECRET: ${SECRET:?defina SECRET no .env}
+      JWT_EXPIRES_IN: 8h
       REDIS_URL: redis://redis:6379
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      MS_AUTH_URL: http://ms-auth:8080
+      MS_CLIENTE_URL: http://ms-cliente:8080
+      MS_GERENTE_URL: http://ms-gerente:8080
+      MS_CONTA_URL: http://ms-conta:8080
+      PUBLIC_URL: http://localhost:8000
     ports:
       - "8000:8000"
     depends_on:
