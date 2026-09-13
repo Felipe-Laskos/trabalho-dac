@@ -1,0 +1,162 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.teste-page {
+  min-height: 100vh;
+  background: var(--color-background);
+  padding: 40px 16px;
+  display: flex;
+  justify-content: center;
+
+  .teste-container {
+    width: 100%;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .teste-header {
+      text-align: center;
+      margin-bottom: 8px;
+
+      h1 {
+        margin: 0 0 8px 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--color-text);
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--color-text-secondary);
+      }
+    }
+
+    .card-bloco {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .bloco-titulo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .step-num {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: var(--color-primary);
+          color: #ffffff;
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+
+        h2 {
+          margin: 0;
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--color-text);
+        }
+      }
+
+      .bloco-descricao {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+        line-height: 1.4;
+      }
+
+      .debug-box {
+        background: var(--color-background);
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.85rem;
+
+        .debug-label {
+          color: var(--color-text-secondary);
+          font-weight: 500;
+        }
+
+        .debug-value {
+          font-family: monospace;
+          font-weight: 700;
+          color: var(--color-primary);
+          font-size: 0.95rem;
+        }
+
+        .debug-status {
+          margin-left: auto;
+          font-weight: 600;
+          color: var(--color-error);
+
+          &.valido {
+            color: var(--color-success);
+          }
+        }
+      }
+
+      .acoes-simulacao {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        p-button {
+          width: 100%;
+
+          ::ng-deep button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+.card-saldo-box {
+  .saldo-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+
+    .saldo-label-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+      }
+    }
+  }
+
+  .saldo-valor {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    transition: opacity 0.2s ease;
+
+    &.sincronizando {
+      opacity: 0.5;
+    }
+  }
+}

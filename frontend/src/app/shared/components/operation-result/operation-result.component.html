@@ -1,0 +1,85 @@
+<p-dialog
+  [visible]="visivel()"
+  [modal]="true"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [showHeader]="false"
+  [style]="{ width: '100%', maxWidth: '440px', border: 'none', background: 'transparent' }"
+  [contentStyle]="{ padding: '0', background: 'transparent', border: 'none', overflow: 'visible' }"
+  (onHide)="aoClicarAcao()"
+>
+  <div class="result-card" [ngClass]="'status-' + dados().tipo.toLowerCase()">
+    <div class="result-badge">
+      <i [class]="icone()"></i>
+    </div>
+
+    <div class="result-header">
+      <h2>{{ titulo() }}</h2>
+
+      @if (subtitulo()) {
+        <p class="subtitulo">
+          {{ subtitulo() }}
+        </p>
+      }
+    </div>
+
+    @if (dados().tipo === 'SUCESSO') {
+      <div class="summary-box">
+        @if (dados().tipoOperacao) {
+          <div class="summary-row">
+            <span class="label">Operação</span>
+            <span class="value">
+              {{ dados().tipoOperacao }}
+            </span>
+          </div>
+        }
+
+        @if (dados().numeroConta) {
+          <div class="summary-row">
+            <span class="label">Conta</span>
+            <span class="value">
+              {{ dados().numeroConta }}
+            </span>
+          </div>
+        }
+
+        @if (dados().dataHora) {
+          <div class="summary-row">
+            <span class="label">Data e hora</span>
+            <span class="value">
+              {{ dados().dataHora | dataHora }}
+            </span>
+          </div>
+        }
+
+        @if (dados().valor) {
+          <div class="summary-row highlight">
+            <span class="label">Valor</span>
+            <span class="value highlight-val">
+              {{ dados().valor | dinheiro }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (dados().tipo === 'ERRO_NEGOCIO' || dados().tipo === 'ERRO_PERMISSAO') {
+      @if (dados().mensagem) {
+        <div class="alert-box">
+          <i [class]="dados().tipo === 'ERRO_NEGOCIO' ? 'pi pi-info-circle' : 'pi pi-shield'"></i>
+
+          <span class="alert-message">{{ dados().mensagem }}</span>
+        </div>
+      }
+    }
+
+    <footer class="result-footer">
+      <p-button
+        [label]="textoAcao()"
+        [severity]="dados().tipo === 'SUCESSO' ? 'primary' : 'secondary'"
+        (onClick)="aoClicarAcao()"
+      />
+    </footer>
+  </div>
+</p-dialog>

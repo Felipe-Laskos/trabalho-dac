@@ -1,0 +1,17 @@
+<div class="saldo-convergindo-container" [class.is-convergindo]="atualizando()">
+  <span class="label">Saldo disponível</span>
+
+  <div class="valor-linha">
+    <strong class="valor">{{ saldo() }}</strong>
+
+    @if (atualizando()) {
+      <span class="spinner-inline"></span>
+    }
+  </div>
+
+  @if (atualizando()) {
+    <span class="status-mensagem">
+      {{ mensagemAtualizando() }}
+    </span>
+  }
+</div>

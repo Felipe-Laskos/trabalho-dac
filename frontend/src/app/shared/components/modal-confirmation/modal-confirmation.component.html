@@ -1,0 +1,55 @@
+<p-dialog
+  [visible]="visivel()"
+  [modal]="true"
+  [closable]="!carregando()"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '440px' }"
+  (onHide)="aoCancelar()"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <div class="icon-badge">
+        <i class="pi pi-arrow-right-arrow-left"></i>
+      </div>
+      <div class="header-texts">
+        <h2>{{ titulo() }}</h2>
+        <p>{{ subtitulo() }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  @if (detalhes().length > 0) {
+    <div class="details-box">
+      @for (item of detalhes(); track $index) {
+        <div class="detail-row" [class.highlight-row]="item.destaque">
+          <span class="detail-label">{{ item.rotulo }}</span>
+          <span
+            class="detail-value"
+            [class.highlight-value]="item.destaque"
+            [title]="formatarValor(item)"
+          >
+            {{ formatarValor(item) }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template #footer>
+    <div class="dialog-footer">
+      <p-button
+        [label]="textoCancelar()"
+        severity="secondary"
+        [disabled]="carregando()"
+        (onClick)="aoCancelar()"
+      />
+      <p-button
+        [label]="textoConfirmar()"
+        severity="primary"
+        [loading]="carregando()"
+        (onClick)="aoConfirmar()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
