@@ -67,7 +67,7 @@ app.use((erro, _req, res, next) => {
 
 app.use((erro, _req, res, _next) => {
   console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
-  res.status(erro.status && erro.status < 500 ? erro.status : 500).json({
+  res.status(500).json({
     status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
   });
 });
