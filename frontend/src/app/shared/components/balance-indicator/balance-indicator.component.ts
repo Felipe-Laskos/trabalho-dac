@@ -4,7 +4,7 @@ import { Dinheiro } from '../../../core/models/dinheiro';
 
 @Component({
   selector: 'app-balance-indicator',
-  imports: [ProgressSpinner],
+  imports: [],
   templateUrl: './balance-indicator.component.html',
   styleUrl: './balance-indicator.component.scss',
 })

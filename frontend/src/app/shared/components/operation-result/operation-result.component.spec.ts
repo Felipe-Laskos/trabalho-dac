@@ -13,6 +13,15 @@ describe('OperationResultComponent', () => {
 
     fixture = TestBed.createComponent(OperationResultComponent);
     component = fixture.componentInstance;
+
+    fixture.componentRef.setInput('dados', {
+    tipo: 'SUCESSO',
+    tipoOperacao: 'TRANSFERENCIA',
+    numeroConta: '0950',
+    valor: '100.00',
+    dataHora: new Date().toISOString()
+    });
+
     await fixture.whenStable();
   });
 

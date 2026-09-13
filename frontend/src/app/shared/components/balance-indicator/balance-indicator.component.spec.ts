@@ -13,6 +13,8 @@ describe('BalanceIndicatorComponent', () => {
 
     fixture = TestBed.createComponent(BalanceIndicatorComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('saldo', '100.00'); 
+  
     await fixture.whenStable();
   });
 
