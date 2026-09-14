@@ -1,5 +1,6 @@
 package br.ufpr.dac.grupo2.cliente.rest;
 
+import br.ufpr.dac.grupo2.cliente.dto.ClienteResumoDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.ClienteResponseDTO;
 import br.ufpr.dac.grupo2.cliente.service.ClienteService;
 
@@ -9,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @CrossOrigin
 @RestController
@@ -26,5 +30,11 @@ public class ClienteREST {
         return service.buscarPorCpf(cpf)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ClienteResumoDTO>> listar(@RequestParam(required = false) String busca) {
+        List<ClienteResumoDTO> clientes = service.buscarPorCpfouNome(busca);
+        return ResponseEntity.ok(clientes); 
     }
 }
