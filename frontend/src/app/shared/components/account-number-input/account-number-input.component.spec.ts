@@ -1,8 +1,17 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { vi } from 'vitest';
 
 import { AccountNumberInputComponent } from './account-number-input.component';
+
+@Component({
+  imports: [ReactiveFormsModule, AccountNumberInputComponent],
+  template: `<app-account-number-input [formControl]="conta" />`,
+})
+class HospedeiroAccountNumberInput {
+  readonly conta = new FormControl<string | null>('0950');
+}
 
 describe('AccountNumberInputComponent', () => {
   let component: AccountNumberInputComponent;
@@ -134,6 +143,45 @@ describe('AccountNumberInputComponent', () => {
       component.setDisabledState(false);
 
       expect((component as any).desabilitado()).toBe(false);
+    });
+  });
+
+  describe('Dentro de um formulario', () => {
+    let hospedeiro: ComponentFixture<HospedeiroAccountNumberInput>;
+    let input: HTMLInputElement;
+
+    beforeEach(async () => {
+      hospedeiro = TestBed.createComponent(HospedeiroAccountNumberInput);
+      await hospedeiro.whenStable();
+      input = hospedeiro.nativeElement.querySelector('input') as HTMLInputElement;
+    });
+
+    it('deve exibir a conta do formulário no input, habilitado e com o zero à esquerda', () => {
+      expect(input.value).toBe('0950');
+      expect(input.disabled).toBe(false);
+    });
+
+    it('deve devolver o que o usuário digita como string de 4 dígitos', async () => {
+      input.value = '1291';
+      input.dispatchEvent(new Event('input'));
+      await hospedeiro.whenStable();
+
+      expect(hospedeiro.componentInstance.conta.value).toBe('1291');
+      expect(typeof hospedeiro.componentInstance.conta.value).toBe('string');
+    });
+
+    it('deve repintar o input quando o formulário muda por código', async () => {
+      hospedeiro.componentInstance.conta.setValue('0007');
+      await hospedeiro.whenStable();
+
+      expect(input.value).toBe('0007');
+    });
+
+    it('deve desabilitar o input quando o formulário é desabilitado', async () => {
+      hospedeiro.componentInstance.conta.disable();
+      await hospedeiro.whenStable();
+
+      expect(input.disabled).toBe(true);
     });
   });
 });

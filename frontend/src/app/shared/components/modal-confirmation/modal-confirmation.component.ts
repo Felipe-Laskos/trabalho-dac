@@ -42,11 +42,7 @@ export class ModalConfirmationComponent {
   }
 
   protected formatarValor(item: DetalheOperacao): string {
-    if (
-      item.valor === null ||
-      item.valor === undefined ||
-      item.valor === ''
-    ) {
+    if (item.valor === null || item.valor === undefined || item.valor === '') {
       return '-';
     }
 

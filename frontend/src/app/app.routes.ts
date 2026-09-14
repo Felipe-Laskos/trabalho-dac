@@ -71,5 +71,11 @@ export const routes: Routes = [
     ],
   },
 
+  {
+    path: 'dev/componentes',
+    loadComponent: () =>
+      import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+
   { path: '**', redirectTo: 'login' },
 ];

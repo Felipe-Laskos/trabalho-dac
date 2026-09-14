@@ -1,5 +1,15 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MoneyInputComponent } from './money-input.component';
+
+@Component({
+  imports: [ReactiveFormsModule, MoneyInputComponent],
+  template: `<app-money-input [formControl]="valor" />`,
+})
+class HospedeiroMoneyInput {
+  readonly valor = new FormControl<string | null>('100.00');
+}
 
 describe('MoneyInputComponent', () => {
   let component: MoneyInputComponent;
@@ -31,7 +41,7 @@ describe('MoneyInputComponent', () => {
     });
 
     it('deve iniciar habilitado', () => {
-      expect((component as any).desabilitado()).toBe(false); 
+      expect((component as any).desabilitado()).toBe(false);
     });
   });
 
@@ -220,6 +230,44 @@ describe('MoneyInputComponent', () => {
       const resultado = (component as any).formatarParaVisual(null);
 
       expect(resultado).toBe('');
+    });
+  });
+
+  describe('Dentro de um formulario', () => {
+    let hospedeiro: ComponentFixture<HospedeiroMoneyInput>;
+    let input: HTMLInputElement;
+
+    beforeEach(async () => {
+      hospedeiro = TestBed.createComponent(HospedeiroMoneyInput);
+      await hospedeiro.whenStable();
+      input = hospedeiro.nativeElement.querySelector('input') as HTMLInputElement;
+    });
+
+    it('deve exibir o valor do formulário no input, habilitado', () => {
+      expect(input.value).toBe('100,00');
+      expect(input.disabled).toBe(false);
+    });
+
+    it('deve converter o que o usuário digita para o formato do contrato', async () => {
+      input.value = '1.500,00';
+      input.dispatchEvent(new Event('input'));
+      await hospedeiro.whenStable();
+
+      expect(hospedeiro.componentInstance.valor.value).toBe('1500.00');
+    });
+
+    it('deve repintar o input quando o formulário muda por código', async () => {
+      hospedeiro.componentInstance.valor.setValue('2500.00');
+      await hospedeiro.whenStable();
+
+      expect(input.value).toBe('2.500,00');
+    });
+
+    it('deve desabilitar o input quando o formulário é desabilitado', async () => {
+      hospedeiro.componentInstance.valor.disable();
+      await hospedeiro.whenStable();
+
+      expect(input.disabled).toBe(true);
     });
   });
 });

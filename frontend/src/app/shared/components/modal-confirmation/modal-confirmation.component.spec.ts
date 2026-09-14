@@ -28,9 +28,7 @@ describe('ModalConfirmationComponent', () => {
     });
 
     it('deve possuir o subtítulo padrão', () => {
-      expect(component.subtitulo()).toBe(
-        'A operação é imediata e não pode ser desfeita.'
-      );
+      expect(component.subtitulo()).toBe('A operação é imediata e não pode ser desfeita.');
     });
 
     it('deve possuir o texto padrão de confirmação', () => {

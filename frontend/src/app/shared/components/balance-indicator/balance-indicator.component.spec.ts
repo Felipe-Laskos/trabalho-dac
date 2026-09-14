@@ -34,8 +34,6 @@ describe('BalanceIndicatorComponent', () => {
     fixture.componentRef.setInput('atualizando', true);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(
-      'Atualizando saldo...'
-    );
+    expect(fixture.nativeElement.textContent).toContain('Atualizando saldo...');
   });
 });
