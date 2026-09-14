@@ -1,10 +1,10 @@
 import { Component, input } from '@angular/core';
-import { ProgressSpinner } from 'primeng/progressspinner';
 import { Dinheiro } from '../../../core/models/dinheiro';
+import { DinheiroPipe } from '../../pipes/dinheiro.pipe';
 
 @Component({
   selector: 'app-balance-indicator',
-  imports: [],
+  imports: [DinheiroPipe],
   templateUrl: './balance-indicator.component.html',
   styleUrl: './balance-indicator.component.scss',
 })

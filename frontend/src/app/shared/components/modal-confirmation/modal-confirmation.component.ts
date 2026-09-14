@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { Button } from 'primeng/button';
-import Decimal from 'decimal.js';
+import { formatarBRL } from '../../util/dinheiro.util';
 
 export interface DetalheOperacao {
   rotulo: string;
@@ -42,24 +42,14 @@ export class ModalConfirmationComponent {
   }
 
   protected formatarValor(item: DetalheOperacao): string {
-    if (item.valor === null || item.valor === undefined || item.valor === '') {
+    if (
+      item.valor === null ||
+      item.valor === undefined ||
+      item.valor === ''
+    ) {
       return '-';
     }
 
-    if (!item.moeda) {
-      return String(item.valor);
-    }
-
-    try {
-      const dec = new Decimal(item.valor);
-      if (!dec.isFinite()) return String(item.valor);
-
-      const [inteiro, decimal] = dec.toFixed(2).split('.');
-      const inteiroFormatado = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-      return `R$ ${inteiroFormatado},${decimal}`;
-    } catch {
-      return String(item.valor);
-    }
+    return item.moeda ? formatarBRL(item.valor) : String(item.valor);
   }
 }
