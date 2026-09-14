@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { vi } from 'vitest';
+
 import { AccountNumberInputComponent } from './account-number-input.component';
 
 describe('AccountNumberInputComponent', () => {
@@ -57,7 +58,7 @@ describe('AccountNumberInputComponent', () => {
     it('deve remover letras e limitar a 4 caracteres no writeValue', () => {
       component.writeValue('12ab3456');
 
-      expect((component as any).valor).toBe('1234');
+      expect((component as any).valor()).toBe('1234');
     });
 
     it('deve limpar o valor, notificar o formulário e emitir evento ao digitar', () => {
@@ -77,7 +78,7 @@ describe('AccountNumberInputComponent', () => {
 
       (component as any).aoDigitar(mockEvent);
 
-      expect((component as any).valor).toBe('9876');
+      expect((component as any).valor()).toBe('9876');
       expect(valorEnviadoProForm).toBe('9876');
       expect(component.valorAlterado.emit).toHaveBeenCalledWith('9876');
     });
@@ -93,7 +94,7 @@ describe('AccountNumberInputComponent', () => {
 
       (component as any).aoDigitar(mockEvent);
 
-      expect((component as any).valor).toBe('');
+      expect((component as any).valor()).toBe('');
       expect(component.valorAlterado.emit).toHaveBeenCalledWith(null);
     });
 
@@ -128,11 +129,11 @@ describe('AccountNumberInputComponent', () => {
     it('deve alterar o estado desabilitado pelo setDisabledState', () => {
       component.setDisabledState(true);
 
-      expect((component as any).desabilitado).toBe(true);
+      expect((component as any).desabilitado()).toBe(true);
 
       component.setDisabledState(false);
 
-      expect((component as any).desabilitado).toBe(false);
+      expect((component as any).desabilitado()).toBe(false);
     });
   });
 });

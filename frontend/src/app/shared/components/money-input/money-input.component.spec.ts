@@ -31,7 +31,7 @@ describe('MoneyInputComponent', () => {
     });
 
     it('deve iniciar habilitado', () => {
-      expect((component as any).desabilitado).toBe(false);
+      expect((component as any).desabilitado()).toBe(false); 
     });
   });
 
@@ -39,23 +39,23 @@ describe('MoneyInputComponent', () => {
     it('deve formatar o valor recebido pelo formulário para visualização', () => {
       component.writeValue('1234.50');
 
-      expect((component as any).valorVisual).toBe('1.234,50');
+      expect((component as any).valorVisual()).toBe('1.234,50');
     });
 
     it('deve limpar o valor visual quando receber null', () => {
       component.writeValue(null);
 
-      expect((component as any).valorVisual).toBe('');
+      expect((component as any).valorVisual()).toBe('');
     });
 
     it('deve atualizar o estado desabilitado', () => {
       component.setDisabledState(true);
 
-      expect((component as any).desabilitado).toBe(true);
+      expect((component as any).desabilitado()).toBe(true);
 
       component.setDisabledState(false);
 
-      expect((component as any).desabilitado).toBe(false);
+      expect((component as any).desabilitado()).toBe(false);
     });
   });
 
@@ -135,7 +135,7 @@ describe('MoneyInputComponent', () => {
 
       (component as any).aoDigitar(evento);
 
-      expect((component as any).valorVisual).toBe('100,00');
+      expect((component as any).valorVisual()).toBe('100,00');
     });
 
     it('deve limitar a quantidade de casas decimais', () => {
