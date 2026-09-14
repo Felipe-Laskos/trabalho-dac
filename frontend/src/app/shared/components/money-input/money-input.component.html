@@ -1,0 +1,24 @@
+<div class="money-field">
+  @if (label()) {
+    <label [for]="inputId()">
+      {{ label() }}
+    </label>
+  }
+
+  <div class="money-input-wrapper">
+    <span class="currency-prefix">R$</span>
+
+    <input
+      pInputText
+      [id]="inputId()"
+      [placeholder]="placeholder()"
+      [value]="valorVisual"
+      [disabled]="desabilitado"
+      inputmode="decimal"
+      autocomplete="off"
+      aria-label="Valor monetário"
+      (input)="aoDigitar($event)"
+      (blur)="aoSairDoCampo()"
+    />
+  </div>
+</div>
