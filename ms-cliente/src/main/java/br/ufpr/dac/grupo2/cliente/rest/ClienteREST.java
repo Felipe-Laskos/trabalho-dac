@@ -35,6 +35,6 @@ public class ClienteREST {
     @GetMapping
     public ResponseEntity<List<ClienteResumoDTO>> listar(@RequestParam(required = false) String busca) {
         List<ClienteResumoDTO> clientes = service.buscarPorCpfouNome(busca);
-        return ResponseEntity.ok(clientes); 
+        return ResponseEntity.ok(clientes);
     }
 }
