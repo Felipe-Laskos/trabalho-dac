@@ -38,6 +38,8 @@ function mensagemPadrao(status: number): string {
       return 'Você não tem permissão para esta operação.';
     case 404:
       return 'Não encontramos o que você pediu.';
+    case 422:
+      return 'Não foi possível concluir a operação.';
     default:
       return 'Não foi possível concluir a operação.';
   }

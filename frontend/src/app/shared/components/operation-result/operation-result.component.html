@@ -44,6 +44,15 @@
           </div>
         }
 
+        @if (dados().destinatario) {
+          <div class="summary-row">
+            <span class="label">Destinatário</span>
+            <span class="value">
+              {{ dados().destinatario }}
+            </span>
+          </div>
+        }
+
         @if (dados().dataHora) {
           <div class="summary-row">
             <span class="label">Data e hora</span>
