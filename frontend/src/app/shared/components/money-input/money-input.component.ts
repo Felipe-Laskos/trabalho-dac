@@ -1,4 +1,4 @@
-import { Component, forwardRef, input } from '@angular/core';
+import { Component, forwardRef, input, signal } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -34,8 +34,8 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
   readonly inputId = input<string>('money-input');
   readonly placeholder = input<string>('0,00');
 
-  protected valorVisual = '';
-  protected desabilitado = false;
+  protected readonly valorVisual = signal('');
+  protected readonly desabilitado = signal(false);
 
   private valorContrato: string | null = null;
   private ultimoValorVisualValido = '';
@@ -46,8 +46,9 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
 
   writeValue(valor: string | null): void {
     this.valorContrato = valor;
-    this.valorVisual = this.formatarParaVisual(valor);
-    this.ultimoValorVisualValido = this.valorVisual;
+    const visual = this.formatarParaVisual(valor);
+    this.valorVisual.set(visual);
+    this.ultimoValorVisualValido = visual;
   }
 
   registerOnChange(fn: (valor: string | null) => void): void {
@@ -59,36 +60,28 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.desabilitado = isDisabled;
+    this.desabilitado.set(isDisabled);
   }
 
   validate(_control: AbstractControl): ValidationErrors | null {
     if (!this.valorContrato) {
-      return {
-        moneyRequired: true,
-      };
+      return { moneyRequired: true };
     }
 
     try {
       const valor = new Decimal(this.valorContrato);
 
       if (!valor.isFinite() || valor.lessThanOrEqualTo(0)) {
-        return {
-          moneyPositive: true,
-        };
+        return { moneyPositive: true };
       }
 
       if (!/^\d+\.\d{2}$/.test(this.valorContrato)) {
-        return {
-          moneyFormat: true,
-        };
+        return { moneyFormat: true };
       }
 
       return null;
     } catch {
-      return {
-        moneyFormat: true,
-      };
+      return { moneyFormat: true };
     }
   }
 
@@ -106,12 +99,10 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
     }
 
     const valorLimpo = valorDigitado.replace(/[^\d.,]/g, '');
-
     const indiceVirgula = valorLimpo.indexOf(',');
 
     if (indiceVirgula >= 0) {
       const parteDecimal = valorLimpo.slice(indiceVirgula + 1).replace(/[.,]/g, '');
-
       if (parteDecimal.length > 2) {
         elemento.value = this.ultimoValorVisualValido;
         return;
@@ -120,20 +111,20 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
 
     const valorNormalizado = this.normalizarVisual(valorLimpo);
 
-    this.valorVisual = valorNormalizado;
-    elemento.value = this.valorVisual;
+    this.valorVisual.set(valorNormalizado);
+    elemento.value = this.valorVisual();
 
-    this.valorContrato = this.converterParaContrato(this.valorVisual);
-
-    this.ultimoValorVisualValido = this.valorVisual;
+    this.valorContrato = this.converterParaContrato(this.valorVisual());
+    this.ultimoValorVisualValido = this.valorVisual();
 
     this.onChange(this.valorContrato);
     this.onValidatorChange();
   }
 
   protected aoSairDoCampo(): void {
-    this.valorVisual = this.formatarParaVisual(this.valorContrato);
-    this.ultimoValorVisualValido = this.valorVisual;
+    const visual = this.formatarParaVisual(this.valorContrato);
+    this.valorVisual.set(visual);
+    this.ultimoValorVisualValido = this.valorVisual();
 
     this.onTouched();
     this.onValidatorChange();
@@ -176,12 +167,10 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
 
   private normalizarVisual(valor: string): string {
     const resultado = valor.replace(/[^\d.,]/g, '');
-
     const indiceVirgula = resultado.indexOf(',');
 
     if (indiceVirgula >= 0) {
       let parteInteira = resultado.slice(0, indiceVirgula).replace(/[.,]/g, '');
-
       const parteDecimal = resultado.slice(indiceVirgula + 1).replace(/[.,]/g, '');
 
       if (!parteInteira) {
@@ -192,32 +181,21 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
     }
 
     const parteInteira = resultado.replace(/[.,]/g, '');
-
     return this.formatarMilhares(parteInteira);
   }
 
   private formatarMilhares(valor: string): string {
-    if (!valor) {
-      return '';
-    }
-
+    if (!valor) return '';
     return valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
   private formatarParaVisual(valor: string | null): string {
-    if (!valor) {
-      return '';
-    }
-
+    if (!valor) return '';
     try {
       const decimalValor = new Decimal(valor);
-
-      if (!decimalValor.isFinite()) {
-        return '';
-      }
+      if (!decimalValor.isFinite()) return '';
 
       const [inteiro, decimal] = decimalValor.toFixed(2).split('.');
-
       return `${this.formatarMilhares(inteiro)},${decimal}`;
     } catch {
       return '';

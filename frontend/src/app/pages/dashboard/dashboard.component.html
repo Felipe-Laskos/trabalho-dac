@@ -1,0 +1,114 @@
+<main class="teste-page">
+  <div class="teste-container">
+    <header class="teste-header">
+      <h1>Validação dos Componentes BANTADS</h1>
+      <p>Testes de saldo em tempo real, formulário, confirmação e resultados.</p>
+    </header>
+
+    <!-- Balance Indicator  -->
+    <section class="card-bloco">
+      <app-balance-indicator [saldo]="saldoConta()" [atualizando]="reconsultandoSaldo()" />
+
+      <p-button
+        label="Simular"
+        icon="pi pi-refresh"
+        severity="secondary"
+        size="small"
+        [disabled]="reconsultandoSaldo()"
+        (onClick)="simularAtualizacaoSaldo()"
+      />
+    </section>
+
+    <!-- Account Number Input -->
+    <section class="card-bloco">
+      <div class="bloco-titulo">
+        <span class="step-num">1</span>
+        <h2>Conta destino (account-number-input)</h2>
+      </div>
+
+      <app-account-number-input
+        label="Número da conta"
+        inputId="conta-teste"
+        placeholder="Ex.: 0950"
+        [formControl]="numeroContaControl"
+      />
+    </section>
+
+    <!-- Money Input -->
+    <section class="card-bloco">
+      <div class="bloco-titulo">
+        <span class="step-num">2</span>
+        <h2>Valor da operação (money-input)</h2>
+      </div>
+
+      <app-money-input
+        label="Valor"
+        inputId="valor-teste"
+        placeholder="0,00"
+        [formControl]="valorControl"
+      />
+    </section>
+
+    <!-- Modal Confirmation -->
+    <section class="card-bloco">
+      <div class="bloco-titulo">
+        <span class="step-num">3</span>
+        <h2>Modal de Confirmação</h2>
+      </div>
+
+      <p-button
+        label="Abrir Confirmação"
+        icon="pi pi-check"
+        severity="primary"
+        [disabled]="numeroContaControl.invalid || valorControl.invalid"
+        (onClick)="abrirConfirmacao()"
+      />
+
+      <app-modal-confirmation
+        [visivel]="exibirModalConfirmacao()"
+        [titulo]="'Confirmar transferência?'"
+        [subtitulo]="'A operação é imediata e não pode ser desfeita.'"
+        [textoConfirmar]="'Confirmar'"
+        [textoCancelar]="'Voltar'"
+        [carregando]="carregando()"
+        [detalhes]="detalhesModal()"
+        (confirmar)="executarOperacao()"
+        (cancelar)="fecharConfirmacao()"
+      />
+    </section>
+
+    <!-- Operation Result) -->
+    <section class="card-bloco">
+      <div class="bloco-titulo">
+        <span class="step-num">4</span>
+        <h2>Resultado de Operação</h2>
+      </div>
+
+      <div class="acoes-simulacao">
+        <p-button
+          label="Testar Erro de Negócio (422)"
+          icon="pi pi-exclamation-triangle"
+          severity="warn"
+          [outlined]="true"
+          (onClick)="testarErroNegocio422()"
+        />
+
+        <p-button
+          label="Testar Sem Permissão (403)"
+          icon="pi pi-lock"
+          severity="danger"
+          [outlined]="true"
+          (onClick)="testarErroPermissao403()"
+        />
+      </div>
+
+      @if (resultado(); as res) {
+        <app-operation-result
+          [visivel]="true"
+          [dados]="res"
+          (fecharOuReiniciar)="reiniciarResultado()"
+        />
+      }
+    </section>
+  </div>
+</main>

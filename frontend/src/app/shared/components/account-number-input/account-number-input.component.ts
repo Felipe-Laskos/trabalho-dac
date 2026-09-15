@@ -1,4 +1,4 @@
-import { Component, forwardRef, input, output } from '@angular/core';
+import { Component, forwardRef, input, output, signal } from '@angular/core';
 
 import {
   AbstractControl,
@@ -37,15 +37,15 @@ export class AccountNumberInputComponent implements ControlValueAccessor, Valida
 
   readonly valorAlterado = output<string | null>();
 
-  protected valor = '';
-  protected desabilitado = false;
+  protected readonly valor = signal('');
+  protected readonly desabilitado = signal(false);
 
   private onChange: (valor: string) => void = () => {};
   private onTouched: () => void = () => {};
   private onValidatorChange: () => void = () => {};
 
   writeValue(valor: string | null | undefined): void {
-    this.valor = this.sanitizar(valor ? String(valor) : '');
+    this.valor.set(this.sanitizar(valor ? String(valor) : ''));
   }
 
   registerOnChange(fn: (valor: string) => void): void {
@@ -57,7 +57,7 @@ export class AccountNumberInputComponent implements ControlValueAccessor, Valida
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.desabilitado = isDisabled;
+    this.desabilitado.set(isDisabled);
   }
 
   validate(control: AbstractControl): ValidationErrors | null {
@@ -82,11 +82,11 @@ export class AccountNumberInputComponent implements ControlValueAccessor, Valida
     const elemento = event.target as HTMLInputElement;
     const valorSanitizado = this.sanitizar(elemento.value);
 
-    this.valor = valorSanitizado;
-    elemento.value = this.valor;
+    this.valor.set(valorSanitizado);
+    elemento.value = this.valor();
 
-    this.onChange(this.valor);
-    this.valorAlterado.emit(this.valor || null);
+    this.onChange(this.valor());
+    this.valorAlterado.emit(this.valor() || null);
     this.onValidatorChange();
   }
 
