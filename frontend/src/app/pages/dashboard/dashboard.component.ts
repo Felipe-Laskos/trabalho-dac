@@ -1,6 +1,8 @@
 import { Component, computed, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
+import { DateTime } from 'luxon';
 
 import { Dinheiro } from '../../core/models/dinheiro';
 
@@ -55,15 +57,23 @@ export class DashboardComponent {
     nonNullable: true,
   });
 
+  private readonly numeroConta = toSignal(this.numeroContaControl.valueChanges, {
+    initialValue: this.numeroContaControl.value,
+  });
+
+  private readonly valor = toSignal(this.valorControl.valueChanges, {
+    initialValue: this.valorControl.value,
+  });
+
   readonly detalhesModal = computed<DetalheOperacao[]>(() => {
     return [
       {
         rotulo: 'Conta destino',
-        valor: this.numeroContaControl.value || 'Não informada',
+        valor: this.numeroConta() || 'Não informada',
       },
       {
         rotulo: 'Valor da transferência',
-        valor: this.valorControl.value || '0.00',
+        valor: this.valor() || '0.00',
         destaque: true,
         moeda: true,
       },
@@ -101,7 +111,7 @@ export class DashboardComponent {
         tipoOperacao: 'TRANSFERENCIA',
         numeroConta: this.numeroContaControl.value,
         valor: this.valorControl.value,
-        dataHora: new Date().toISOString(),
+        dataHora: DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss"),
       });
 
       this.simularAtualizacaoSaldo();

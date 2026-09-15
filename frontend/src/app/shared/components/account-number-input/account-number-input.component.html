@@ -13,8 +13,8 @@
     autocomplete="off"
     maxlength="4"
     [placeholder]="placeholder()"
-    [value]="valor"
-    [disabled]="desabilitado"
+    [value]="valor()"
+    [disabled]="desabilitado()"
     (input)="aoDigitar($event)"
     (blur)="aoSairDoCampo()"
   />

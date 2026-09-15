@@ -37,14 +37,12 @@ describe('OperationResultComponent', () => {
     });
 
     it('deve retornar o título de sucesso', () => {
-      expect((component as any).titulo()).toBe(
-        'Operação realizada com sucesso!'
-      );
+      expect((component as any).titulo()).toBe('Operação realizada com sucesso!');
     });
 
     it('deve retornar o subtítulo de sucesso', () => {
       expect((component as any).subtitulo()).toBe(
-        'Os dados da transação foram processados e registrados.'
+        'Os dados da transação foram processados e registrados.',
       );
     });
   });
@@ -60,19 +58,22 @@ describe('OperationResultComponent', () => {
     });
 
     it('deve retornar o ícone de erro de negócio', () => {
-      expect((component as any).icone()).toBe(
-        'pi pi-exclamation-triangle'
-      );
+      expect((component as any).icone()).toBe('pi pi-exclamation-triangle');
     });
 
     it('deve retornar o título de erro de negócio', () => {
-      expect((component as any).titulo()).toBe(
-        'Não foi possível concluir a operação'
-      );
+      expect((component as any).titulo()).toBe('Não foi possível concluir a operação');
     });
 
     it('deve retornar subtítulo vazio', () => {
       expect((component as any).subtitulo()).toBe('');
+    });
+
+    it('deve exibir na tela a mensagem que veio do back', () => {
+      fixture.componentRef.setInput('visivel', true);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Saldo insuficiente');
     });
   });
 
@@ -90,9 +91,7 @@ describe('OperationResultComponent', () => {
     });
 
     it('deve retornar o título de permissão', () => {
-      expect((component as any).titulo()).toBe(
-        'Operação não permitida'
-      );
+      expect((component as any).titulo()).toBe('Operação não permitida');
     });
   });
 
