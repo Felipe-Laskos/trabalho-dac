@@ -1,0 +1,23 @@
+<div class="account-field">
+  @if (label()) {
+    <label [for]="inputId()">
+      {{ label() }}
+    </label>
+  }
+
+  <input
+    pInputText
+    [id]="inputId()"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    maxlength="4"
+    [placeholder]="placeholder()"
+    [value]="valor"
+    [disabled]="desabilitado"
+    (input)="aoDigitar($event)"
+    (blur)="aoSairDoCampo()"
+  />
+
+  <small class="field-hint"> Informe os 4 dígitos da conta. </small>
+</div>

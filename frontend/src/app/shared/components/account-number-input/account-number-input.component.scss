@@ -1,0 +1,27 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+
+  label {
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    letter-spacing: 0.08em;
+  }
+
+  .field-hint {
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+  }
+}
