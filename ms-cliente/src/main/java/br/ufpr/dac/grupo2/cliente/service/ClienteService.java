@@ -56,9 +56,9 @@ public class ClienteService {
         dto.setNome(cliente.getNome());
         dto.setCidade(cliente.getCidade());
         dto.setEstado(cliente.getUf());
-        
-        dto.addLink("self", "/clientes/" + cliente.getCpf()); 
-        
+
+        dto.addLink("self", "/clientes/" + cliente.getCpf());
+
         return dto;
     }
 
@@ -67,7 +67,7 @@ public class ClienteService {
         List<Cliente> clientes;
 
         if (busca != null && !busca.isBlank()) {
-            clientes = clienteRepository.findByCpfContainingOrNomeContainingIgnoreCase(busca, busca);
+            clientes = clienteRepository.buscarOrdenado(busca);
         } else {
             clientes = clienteRepository.listarOrdenadoPorNome();
         }
