@@ -15,6 +15,7 @@ export interface DadosResultadoOperacao {
   dataHora?: string | null;
   numeroConta?: string | null;
   tipoOperacao?: string | null;
+  destinatario?: string | null;
   mensagem?: string | null;
 }
 

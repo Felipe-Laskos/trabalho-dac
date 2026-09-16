@@ -1,0 +1,72 @@
+<div class="operacao-page">
+  <div class="page-header">
+    <span class="role-badge">CLIENTE</span>
+    <h1>{{ textos.titulo }}</h1>
+    <a routerLink="/cliente/home" class="voltar">Voltar ao início</a>
+  </div>
+
+  @if (estado() === 'carregando') {
+    <app-loading message="Carregando sua conta..." />
+  } @else if (estado() === 'erro') {
+    <div class="erro-bloco">
+      <app-message type="error" [message]="mensagemErro()" />
+      <p-button
+        label="Tentar de novo"
+        icon="pi pi-refresh"
+        severity="secondary"
+        variant="outlined"
+        (onClick)="carregarConta()" />
+    </div>
+  } @else if (conta(); as contaAtual) {
+    @if (mensagemErro()) {
+      <app-message type="error" [message]="mensagemErro()" />
+    }
+    @if (avisoTimeout()) {
+      <app-message type="empty" [message]="avisoTimeout()" />
+    }
+
+    <p-card styleClass="operacao-card">
+      <app-balance-indicator
+        [saldo]="contaAtual.saldo"
+        [atualizando]="atualizandoSaldo()"
+        mensagemAtualizando="Atualizando saldo" />
+
+      <form class="operacao-form" [formGroup]="form">
+        @if (ehTransferencia) {
+          <app-account-number-input
+            label="Conta destino"
+            inputId="conta-destino"
+            placeholder="0950"
+            formControlName="contaDestino" />
+        }
+
+        <app-money-input
+          label="Valor"
+          inputId="valor-operacao"
+          formControlName="valor" />
+
+        <p-button
+          [label]="textos.acao"
+          [disabled]="processando() || atualizandoSaldo()"
+          [loading]="processando()"
+          (onClick)="pedirConfirmacao()" />
+      </form>
+    </p-card>
+  }
+
+  <app-modal-confirmation
+    [visivel]="modalAberto()"
+    [titulo]="'Confirmar ' + textos.titulo.toLowerCase() + '?'"
+    [textoConfirmar]="textos.confirmar"
+    [carregando]="processando()"
+    [detalhes]="detalhesModal()"
+    (confirmar)="confirmar()"
+    (cancelar)="fecharModal()" />
+
+  @if (resultado(); as res) {
+    <app-operation-result
+      [visivel]="true"
+      [dados]="res"
+      (fecharOuReiniciar)="fecharResultado()" />
+  }
+</div>
