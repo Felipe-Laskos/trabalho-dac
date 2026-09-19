@@ -14,7 +14,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
+import java.util.LinkedHashMap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,10 +67,11 @@ public class ExtratoQueryService {
                         numero, limiteInicial, limiteFinal)
                 .stream().map(this::item).toList();
         String base = "/contas/" + numero;
+        var links = new LinkedHashMap<String, Link>();
+        links.put("self", new Link(base + "/extrato?inicio=" + inicialPeriodo + "&fim=" + finalPeriodo));
+        links.put("conta", new Link(base));
         return new ExtratoDTO(numero, inicialPeriodo.toString(), finalPeriodo.toString(),
-                dinheiro(abertura), itens, Map.of(
-                    "self", new Link(base + "/extrato?inicio=" + inicialPeriodo + "&fim=" + finalPeriodo),
-                    "conta", new Link(base)));
+                dinheiro(abertura), itens, links);
     }
 
     private ExtratoDTO.Item item(Movimentacao m) {

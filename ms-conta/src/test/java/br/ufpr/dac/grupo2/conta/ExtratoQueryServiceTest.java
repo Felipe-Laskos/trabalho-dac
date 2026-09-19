@@ -44,6 +44,7 @@ class ExtratoQueryServiceTest {
         assertTrue(e.movimentacoes().isEmpty());
         assertEquals("1291", e.numeroConta());
         assertEquals("/contas/1291", e._links().get("conta").href());
+        assertEquals(List.of("self", "conta"), new ArrayList<>(e._links().keySet()));
     }
 
     @Test
