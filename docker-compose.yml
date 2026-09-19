@@ -4,9 +4,12 @@ services:
     image: postgres:16
     mem_limit: 384m
     environment:
+      TZ: America/Sao_Paulo
       POSTGRES_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
       POSTGRES_DB: bantads
-    command: ["postgres", "-c", "shared_buffers=128MB"]
+    command: ["postgres", "-c", "shared_buffers=128MB",
+              "-c", "timezone=America/Sao_Paulo",
+              "-c", "log_timezone=America/Sao_Paulo"]
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/sql:/docker-entrypoint-initdb.d:ro
@@ -20,6 +23,8 @@ services:
 
   mongo:
     image: mongo:7
+    environment:
+      TZ: America/Sao_Paulo
     mem_limit: 384m
     command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
     volumes:
@@ -35,6 +40,8 @@ services:
 
   redis:
     image: redis:7
+    environment:
+      TZ: America/Sao_Paulo
     mem_limit: 128m
     command:
       - redis-server
@@ -51,6 +58,8 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
+    environment:
+      TZ: America/Sao_Paulo
     mem_limit: 512m
     volumes:
       - ./config/rabbitmq/20-bantads.conf:/etc/rabbitmq/conf.d/20-bantads.conf:ro
@@ -72,6 +81,7 @@ services:
     image: bantads/ms-auth
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       SPRING_MONGODB_URI: mongodb://mongo:27017/bantads_auth
     depends_on:
@@ -91,6 +101,7 @@ services:
     image: bantads/ms-orquestrador
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_DATA_REDIS_HOST: redis
@@ -113,6 +124,7 @@ services:
     image: bantads/ms-email
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       SPRING_RABBITMQ_HOST: rabbitmq
       GMAIL_USER: ${GMAIL_USER}
@@ -134,6 +146,7 @@ services:
     image: bantads/ms-cliente
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=cliente
       SPRING_DATASOURCE_USERNAME: postgres
@@ -155,6 +168,7 @@ services:
     image: bantads/ms-gerente
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=gerente
       SPRING_DATASOURCE_USERNAME: postgres
@@ -176,6 +190,7 @@ services:
     image: bantads/ms-conta
     mem_limit: 512m
     environment:
+      TZ: America/Sao_Paulo
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
       CONTA_COMMAND_DB_URL: jdbc:postgresql://postgres:5432/bantads
       CONTA_COMMAND_DB_USER: postgres
@@ -204,6 +219,7 @@ services:
     image: bantads/gateway
     mem_limit: 256m
     environment:
+      TZ: America/Sao_Paulo
       NODE_OPTIONS: "--max-old-space-size=192"
       PORT: 8000
       SECRET: ${SECRET:?defina SECRET no .env}
@@ -244,6 +260,8 @@ services:
     build:
       context: ./frontend
     image: bantads/front
+    environment:
+      TZ: America/Sao_Paulo
     mem_limit: 64m
     ports:
       - "4200:80"
