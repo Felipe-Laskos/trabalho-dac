@@ -11,15 +11,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class TratadorDeErros {
 
+    @ExceptionHandler(SolicitacaoNaoEncontradaException.class)
+    public ResponseEntity<ErroDTO> naoEncontrada(SolicitacaoNaoEncontradaException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErroDTO(404, "Not Found", e.getMessage()));
+    }
+
     @ExceptionHandler(SolicitacaoException.class)
-    public ResponseEntity<ErroDTO> tratarSolicitacaoException(SolicitacaoException e) {
-        String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-
-        if (msg.contains("não encontrada") || msg.contains("não encontrado")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErroDTO(404, "Not Found", e.getMessage()));
-        }
-
+    public ResponseEntity<ErroDTO> conflito(SolicitacaoException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErroDTO(409, "Conflict", e.getMessage()));
     }

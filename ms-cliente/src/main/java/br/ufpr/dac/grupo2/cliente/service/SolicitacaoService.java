@@ -3,6 +3,7 @@ package br.ufpr.dac.grupo2.cliente.service;
 import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
 import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoException;
+import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoNaoEncontradaException;
 
 import br.ufpr.dac.grupo2.cliente.model.Solicitacao;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
@@ -21,20 +22,23 @@ import java.util.Optional;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SolicitacaoService {
 
     private final SolicitacaoRepository solicitacaoRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
     private final ClienteRepository clienteRepository;
     private final ModelMapper mapper;
 
-    public SolicitacaoService(SolicitacaoRepository solicitacaoRepository, ClienteRepository clienteRepository, ModelMapper mapper, RabbitTemplate rabbitTemplate) {
+    public SolicitacaoService(SolicitacaoRepository solicitacaoRepository, ClienteRepository clienteRepository, ModelMapper mapper, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
         this.solicitacaoRepository = solicitacaoRepository;
         this.clienteRepository = clienteRepository;
         this.mapper = mapper;
         this.rabbitTemplate = rabbitTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -115,9 +119,9 @@ public class SolicitacaoService {
     }
 
     @Transactional
-    public Solicitacao rejeitarSolicitacao(String cpf, String motivo) {
+    public SolicitacaoResponseDTO rejeitarSolicitacao(String cpf, String motivo) {
         Solicitacao solicitacao = solicitacaoRepository.findByCpf(cpf)
-            .orElseThrow(() -> new SolicitacaoException("Solicitação não encontrada para o CPF: " + cpf));
+            .orElseThrow(() -> new SolicitacaoNaoEncontradaException("Solicitação não encontrada para o CPF: " + cpf));
 
         if (!"PENDENTE".equals(solicitacao.getStatus())) {
             throw new SolicitacaoException("Solicitação com status " + solicitacao.getStatus() + " não pode ser rejeitada");
@@ -128,22 +132,26 @@ public class SolicitacaoService {
         solicitacao.setDataHoraProcessamento(LocalDateTime.now());
 
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
+
+        SolicitacaoResponseDTO salvaDTO = paraDTO(salva);
         
         try {
             Map<String, Object> payload = Map.of(
-                "email", salva.getEmail(),
-                "nome", salva.getNome(),
+                "para", salvaDTO.getEmail(),
+                "nome", salvaDTO.getNome(),
                 "motivo", motivo
             );
 
             MensagemSaga mensagem = MensagemSaga.semSaga("email.solicitacao-rejeitada", payload);
 
-            rabbitTemplate.convertAndSend("ms.email.cmd", mensagem);
+            String json = objectMapper.writeValueAsString(mensagem);
+
+            rabbitTemplate.convertAndSend("ms.email.cmd", json);
         } catch (Exception e) {
             System.err.println("Erro ao publicar na fila ms.email.cmd: " + e.getMessage());
         }
 
-        return salva;
+        return salvaDTO;
     }
 
 }

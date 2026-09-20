@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 
 import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
-import br.ufpr.dac.grupo2.cliente.model.Solicitacao;
 import br.ufpr.dac.grupo2.cliente.service.SolicitacaoService;
 import br.ufpr.dac.grupo2.cliente.dto.Link;
 import br.ufpr.dac.grupo2.cliente.dto.RejeicaoRequestDTO;
@@ -65,11 +64,11 @@ public class SolicitacaoREST {
     }
 
     @PostMapping("/{cpf}/rejeicao")
-    public ResponseEntity<Solicitacao> rejeitarSolicitacao(
+    public ResponseEntity<SolicitacaoResponseDTO> rejeitarSolicitacao(
         @PathVariable String cpf, 
         @Valid @RequestBody RejeicaoRequestDTO rejeicaoRequest) {
 
-        Solicitacao response = service.rejeitarSolicitacao(cpf, rejeicaoRequest.getMotivo());
+        SolicitacaoResponseDTO response = service.rejeitarSolicitacao(cpf, rejeicaoRequest.getMotivo());
 
         return ResponseEntity.ok(response);
     }
