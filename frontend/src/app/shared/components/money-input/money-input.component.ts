@@ -48,8 +48,11 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
   private onValidatorChange: () => void = () => {};
 
   writeValue(valor: string | null): void {
+    this.valorContrato = valor;
     this.centavos = this.centavosDeContrato(valor);
-    this.aplicar(undefined, false);
+    const visual = this.formatarCentavos(this.centavos);
+    this.valorVisual.set(visual);
+    this.ultimoValorVisualValido = visual;
   }
 
   registerOnChange(fn: (valor: string | null) => void): void {
