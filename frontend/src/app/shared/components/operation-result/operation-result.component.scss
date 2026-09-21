@@ -78,6 +78,12 @@
     }
   }
 
+  &.status-erro_tecnico {
+    .result-badge i {
+      color: var(--color-error);
+    }
+  }
+
   .summary-box {
     width: 100%;
     box-sizing: border-box;
@@ -165,6 +171,12 @@
   }
 
   &.status-erro_permissao {
+    .alert-box i {
+      color: var(--color-error);
+    }
+  }
+
+  &.status-erro_tecnico {
     .alert-box i {
       color: var(--color-error);
     }
