@@ -7,7 +7,7 @@ import { Dinheiro } from '../../../core/models/dinheiro';
 import { DataHoraPipe } from '../../pipes/data-hora.pipe';
 import { DinheiroPipe } from '../../pipes/dinheiro.pipe';
 
-export type TipoResultado = 'SUCESSO' | 'ERRO_NEGOCIO' | 'ERRO_PERMISSAO';
+export type TipoResultado = 'SUCESSO' | 'ERRO_NEGOCIO' | 'ERRO_PERMISSAO' | 'ERRO_TECNICO';
 
 export interface DadosResultadoOperacao {
   tipo: TipoResultado;
@@ -41,6 +41,8 @@ export class OperationResultComponent {
         return 'pi pi-exclamation-triangle';
       case 'ERRO_PERMISSAO':
         return 'pi pi-lock';
+      case 'ERRO_TECNICO':
+        return 'pi pi-times-circle';
       default:
         return 'pi pi-info-circle';
     }
@@ -54,6 +56,8 @@ export class OperationResultComponent {
         return 'Não foi possível concluir a operação';
       case 'ERRO_PERMISSAO':
         return 'Operação não permitida';
+      case 'ERRO_TECNICO':
+        return 'Não foi possível falar com o servidor';
       default:
         return 'Resultado da operação';
     }

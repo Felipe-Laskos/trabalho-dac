@@ -39,7 +39,7 @@ function mensagemPadrao(status: number): string {
     case 404:
       return 'Não encontramos o que você pediu.';
     case 422:
-      return 'Não foi possível concluir a operação.';
+      return 'A operação não foi aceita: verifique o valor e a conta informada.';
     default:
       return 'Não foi possível concluir a operação.';
   }

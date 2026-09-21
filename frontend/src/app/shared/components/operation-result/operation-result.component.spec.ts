@@ -95,6 +95,27 @@ describe('OperationResultComponent', () => {
     });
   });
 
+  describe('Resultado de erro técnico', () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput('dados', {
+        tipo: 'ERRO_TECNICO',
+        mensagem: 'Não foi possível falar com o servidor.',
+      });
+
+      fixture.detectChanges();
+    });
+
+    it('deve retornar o ícone de erro técnico', () => {
+      expect((component as any).icone()).toBe('pi pi-times-circle');
+    });
+
+    it('deve retornar o título de erro técnico', () => {
+      expect((component as any).titulo()).toBe(
+        'Não foi possível falar com o servidor'
+      );
+    });
+  });
+
   describe('Interação', () => {
     it('deve emitir o evento ao clicar na ação', () => {
       vi.spyOn(component.fecharOuReiniciar, 'emit');
