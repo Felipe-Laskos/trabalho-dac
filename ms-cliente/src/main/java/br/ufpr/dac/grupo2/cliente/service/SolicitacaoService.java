@@ -11,6 +11,8 @@ import br.ufpr.dac.grupo2.cliente.repository.ClienteRepository;
 import br.ufpr.dac.grupo2.cliente.dto.EnderecoDTO;
 
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +24,12 @@ import java.util.Optional;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class SolicitacaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(SolicitacaoService.class);
 
     private final SolicitacaoRepository solicitacaoRepository;
     private final RabbitTemplate rabbitTemplate;
@@ -44,11 +48,6 @@ public class SolicitacaoService {
     @Transactional(readOnly = true)
     public Optional<SolicitacaoResponseDTO> buscarSolicitacaoPorCpf(String cpf) {
         return solicitacaoRepository.findById(cpf).map(this::paraDTO);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<SolicitacaoResponseDTO> buscarSolicitacaoPorStatus(String status) {
-        return solicitacaoRepository.findByStatus(status).stream().findFirst().map(this::paraDTO);
     }
 
     @Transactional(readOnly = true)
@@ -120,7 +119,7 @@ public class SolicitacaoService {
 
     @Transactional
     public SolicitacaoResponseDTO rejeitarSolicitacao(String cpf, String motivo) {
-        Solicitacao solicitacao = solicitacaoRepository.findByCpf(cpf)
+        Solicitacao solicitacao = solicitacaoRepository.findById(cpf)
             .orElseThrow(() -> new SolicitacaoNaoEncontradaException("Solicitação não encontrada para o CPF: " + cpf));
 
         if (!"PENDENTE".equals(solicitacao.getStatus())) {
@@ -148,7 +147,7 @@ public class SolicitacaoService {
 
             rabbitTemplate.convertAndSend("ms.email.cmd", json);
         } catch (Exception e) {
-            System.err.println("Erro ao publicar na fila ms.email.cmd: " + e.getMessage());
+            log.error("cpf={} rejeicao gravada mas e-mail NAO publicado em ms.email.cmd", cpf, e);
         }
 
         return salvaDTO;
