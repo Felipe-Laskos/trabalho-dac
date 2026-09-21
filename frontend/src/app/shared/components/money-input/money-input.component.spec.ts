@@ -52,10 +52,10 @@ describe('MoneyInputComponent', () => {
       expect((component as any).valorVisual()).toBe('1.234,50');
     });
 
-    it('deve limpar o valor visual quando receber null', () => {
+    it('deve mostrar 0,00 quando receber null', () => {
       component.writeValue(null);
 
-      expect((component as any).valorVisual()).toBe('');
+      expect((component as any).valorVisual()).toBe('0,00');
     });
 
     it('deve atualizar o estado desabilitado', () => {
@@ -159,7 +159,20 @@ describe('MoneyInputComponent', () => {
 
       (component as any).aoDigitar(evento);
 
-      expect(elemento.value).toBe('');
+      expect(elemento.value).toBe('1.001,23');
+    });
+
+    it('deve entrar dígitos a partir dos centavos', () => {
+      const elemento = { value: '0,00', setSelectionRange: () => {} };
+
+      (component as any).aoTecla({
+        key: '1',
+        preventDefault: () => {},
+        target: elemento,
+      });
+
+      expect((component as any).valorVisual()).toBe('0,01');
+      expect((component as any).valorContrato).toBe('0.01');
     });
 
     it('deve impedir valores negativos', () => {
@@ -226,10 +239,10 @@ describe('MoneyInputComponent', () => {
       expect(resultado).toBe('1.234,50');
     });
 
-    it('deve retornar string vazia para valor nulo', () => {
+    it('deve mostrar 0,00 para valor nulo', () => {
       const resultado = (component as any).formatarParaVisual(null);
 
-      expect(resultado).toBe('');
+      expect(resultado).toBe('0,00');
     });
   });
 

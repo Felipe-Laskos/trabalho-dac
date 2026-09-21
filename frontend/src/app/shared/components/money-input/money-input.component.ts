@@ -34,21 +34,22 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
   readonly inputId = input<string>('money-input');
   readonly placeholder = input<string>('0,00');
 
-  protected readonly valorVisual = signal('');
+  protected readonly valorVisual = signal('0,00');
   protected readonly desabilitado = signal(false);
 
   private valorContrato: string | null = null;
-  private ultimoValorVisualValido = '';
+  private ultimoValorVisualValido = '0,00';
+  private centavos = 0;
+
+  private readonly maxCentavos = 9_999_999_999_99;
 
   private onChange: (valor: string | null) => void = () => {};
   private onTouched: () => void = () => {};
   private onValidatorChange: () => void = () => {};
 
   writeValue(valor: string | null): void {
-    this.valorContrato = valor;
-    const visual = this.formatarParaVisual(valor);
-    this.valorVisual.set(visual);
-    this.ultimoValorVisualValido = visual;
+    this.centavos = this.centavosDeContrato(valor);
+    this.aplicar(undefined, false);
   }
 
   registerOnChange(fn: (valor: string | null) => void): void {
@@ -89,116 +90,167 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
     this.onValidatorChange = fn;
   }
 
-  protected aoDigitar(event: Event): void {
-    const elemento = event.target as HTMLInputElement;
-    const valorDigitado = elemento.value;
+  protected aoFocar(event: FocusEvent): void {
+    this.cursorNoFim(event.target as HTMLInputElement);
+  }
 
-    if (valorDigitado.includes('-')) {
-      elemento.value = this.ultimoValorVisualValido;
+  protected aoPressionar(event: MouseEvent): void {
+    if (this.desabilitado()) {
       return;
     }
 
-    const valorLimpo = valorDigitado.replace(/[^\d.,]/g, '');
-    const indiceVirgula = valorLimpo.indexOf(',');
-
-    if (indiceVirgula >= 0) {
-      const parteDecimal = valorLimpo.slice(indiceVirgula + 1).replace(/[.,]/g, '');
-      if (parteDecimal.length > 2) {
-        elemento.value = this.ultimoValorVisualValido;
-        return;
-      }
+    event.preventDefault();
+    const wrapper = event.currentTarget as HTMLElement;
+    const campo = wrapper.querySelector('input');
+    if (!campo || campo.disabled) {
+      return;
     }
 
-    const valorNormalizado = this.normalizarVisual(valorLimpo);
+    campo.focus({ preventScroll: true });
+    this.cursorNoFim(campo);
+  }
 
-    this.valorVisual.set(valorNormalizado);
-    elemento.value = this.valorVisual();
+  protected aoClicar(event: Event): void {
+    this.cursorNoFim(event.target as HTMLInputElement);
+  }
 
-    this.valorContrato = this.converterParaContrato(this.valorVisual());
-    this.ultimoValorVisualValido = this.valorVisual();
+  protected aoTecla(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
 
-    this.onChange(this.valorContrato);
-    this.onValidatorChange();
+    const elemento = event.target as HTMLInputElement;
+
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      this.cursorNoFim(elemento);
+      return;
+    }
+
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      this.entrarDigito(Number(event.key), elemento);
+      return;
+    }
+
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      event.preventDefault();
+      this.centavos = Math.floor(this.centavos / 10);
+      this.aplicar(elemento, true);
+    }
+  }
+
+  protected aoColar(event: ClipboardEvent): void {
+    event.preventDefault();
+    const texto = event.clipboardData?.getData('text') ?? '';
+    if (texto.includes('-')) {
+      return;
+    }
+    this.centavosAPartirDoTexto(texto);
+    this.aplicar(event.target as HTMLInputElement, true);
+  }
+
+  protected aoDigitar(event: Event): void {
+    const elemento = event.target as HTMLInputElement;
+    const tipo = (event as InputEvent).inputType;
+
+    if (
+      tipo === 'insertText' ||
+      tipo === 'deleteContentBackward' ||
+      tipo === 'deleteContentForward'
+    ) {
+      elemento.value = this.valorVisual();
+      this.cursorNoFim(elemento);
+      return;
+    }
+
+    if (elemento.value.includes('-')) {
+      elemento.value = this.ultimoValorVisualValido;
+      this.cursorNoFim(elemento);
+      return;
+    }
+
+    this.centavosAPartirDoTexto(elemento.value);
+    this.aplicar(elemento, true);
   }
 
   protected aoSairDoCampo(): void {
-    const visual = this.formatarParaVisual(this.valorContrato);
-    this.valorVisual.set(visual);
-    this.ultimoValorVisualValido = this.valorVisual();
-
+    this.aplicar(undefined, true);
     this.onTouched();
-    this.onValidatorChange();
   }
 
-  private converterParaContrato(valorVisual: string): string | null {
-    if (!valorVisual) {
-      return null;
+  private entrarDigito(digito: number, elemento: HTMLInputElement): void {
+    const proximo = this.centavos * 10 + digito;
+    this.centavos = Math.min(proximo, this.maxCentavos);
+    this.aplicar(elemento, true);
+  }
+
+  private aplicar(elemento: HTMLInputElement | undefined, emitir: boolean): void {
+    const visual = this.formatarCentavos(this.centavos);
+    this.valorVisual.set(visual);
+    this.ultimoValorVisualValido = visual;
+    this.valorContrato =
+      this.centavos > 0 ? new Decimal(this.centavos).dividedBy(100).toFixed(2) : null;
+
+    if (elemento) {
+      elemento.value = visual;
+      this.cursorNoFim(elemento);
     }
 
-    const semPontos = valorVisual.replace(/\./g, '');
-    const normalizado = semPontos.replace(',', '.');
-
-    if (!normalizado || normalizado === '.') {
-      return null;
+    if (emitir) {
+      this.onChange(this.valorContrato);
+      this.onValidatorChange();
+      queueMicrotask(() => this.onChange(this.valorContrato));
     }
+  }
 
-    const partes = normalizado.split('.');
-    const inteiro = partes[0] || '0';
-    const parteDecimal = partes[1] ?? '';
+  private centavosAPartirDoTexto(texto: string): void {
+    const digitos = texto.replace(/\D/g, '');
+    const bruto = Number(digitos);
+    this.centavos = Number.isFinite(bruto) ? Math.min(bruto, this.maxCentavos) : 0;
+  }
 
-    if (partes.length > 2 || parteDecimal.length > 2) {
-      return null;
+  private centavosDeContrato(valor: string | null): number {
+    if (!valor) {
+      return 0;
     }
-
-    const valor = `${inteiro}.${parteDecimal.padEnd(2, '0')}`;
-
     try {
       const decimalValor = new Decimal(valor);
-
-      if (!decimalValor.isFinite() || decimalValor.lessThanOrEqualTo(0)) {
-        return null;
+      if (!decimalValor.isFinite() || decimalValor.lessThan(0)) {
+        return 0;
       }
-
-      return decimalValor.toFixed(2);
+      return decimalValor.times(100).toDecimalPlaces(0).toNumber();
     } catch {
-      return null;
+      return 0;
     }
   }
 
-  private normalizarVisual(valor: string): string {
-    const resultado = valor.replace(/[^\d.,]/g, '');
-    const indiceVirgula = resultado.indexOf(',');
-
-    if (indiceVirgula >= 0) {
-      let parteInteira = resultado.slice(0, indiceVirgula).replace(/[.,]/g, '');
-      const parteDecimal = resultado.slice(indiceVirgula + 1).replace(/[.,]/g, '');
-
-      if (!parteInteira) {
-        parteInteira = '0';
-      }
-
-      return `${this.formatarMilhares(parteInteira)},${parteDecimal}`;
+  private cursorNoFim(elemento: HTMLInputElement): void {
+    if (typeof elemento.setSelectionRange !== 'function') {
+      return;
     }
+    const irAoFim = () => {
+      const fim = elemento.value.length;
+      elemento.setSelectionRange(fim, fim);
+    };
+    irAoFim();
+    queueMicrotask(irAoFim);
+    requestAnimationFrame(irAoFim);
+    setTimeout(irAoFim, 0);
+  }
 
-    const parteInteira = resultado.replace(/[.,]/g, '');
-    return this.formatarMilhares(parteInteira);
+  private formatarCentavos(centavos: number): string {
+    const inteiro = Math.floor(centavos / 100);
+    const decimal = String(centavos % 100).padStart(2, '0');
+    return `${this.formatarMilhares(String(inteiro))},${decimal}`;
   }
 
   private formatarMilhares(valor: string): string {
-    if (!valor) return '';
+    if (!valor) return '0';
     return valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
   private formatarParaVisual(valor: string | null): string {
-    if (!valor) return '';
-    try {
-      const decimalValor = new Decimal(valor);
-      if (!decimalValor.isFinite()) return '';
-
-      const [inteiro, decimal] = decimalValor.toFixed(2).split('.');
-      return `${this.formatarMilhares(inteiro)},${decimal}`;
-    } catch {
-      return '';
-    }
+    return this.formatarCentavos(this.centavosDeContrato(valor));
   }
 }
