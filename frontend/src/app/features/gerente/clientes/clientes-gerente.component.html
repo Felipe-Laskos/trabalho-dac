@@ -1,0 +1,119 @@
+<div class="page-container">
+
+  <div class="header-section">
+    <div class="header-titles">
+      <span class="role-badge">GERENTE</span>
+      <h1 class="page-title">Clientes do banco</h1>
+    </div>
+
+    <p-button
+      label="Atualizar"
+      icon="pi pi-refresh"
+      styleClass="btn-outline-dark"
+      [disabled]="carregando()"
+      (onClick)="carregarClientes()">
+    </p-button>
+  </div>
+
+  <div class="search-container">
+
+    <p-iconfield 
+      iconPosition="left" 
+      class="search-field">
+
+      <p-inputicon class="pi pi-search"></p-inputicon>
+
+      <input
+        type="text"
+        pInputText
+        placeholder="Buscar por nome ou CPF"
+        [formControl]="buscaControl"
+        class="search-input"
+        [disabled]="carregando()">
+    </p-iconfield>
+
+    <span class="clients-count">
+      {{ clientes().length }} {{ clientes().length === 1 ? 'cliente' : 'clientes' }}
+    </span>
+
+  </div>
+
+  <div class="table-wrapper">
+
+    @if (erro()) {
+    <app-message
+      type="error"
+      [message]="erro()">
+    </app-message>
+    }
+
+    @else if (carregando()) {
+       <app-loading message="Carregando clientes..." />
+    }
+
+    @else if (clientes().length === 0) {
+      <div class="state-message">
+        <i class="pi pi-users"></i>
+        <span>Nenhum cliente encontrado</span>
+
+        @if (buscaRealizada) {
+          <h5>
+        Nada corresponde a "{{ buscaRealizada }}". <br>
+        A busca aceita parte do nome ou CPF.
+      </h5>
+    } @else {
+      <h5>Ainda não há clientes aprovados.</h5>
+    }
+      </div>
+    }
+
+    @else {
+      <p-table
+        [value]="clientes()"
+        styleClass="bantads-table">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th>CPF</th>
+            <th>NOME</th>
+            <th>CIDADE</th>
+            <th>ESTADO</th>
+            <th class="salary-column text-right">SALDO</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+          <tr>
+            <td class="col-cpf">
+              {{ row.cpf | cpf }}
+            </td>
+
+            <td>
+              <span class="user-name">
+                {{ row.nome }}
+              </span>
+            </td>
+
+            <td class="city-column">
+              {{ row.cidade }}
+            </td>
+
+            <td class="state-column">
+              {{ row.estado }}
+            </td>
+
+            <td class="salary-column text-right">
+              <span class="salary-value">
+                {{ row.saldo | dinheiro }}
+              </span>
+            </td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+    }
+
+  </div>
+
+</div>
+
