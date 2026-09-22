@@ -6,6 +6,8 @@ const { montarUrl, identidadeDe, consultar, responderErro } = require("../micros
 
 const router = express.Router();
 
+const SEM_CONTA = "0.00";
+
 async function saldoDe(cpf, req) {
   try {
     const { saldo } = await consultar(
@@ -14,7 +16,7 @@ async function saldoDe(cpf, req) {
 
     return saldo;
   } catch (erro) {
-    if (erro.response?.status === 404) return null;
+    if (erro.response?.status === 404) return SEM_CONTA;
 
     throw erro;
   }
