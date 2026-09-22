@@ -1,25 +1,10 @@
 #!/bin/bash
-# ==============================================================================
-# dlq.sh — CLI de operação sobre as Dead Letter Queues do RabbitMQ (BANTADS).
-#
-# O reprocessamento é sempre MANUAL, nunca automático (ver tools/RESILIENCIA.md
-# §"Por que a reinjeção é manual"): uma mensagem venenosa reenfileirada sozinha
-# entraria em loop infinito e derrubaria a frota. Por isso toda ação destrutiva
-# aqui exige confirmação explícita.
-#
-# Uso:
-#   tools/dlq.sh listar
-#   tools/dlq.sh ver <fila.dlq>
-#   tools/dlq.sh reinjetar <fila.dlq> [n]
-#   tools/dlq.sh purgar <fila.dlq>
-# ==============================================================================
 set -uo pipefail
 
 RABBITMQ_API_URL="${RABBITMQ_API_URL:-http://localhost:15672/api}"
 RABBITMQ_USER="${RABBITMQ_USER:-guest}"
 RABBITMQ_PASS="${RABBITMQ_PASS:-guest}"
 
-# DLQ -> fila original (mesmo mapeamento de gateway/topologia.js)
 declare -A FILA_ORIGEM=(
   [ms.cliente.cmd.dlq]="ms.cliente.cmd"
   [ms.conta.cmd.dlq]="ms.conta.cmd"
@@ -44,7 +29,6 @@ precisa_de() {
 precisa_de curl jq
 
 api() {
-  # api <metodo> <caminho> [corpo-json]
   local metodo="$1" caminho="$2" corpo="${3:-}"
   local args=(-s -u "$RABBITMQ_USER:$RABBITMQ_PASS" -X "$metodo")
   [ -n "$corpo" ] && args+=(-H "Content-Type: application/json" -d "$corpo")
@@ -58,7 +42,6 @@ validar_dlq() {
 }
 
 confirmar() {
-  # confirmar <mensagem>
   echo "$1"
   read -r -p "Digite 'sim' para confirmar: " resposta
   [ "$resposta" = "sim" ] || { echo "Cancelado."; exit 1; }
@@ -92,8 +75,10 @@ cmd_ver() {
   resposta="$(api POST "/queues/%2f/$fila/get" \
     '{"count":1,"ackmode":"reject_requeue_true","encoding":"auto","truncate":50000}' 2>/dev/null)"
 
-  if ! jq_seguro "$resposta" -e 'type == "array" and length > 0' >/dev/null 2>&1; then
-    echo "Fila '$fila' está vazia (ou a API não respondeu)."
+  jq_seguro "$resposta" -e 'type == "array"' >/dev/null 2>&1 \
+    || erro "não foi possível consultar a API do RabbitMQ em $RABBITMQ_API_URL"
+  if jq_seguro "$resposta" -e 'length == 0' >/dev/null 2>&1; then
+    echo "Fila '$fila' está vazia."
     return 0
   fi
 
@@ -105,18 +90,13 @@ cmd_ver() {
 reinjetar_uma() {
   local dlq="$1" original="$2"
 
-  # Remove a mensagem da DLQ de forma atômica (uma única chamada). Espiar
-  # com ack_requeue_true e só depois consumir numa segunda chamada NÃO
-  # garante pegar a mesma mensagem: o RabbitMQ pode reordenar a fila ao
-  # dar requeue, o que já causou duplicação e perda de mensagem em teste.
-  # O preço deste jeito é: se a publicação abaixo falhar, a mensagem já
-  # saiu da DLQ — por isso ela é impressa por inteiro no erro, para
-  # recuperação manual.
   local consumido
   consumido="$(api POST "/queues/%2f/$dlq/get" \
     '{"count":1,"ackmode":"ack_requeue_false","encoding":"auto","truncate":50000}' 2>/dev/null)"
 
-  if ! jq_seguro "$consumido" -e 'type == "array" and length > 0' >/dev/null 2>&1; then
+  jq_seguro "$consumido" -e 'type == "array"' >/dev/null 2>&1 \
+    || erro "não foi possível consultar a API do RabbitMQ em $RABBITMQ_API_URL"
+  if jq_seguro "$consumido" -e 'length == 0' >/dev/null 2>&1; then
     echo "  (fila vazia, nada a reinjetar)"
     return 1
   fi
@@ -124,8 +104,6 @@ reinjetar_uma() {
   local payload payload_encoding properties
   payload="$(echo "$consumido" | jq -r '.[0].payload')"
   payload_encoding="$(echo "$consumido" | jq -r '.[0].payload_encoding')"
-  # a API do RabbitMQ devolve "properties": [] (array) quando a mensagem não
-  # tem properties, mas /publish só aceita objeto — normaliza para {}
   properties="$(echo "$consumido" | jq -c '.[0].properties | if type == "object" then . else {} end')"
 
   local publicar_corpo publicado
@@ -137,8 +115,10 @@ reinjetar_uma() {
 
   if ! jq_seguro "$publicado" -e '.routed == true' >/dev/null 2>&1; then
     echo "  [FALHA] a mensagem já saiu de '$dlq' mas a publicação em '$original' não foi confirmada."
-    echo "  Payload perdido da DLQ (recupere manualmente):"
-    echo "    $payload"
+    echo "  Mensagem que saiu da DLQ (recupere manualmente):"
+    echo "    payload: $payload"
+    echo "    payload_encoding: $payload_encoding"
+    echo "    properties: $properties"
     return 1
   fi
 
