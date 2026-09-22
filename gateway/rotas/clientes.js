@@ -34,7 +34,7 @@ async function listarClientes(req, res) {
       async (cliente) => ({ ...cliente, saldo: await saldoDe(cliente.cpf, req) })
     ));
 
-    return res.json(comSaldo);
+    return res.json({ clientes: comSaldo, _links: { self: { href: "/clientes" } } });
   } catch (erro) {
     return responderErro(erro, res);
   }
