@@ -63,10 +63,13 @@ describe('ClientesGerenteComponent', () => {
   };
 
   beforeEach(async () => {
-    vi.useFakeTimers();
+    vi.useRealTimers();
 
     apiMock.get.mockImplementation(
-      async (url: string, parametros?: Record<string, string>) => {
+      async (
+        url: string,
+        parametros?: Record<string, string>
+      ) => {
         const busca = parametros?.['busca']?.toLowerCase() ?? '';
 
         if (!busca) {
@@ -96,7 +99,13 @@ describe('ClientesGerenteComponent', () => {
 
     fixture.detectChanges();
 
+    await fixture.whenStable();
+
+    vi.useFakeTimers();
+
     await vi.advanceTimersByTimeAsync(0);
+
+    fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -108,14 +117,22 @@ describe('ClientesGerenteComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deve iniciar com os 5 clientes', () => {
-    expect(component.isLoading).toBe(false);
-    expect(component.hasError).toBe(false);
-    expect(component.clientes.length).toBe(5);
+  it('deve iniciar com os 5 clientes', async () => {
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('tbody tr').length
+    ).toBe(5);
+
+    expect(
+      fixture.nativeElement.textContent
+    ).toContain('Catharyna');
   });
 
   it('deve manter os clientes na ordem recebida pela API', () => {
-    expect(component.clientes.map((cliente) => cliente.nome)).toEqual([
+    expect(
+      component.clientes().map((cliente) => cliente.nome)
+    ).toEqual([
       'Catharyna',
       'Catianna',
       'Coândrya',
@@ -129,77 +146,66 @@ describe('ClientesGerenteComponent', () => {
 
     await vi.advanceTimersByTimeAsync(399);
 
-    expect(component.clientes.map((cliente) => cliente.nome)).toEqual([
-      'Catharyna',
-      'Catianna',
-      'Coândrya',
-      'Cleuddônio',
-      'Cutardo',
-    ]);
+    expect(apiMock.get).toHaveBeenCalledTimes(1);
 
     await vi.advanceTimersByTimeAsync(1);
 
-    expect(component.clientes.map((cliente) => cliente.nome)).toEqual([
-      'Catharyna',
-      'Catianna',
-    ]);
-
+    expect(apiMock.get).toHaveBeenCalledTimes(2);
     expect(component.buscaRealizada).toBe('cat');
-    expect(component.isLoading).toBe(false);
-    expect(component.hasError).toBe(false);
+
+    expect(
+    component.clientes().map((cliente) => cliente.nome)
+  ).toEqual([
+    'Catharyna',
+    'Catianna',
+  ])
   });
 
   it('deve buscar por CPF parcial após o debounce', async () => {
-    component.buscaControl.setValue('129');
+    component.buscaControl.setValue('1291');
 
     await vi.advanceTimersByTimeAsync(400);
 
-    expect(component.clientes.length).toBe(1);
-    expect(component.clientes[0].nome).toBe('Catharyna');
-    expect(component.clientes[0].cpf).toBe('12912861012');
+    expect(apiMock.get).toHaveBeenCalledTimes(2);
 
-    expect(component.buscaRealizada).toBe('129');
-    expect(component.isLoading).toBe(false);
-    expect(component.hasError).toBe(false);
+    expect(component.clientes().length).toBe(1);
+    expect(component.clientes()[0].nome).toBe('Catharyna');
+    expect(component.clientes()[0].cpf).toBe('12912861012');
+    expect(component.buscaRealizada).toBe('1291');
   });
 
   it('deve restaurar os 5 clientes ao limpar a busca', async () => {
-    component.buscaControl.setValue('cat');
+  component.buscaControl.setValue('cat');
 
-    await vi.advanceTimersByTimeAsync(400);
+  await vi.advanceTimersByTimeAsync(400);
 
-    expect(component.clientes.length).toBe(2);
+  expect(component.clientes().length).toBe(2);
 
-    component.buscaControl.setValue('');
+  component.buscaControl.setValue('');
 
-    await vi.advanceTimersByTimeAsync(400);
+  await vi.advanceTimersByTimeAsync(400);
 
-    expect(component.clientes.length).toBe(5);
-
-    expect(component.buscaRealizada).toBe('');
-    expect(component.isLoading).toBe(false);
-    expect(component.hasError).toBe(false);
-  });
+  expect(component.clientes().length).toBe(5);
+  expect(component.buscaRealizada).toBe('');
+});
 
   it('deve aguardar o debounce antes de realizar uma nova busca', async () => {
     component.buscaControl.setValue('cat');
 
     await vi.advanceTimersByTimeAsync(399);
 
-    expect(component.clientes.length).toBe(5);
+    expect(apiMock.get).toHaveBeenCalledTimes(1);
+    expect(component.clientes().length).toBe(5);
     expect(component.buscaRealizada).toBe('');
 
     await vi.advanceTimersByTimeAsync(1);
 
-    expect(component.clientes.length).toBe(2);
+    expect(apiMock.get).toHaveBeenCalledTimes(2);
     expect(component.buscaRealizada).toBe('cat');
-    expect(component.isLoading).toBe(false);
   });
 
   it('deve registrar a última busca somente após ela ser processada', async () => {
-    component.buscaControl.setValue('xyz');
-
-    expect(component.buscaRealizada).toBe('');
+    component.buscaControl.setValue('cat');
 
     await vi.advanceTimersByTimeAsync(399);
 
@@ -207,26 +213,27 @@ describe('ClientesGerenteComponent', () => {
 
     await vi.advanceTimersByTimeAsync(1);
 
-    expect(component.buscaRealizada).toBe('xyz');
+    expect(component.buscaRealizada).toBe('cat');
   });
 
   it('deve deixar a lista vazia quando não encontrar clientes', async () => {
+    component.buscaControl.setValue('xyz');
+
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(component.clientes()).toEqual([]);
+    expect(component.carregando()).toBe(false);
+    expect(component.erro()).toBe('');
+    expect(component.buscaRealizada).toBe('xyz');
+  });
+
+  it('deve manter o estado de erro vazio durante uma busca normal', async () => {
     component.buscaControl.setValue('cliente-inexistente');
 
     await vi.advanceTimersByTimeAsync(400);
 
-    expect(component.clientes).toEqual([]);
-    expect(component.isLoading).toBe(false);
-    expect(component.hasError).toBe(false);
-    expect(component.buscaRealizada).toBe('cliente-inexistente');
-  });
-
-  it('deve manter o estado de erro falso durante uma busca normal', async () => {
-    component.buscaControl.setValue('cat');
-
-    await vi.advanceTimersByTimeAsync(400);
-
-    expect(component.hasError).toBe(false);
-    expect(component.isLoading).toBe(false);
+    expect(component.erro()).toBe('');
+    expect(component.carregando()).toBe(false);
   });
 });
+

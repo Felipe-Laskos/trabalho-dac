@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import {
@@ -17,6 +17,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { mensagemDeErro } from '../../../core/services/erro.util';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';  
+import { MessageComponent } from '../../../shared/components/message/message.component';  
 
 @Component({
   selector: 'app-clientes-gerente',
@@ -30,7 +33,9 @@ import { InputIconModule } from 'primeng/inputicon';
     InputTextModule,
     IconFieldModule,
     InputIconModule,
-  ],
+    LoadingComponent,
+    MessageComponent
+],
   templateUrl: './clientes-gerente.component.html',
   styleUrl: './clientes-gerente.component.scss',
 })
@@ -40,10 +45,9 @@ export class ClientesGerenteComponent implements OnInit {
   buscaControl = new FormControl('', { nonNullable: true });
   buscaRealizada = '';
 
-  clientes: ClienteResumo[] = [];
-
-  isLoading = true;
-  hasError = false;
+  readonly clientes = signal<ClienteResumo[]>([]);
+  readonly carregando = signal(true);
+  readonly erro = signal('');
 
   ngOnInit(): void {
     this.carregarClientes();
@@ -59,8 +63,8 @@ export class ClientesGerenteComponent implements OnInit {
   }
 
   async carregarClientes(): Promise<void> {
-    this.isLoading = true;
-    this.hasError = false;
+    this.carregando.set(true);
+    this.erro.set('');
 
     try {
       const parametros: Parametros = {};
@@ -75,13 +79,13 @@ export class ClientesGerenteComponent implements OnInit {
         parametros
       );
 
-      this.clientes = resultado;
+      this.clientes.set(resultado);
       this.buscaRealizada = busca;
-    } catch {
-      this.hasError = true;
-      this.clientes = [];
+    } catch (e) {
+      this.erro.set(mensagemDeErro(e));
+      this.clientes.set([]);
     } finally {
-      this.isLoading = false;
+      this.carregando.set(false);
     }
   }
 }

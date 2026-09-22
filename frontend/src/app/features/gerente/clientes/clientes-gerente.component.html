@@ -10,7 +10,7 @@
       label="Atualizar"
       icon="pi pi-refresh"
       styleClass="btn-outline-dark"
-      [disabled]="isLoading"
+      [disabled]="carregando()"
       (onClick)="carregarClientes()">
     </p-button>
   </div>
@@ -18,10 +18,10 @@
   <div class="search-container">
 
     <p-iconfield 
-    iconPosition="left" 
-    class="search-field">
+      iconPosition="left" 
+      class="search-field">
 
-    <p-inputicon class="pi pi-search"></p-inputicon>
+      <p-inputicon class="pi pi-search"></p-inputicon>
 
       <input
         type="text"
@@ -29,49 +29,47 @@
         placeholder="Buscar por nome ou CPF"
         [formControl]="buscaControl"
         class="search-input"
-        [disabled]="isLoading">
+        [disabled]="carregando()">
     </p-iconfield>
 
     <span class="clients-count">
-      {{ clientes.length }} {{ clientes.length === 1 ? 'cliente' : 'clientes' }}
+      {{ clientes().length }} {{ clientes().length === 1 ? 'cliente' : 'clientes' }}
     </span>
 
   </div>
 
   <div class="table-wrapper">
 
-    @if (hasError) {
-      <div class="state-message">
-        <i class="pi pi-exclamation-triangle"></i>
-        <span>Ocorreu um erro ao carregar os clientes.</span>
-
-        <p-button
-          label="Tentar novamente"
-          icon="pi pi-refresh"
-          styleClass="btn-outline-dark"
-          (onClick)="carregarClientes()">
-        </p-button>
-      </div>
+    @if (erro()) {
+    <app-message
+      type="error"
+      [message]="erro()">
+    </app-message>
     }
 
-    @else if (isLoading) {
-      <div class="state-message">
-        <i class="pi pi-spin pi-spinner"></i>
-        <span>Carregando clientes...</span>
-      </div>
+    @else if (carregando()) {
+       <app-loading message="Carregando clientes..." />
     }
 
-    @else if (clientes.length === 0) {
+    @else if (clientes().length === 0) {
       <div class="state-message">
         <i class="pi pi-users"></i>
         <span>Nenhum cliente encontrado</span>
-        <h5>Nada corresponde a "{{ buscaRealizada }}". <br> A busca aceita parte do nome ou CPF. </h5>
+
+        @if (buscaRealizada) {
+          <h5>
+        Nada corresponde a "{{ buscaRealizada }}". <br>
+        A busca aceita parte do nome ou CPF.
+      </h5>
+    } @else {
+      <h5>Ainda não há clientes aprovados.</h5>
+    }
       </div>
     }
 
     @else {
       <p-table
-        [value]="clientes"
+        [value]="clientes()"
         styleClass="bantads-table">
 
         <ng-template pTemplate="header">
@@ -118,3 +116,4 @@
   </div>
 
 </div>
+
