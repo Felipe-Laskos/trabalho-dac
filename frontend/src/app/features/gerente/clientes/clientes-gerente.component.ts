@@ -1,13 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import {
   debounceTime,
   distinctUntilChanged,
 } from 'rxjs/operators';
 
 import { ApiService, Parametros } from '../../../core/services/api.service';
-import { ClienteResumo } from '../../../core/models/cliente.model';
+import { ClienteResumo, ClientesList } from '../../../core/models/cliente.model';
 
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
@@ -18,14 +17,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { mensagemDeErro } from '../../../core/services/erro.util';
-import { LoadingComponent } from '../../../shared/components/loading/loading.component';  
-import { MessageComponent } from '../../../shared/components/message/message.component';  
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { MessageComponent } from '../../../shared/components/message/message.component';
 
 @Component({
   selector: 'app-clientes-gerente',
   imports: [
     ReactiveFormsModule,
-    CommonModule,
     CpfPipe,
     DinheiroPipe,
     TableModule,
@@ -34,8 +32,8 @@ import { MessageComponent } from '../../../shared/components/message/message.com
     IconFieldModule,
     InputIconModule,
     LoadingComponent,
-    MessageComponent
-],
+    MessageComponent,
+  ],
   templateUrl: './clientes-gerente.component.html',
   styleUrl: './clientes-gerente.component.scss',
 })
@@ -74,12 +72,12 @@ export class ClientesGerenteComponent implements OnInit {
         parametros['busca'] = busca;
       }
 
-      const resultado = await this.api.get<ClienteResumo[]>(
+      const resultado = await this.api.get<ClientesList>(
         '/clientes',
         parametros
       );
 
-      this.clientes.set(resultado);
+      this.clientes.set(resultado.clientes);
       this.buscaRealizada = busca;
     } catch (e) {
       this.erro.set(mensagemDeErro(e));

@@ -34,7 +34,7 @@
   }
 }
 
-.btn-outline-dark {
+:host ::ng-deep .btn-outline-dark {
   flex-shrink: 0;
   background: var(--color-surface);
   color: var(--color-text);
@@ -178,15 +178,15 @@ th {
   width: 18%;
 }
 
-.bantads-table tbody tr:nth-child(odd) td {
+.bantads-table tr:nth-child(odd) td {
   background: var(--color-surface);
 }
 
-.bantads-table tbody tr:nth-child(even) td {
+.bantads-table tr:nth-child(even) td {
   background: var(--color-background);
 }
 
-.bantads-table tbody tr:hover td {
+.bantads-table tr:hover td {
   background: var(--color-highlight);
 }
 
