@@ -21,35 +21,35 @@ const CLIENTES_MOCK = [
     _links: {},
   },
   {
-    cpf: '98765432100',
+    cpf: '85733854057',
     nome: 'Catianna',
-    cidade: 'Araucária',
+    cidade: 'Curitiba',
     estado: 'PR',
-    saldo: '1250.50',
+    saldo: '200.00',
     _links: {},
   },
   {
-    cpf: '45678912300',
-    nome: 'Coândrya',
-    cidade: 'São José dos Pinhais',
-    estado: 'PR',
-    saldo: '320.75',
-    _links: {},
-  },
-  {
-    cpf: '32165498700',
+    cpf: '09506382000',
     nome: 'Cleuddônio',
-    cidade: 'Colombo',
+    cidade: 'Curitiba',
     estado: 'PR',
-    saldo: '2100.00',
+    saldo: '10000.00',
     _links: {},
   },
   {
-    cpf: '74185296300',
-    nome: 'Cutardo',
-    cidade: 'Pinhais',
+    cpf: '76179646090',
+    nome: 'Coândrya',
+    cidade: 'Curitiba',
     estado: 'PR',
-    saldo: '560.30',
+    saldo: '1500.00',
+    _links: {},
+  },
+  {
+    cpf: '58872160006',
+    nome: 'Cutardo',
+    cidade: 'Curitiba',
+    estado: 'PR',
+    saldo: '150000.00',
     _links: {},
   },
 ];
@@ -72,15 +72,15 @@ describe('ClientesGerenteComponent', () => {
       ) => {
         const busca = parametros?.['busca']?.toLowerCase() ?? '';
 
-        if (!busca) {
-          return CLIENTES_MOCK;
-        }
+        const clientes = busca
+          ? CLIENTES_MOCK.filter(
+              (cliente) =>
+                cliente.nome.toLowerCase().includes(busca) ||
+                cliente.cpf.includes(busca)
+            )
+          : CLIENTES_MOCK;
 
-        return CLIENTES_MOCK.filter(
-          (cliente) =>
-            cliente.nome.toLowerCase().includes(busca) ||
-            cliente.cpf.includes(busca)
-        );
+        return { clientes, _links: { self: { href: '/clientes' } } };
       }
     );
 
@@ -97,15 +97,11 @@ describe('ClientesGerenteComponent', () => {
     fixture = TestBed.createComponent(ClientesGerenteComponent);
     component = fixture.componentInstance;
 
-    fixture.detectChanges();
-
     await fixture.whenStable();
 
     vi.useFakeTimers();
 
     await vi.advanceTimersByTimeAsync(0);
-
-    fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -129,14 +125,21 @@ describe('ClientesGerenteComponent', () => {
     ).toContain('Catharyna');
   });
 
+  it('deve ler os clientes de dentro do envelope ClientesList', async () => {
+    await fixture.whenStable();
+
+    expect(Array.isArray(component.clientes())).toBe(true);
+    expect(component.clientes().length).toBe(5);
+  });
+
   it('deve manter os clientes na ordem recebida pela API', () => {
     expect(
       component.clientes().map((cliente) => cliente.nome)
     ).toEqual([
       'Catharyna',
       'Catianna',
-      'Coândrya',
       'Cleuddônio',
+      'Coândrya',
       'Cutardo',
     ]);
   });
@@ -154,15 +157,12 @@ describe('ClientesGerenteComponent', () => {
     expect(component.buscaRealizada).toBe('cat');
 
     expect(
-    component.clientes().map((cliente) => cliente.nome)
-  ).toEqual([
-    'Catharyna',
-    'Catianna',
-  ])
+      component.clientes().map((cliente) => cliente.nome)
+    ).toEqual(['Catharyna', 'Catianna']);
   });
 
   it('deve buscar por CPF parcial após o debounce', async () => {
-    component.buscaControl.setValue('1291');
+    component.buscaControl.setValue('129');
 
     await vi.advanceTimersByTimeAsync(400);
 
@@ -171,23 +171,23 @@ describe('ClientesGerenteComponent', () => {
     expect(component.clientes().length).toBe(1);
     expect(component.clientes()[0].nome).toBe('Catharyna');
     expect(component.clientes()[0].cpf).toBe('12912861012');
-    expect(component.buscaRealizada).toBe('1291');
+    expect(component.buscaRealizada).toBe('129');
   });
 
   it('deve restaurar os 5 clientes ao limpar a busca', async () => {
-  component.buscaControl.setValue('cat');
+    component.buscaControl.setValue('cat');
 
-  await vi.advanceTimersByTimeAsync(400);
+    await vi.advanceTimersByTimeAsync(400);
 
-  expect(component.clientes().length).toBe(2);
+    expect(component.clientes().length).toBe(2);
 
-  component.buscaControl.setValue('');
+    component.buscaControl.setValue('');
 
-  await vi.advanceTimersByTimeAsync(400);
+    await vi.advanceTimersByTimeAsync(400);
 
-  expect(component.clientes().length).toBe(5);
-  expect(component.buscaRealizada).toBe('');
-});
+    expect(component.clientes().length).toBe(5);
+    expect(component.buscaRealizada).toBe('');
+  });
 
   it('deve aguardar o debounce antes de realizar uma nova busca', async () => {
     component.buscaControl.setValue('cat');

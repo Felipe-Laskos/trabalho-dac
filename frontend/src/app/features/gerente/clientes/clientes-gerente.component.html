@@ -17,8 +17,8 @@
 
   <div class="search-container">
 
-    <p-iconfield 
-      iconPosition="left" 
+    <p-iconfield
+      iconPosition="left"
       class="search-field">
 
       <p-inputicon class="pi pi-search"></p-inputicon>
@@ -28,8 +28,7 @@
         pInputText
         placeholder="Buscar por nome ou CPF"
         [formControl]="buscaControl"
-        class="search-input"
-        [disabled]="carregando()">
+        class="search-input">
     </p-iconfield>
 
     <span class="clients-count">
@@ -58,12 +57,12 @@
 
         @if (buscaRealizada) {
           <h5>
-        Nada corresponde a "{{ buscaRealizada }}". <br>
-        A busca aceita parte do nome ou CPF.
-      </h5>
-    } @else {
-      <h5>Ainda não há clientes aprovados.</h5>
-    }
+            Nada corresponde a "{{ buscaRealizada }}". <br>
+            A busca aceita parte do nome ou CPF.
+          </h5>
+        } @else {
+          <h5>Ainda não há clientes aprovados.</h5>
+        }
       </div>
     }
 
@@ -82,7 +81,7 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+        <ng-template pTemplate="body" let-row>
           <tr>
             <td class="col-cpf">
               {{ row.cpf | cpf }}
