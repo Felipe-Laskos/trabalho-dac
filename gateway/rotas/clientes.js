@@ -1,10 +1,44 @@
 const express = require("express");
 
-const { CPF, exigirGerenteOuProprio, exigirFormato, injetarIdentidade } = require("../auth");
+const { CPF, exigirPerfil, exigirGerenteOuProprio, exigirFormato, injetarIdentidade } = require("../auth");
 const { cacheAside } = require("../redis");
 const { montarUrl, identidadeDe, consultar, responderErro } = require("../microsservicos");
 
 const router = express.Router();
+
+async function saldoDe(cpf, req) {
+  try {
+    const { saldo } = await consultar(
+      montarUrl(process.env.MS_CONTA_URL, "clientes", cpf, "conta"), identidadeDe(req)
+    );
+
+    return saldo;
+  } catch (erro) {
+    if (erro.response?.status === 404) return null;
+
+    throw erro;
+  }
+}
+
+async function listarClientes(req, res) {
+  const { busca } = req.query;
+
+  try {
+    const clientes = await consultar(
+      montarUrl(process.env.MS_CLIENTE_URL, "clientes"),
+      identidadeDe(req),
+      busca ? { busca } : undefined
+    );
+
+    const comSaldo = await Promise.all(clientes.map(
+      async (cliente) => ({ ...cliente, saldo: await saldoDe(cliente.cpf, req) })
+    ));
+
+    return res.json(comSaldo);
+  } catch (erro) {
+    return responderErro(erro, res);
+  }
+}
 
 async function buscarCliente(req, res) {
   const { cpf } = req.params;
@@ -36,6 +70,10 @@ async function buscarContaDoCliente(req, res) {
     return responderErro(erro, res);
   }
 }
+
+router.get("/",
+  exigirPerfil("GERENTE"), injetarIdentidade,
+  listarClientes);
 
 router.get("/:cpf",
   exigirGerenteOuProprio("cpf"), exigirFormato("cpf", CPF), injetarIdentidade,
