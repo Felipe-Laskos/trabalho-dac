@@ -7,10 +7,7 @@ import {
 } from 'rxjs/operators';
 
 import { ApiService, Parametros } from '../../../core/services/api.service';
-import {
-  ClientesList,
-  ClienteResumo,
-} from '../../../core/models/cliente.model';
+import { ClienteResumo } from '../../../core/models/cliente.model';
 
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
@@ -20,49 +17,6 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-
-const CLIENTES_MOCK: ClienteResumo[] = [
-  {
-    cpf: '12912861012',
-    nome: 'Catharyna',
-    cidade: 'Curitiba',
-    estado: 'PR',
-    saldo: '800.00',
-    _links: {} as any,
-  },
-  {
-    cpf: '98765432100',
-    nome: 'Catianna',
-    cidade: 'Araucária',
-    estado: 'PR',
-    saldo: '1250.50',
-    _links: {} as any,
-  },
-  {
-    cpf: '45678912300',
-    nome: 'Coândrya',
-    cidade: 'São José dos Pinhais',
-    estado: 'PR',
-    saldo: '320.75',
-    _links: {} as any,
-  },
-  {
-    cpf: '32165498700',
-    nome: 'Cleuddônio',
-    cidade: 'Colombo',
-    estado: 'PR',
-    saldo: '2100.00',
-    _links: {} as any,
-  },
-  {
-    cpf: '74185296300',
-    nome: 'Cutardo',
-    cidade: 'Pinhais',
-    estado: 'PR',
-    saldo: '560.30',
-    _links: {} as any,
-  },
-];
 
 @Component({
   selector: 'app-clientes-gerente',
@@ -92,41 +46,16 @@ export class ClientesGerenteComponent implements OnInit {
   hasError = false;
 
   ngOnInit(): void {
-    this.clientes = CLIENTES_MOCK;
-    this.isLoading = false;
+    this.carregarClientes();
 
     this.buscaControl.valueChanges
       .pipe(
         debounceTime(400),
         distinctUntilChanged()
       )
-      .subscribe((termo) => {
-        this.buscarMock(termo);
+      .subscribe(() => {
+        this.carregarClientes();
       });
-  }
-
-  private buscarMock(termo: string): void {
-    this.isLoading = true;
-    this.hasError = false;
-
-    const busca = termo.trim().toLowerCase();
-
-    setTimeout(() => {
-      this.buscaRealizada = termo.trim();
-      
-      if (!busca) {
-        this.clientes = CLIENTES_MOCK;
-      } else {
-        this.clientes = CLIENTES_MOCK.filter((cliente) => {
-          const nome = cliente.nome.toLowerCase();
-          const cpf = cliente.cpf;
-
-          return nome.includes(busca) || cpf.includes(busca);
-        });
-      }
-
-      this.isLoading = false;
-    }, 300);
   }
 
   async carregarClientes(): Promise<void> {
@@ -141,12 +70,13 @@ export class ClientesGerenteComponent implements OnInit {
         parametros['busca'] = busca;
       }
 
-      const resultado = await this.api.get<ClientesList>(
+      const resultado = await this.api.get<ClienteResumo[]>(
         '/clientes',
         parametros
       );
 
-      this.clientes = resultado.clientes;
+      this.clientes = resultado;
+      this.buscaRealizada = busca;
     } catch {
       this.hasError = true;
       this.clientes = [];
