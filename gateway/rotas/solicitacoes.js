@@ -7,7 +7,7 @@ const { montarUrl, identidadeDe, consultar, criar, responderErro } = require("..
 const publica = express.Router();
 const gerente = express.Router();
 
-// os dois status que o POST /solicitacoes produz
+// os status de negocio do POST publico e da rejeicao
 const REPASSAR = [400, 409];
 
 async function criarSolicitacao(req, res) {
@@ -19,6 +19,21 @@ async function criarSolicitacao(req, res) {
     if (location) res.set("Location", location);
 
     return res.status(201).json(corpo);
+  } catch (erro) {
+    return responderErro(erro, res, REPASSAR);
+  }
+}
+
+async function rejeitarSolicitacao(req, res) {
+  const { cpf } = req.params;
+
+  try {
+    const { corpo } = await criar(
+      montarUrl(process.env.MS_CLIENTE_URL, "solicitacoes", cpf, "rejeicao"),
+      req.body, identidadeDe(req)
+    );
+
+    return res.json(corpo);
   } catch (erro) {
     return responderErro(erro, res, REPASSAR);
   }
@@ -63,5 +78,9 @@ gerente.get("/",
 gerente.get("/:cpf",
   exigirPerfil("GERENTE"), exigirFormato("cpf", CPF), injetarIdentidade,
   buscarSolicitacao);
+
+gerente.post("/:cpf/rejeicao",
+  exigirPerfil("GERENTE"), exigirFormato("cpf", CPF), injetarIdentidade,
+  rejeitarSolicitacao);
 
 module.exports = { publica, gerente };
