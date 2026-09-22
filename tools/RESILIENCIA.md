@@ -17,9 +17,12 @@ spring.rabbitmq.listener.simple.retry.multiplier=1.0
 spring.rabbitmq.listener.simple.default-requeue-rejected=false
 ```
 
-**3 tentativas, 5 segundos de intervalo fixo entre elas** (`multiplier=1.0`,
-sem backoff exponencial). Na 3ª falha, `default-requeue-rejected=false` faz
-o listener rejeitar a mensagem sem devolvê-la à fila original — e a fila,
+**1 entrega + 3 retentativas = 4 execuções do handler, com 5 segundos de
+intervalo fixo entre elas** (`multiplier=1.0`, sem backoff exponencial): ~15 s
+até a DLQ, a janela de ∼15–20 s do enunciado. No Boot 4, `max-retries` conta
+só as retentativas, sem a entrega inicial (`max-attempts` foi descontinuado
+na 4.0). Na 4ª falha, `default-requeue-rejected=false` faz o listener
+rejeitar a mensagem sem devolvê-la à fila original — e a fila,
 declarada com `x-dead-letter-exchange`/`x-dead-letter-routing-key` (ver
 [gateway/topologia.js](../gateway/topologia.js)), a roteia automaticamente
 para a DLQ correspondente.
@@ -30,7 +33,7 @@ Configurado em:
 |---|---|---|
 | `ms-orquestrador` | (ainda sem `@RabbitListener` — entram na S7) | configurado desde a S2 |
 | `ms-conta` | `ProjecaoContaListener` (`ms.conta.events`) | configurado nesta tarefa (S5) |
-| `ms-email` | `EmailListener` (`ms.email.cmd`) | configurado nesta tarefa (S5) |
+| `ms-email` | `EmailListener` (`ms.email.cmd`) | configurado nesta tarefa (S5), mas inerte: o listener captura toda exceção e descarta (§5.9), então nenhuma falha chega a ser retentada |
 | `ms-cliente`, `ms-gerente`, `ms-auth` | nenhum `@RabbitListener` ainda | não se aplica |
 
 ## Filas de comando e suas DLQs
@@ -81,8 +84,8 @@ agir — nunca rodam sozinhos.
 2. Publica o mesmo payload na fila original (`amq.default`, routing key =
    nome da fila original).
 3. Se a publicação falhar, a mensagem **já saiu da DLQ** — o script imprime
-   o payload inteiro para recuperação manual, em vez de perdê-lo em
-   silêncio.
+   o payload, o `payload_encoding` e as `properties` para recuperação
+   manual, em vez de perdê-los em silêncio.
 
 Isso é deliberado: espiar a mensagem numa chamada e só remover numa segunda
 chamada separada não garante pegar a mesma mensagem (o RabbitMQ pode
@@ -99,7 +102,10 @@ seguinte falhar.
    dependente fora do ar) **antes** de reinjetar — senão a mensagem só vai
    falhar de novo e voltar para a mesma DLQ.
 4. `tools/dlq.sh reinjetar <fila.dlq> [n]` — confirme com `sim`.
-5. `tools/dlq.sh listar` de novo — confirme que a contagem da DLQ caiu.
+5. Espere ~5 s e rode `tools/dlq.sh listar` de novo — confirme que a contagem
+   da DLQ caiu. A contagem vem das estatísticas da Management API, atualizadas
+   a cada ~5 s: logo depois de reinjetar ela ainda mostra o número antigo, e
+   reinjetar de novo por causa disso duplica a mensagem na fila original.
 
 Se a causa não for corrigível (payload realmente inválido, por exemplo),
 use `tools/dlq.sh purgar <fila.dlq>` em vez de reinjetar.
@@ -124,9 +130,20 @@ Caused by: EventoForaDeOrdemException: Evento fora de ordem para a conta
   9999: esperada versão 1, recebida 5
 ```
 
-~15,7s entre a publicação e o esgotamento das tentativas — consistente com
-3 tentativas e 5s de intervalo fixo entre elas (a 1ª tentativa não é
-instantânea: leva o tempo de entrega da mensagem pelo broker).
+~15,7s entre a publicação e o esgotamento das tentativas: três esperas de
+5s, ou seja, 1 entrega + 3 retentativas = 4 execuções do handler. A 1ª
+execução é praticamente imediata (dezenas de milissegundos após a publicação).
+
+Com `LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CORE_RETRY=TRACE` no `ms-conta`, cada
+execução aparece no log (reexecução do mesmo teste em 22/09/2026):
+
+```
+17:28:50.866  Execution of retryable operation ...   ← 1ª
+17:28:55.876  Retry attempt for operation ...        ← 2ª
+17:29:00.883  Retry attempt for operation ...        ← 3ª
+17:29:05.890  Retry attempt for operation ...        ← 4ª
+17:29:05.901  WARN RejectAndDontRequeueRecoverer : Retries exhausted
+```
 
 Confirmação via API depois do teste:
 
@@ -134,5 +151,5 @@ Confirmação via API depois do teste:
 GET /api/queues/%2f/ms.conta.events.dlq → messages: 1
 ```
 
-A mensagem só apareceu na DLQ **depois** da 3ª falha, nunca antes — o
+A mensagem só apareceu na DLQ **depois** da 4ª execução, nunca antes — o
 comportamento esperado.
