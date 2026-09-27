@@ -39,6 +39,9 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
 
   private valorContrato: string | null = null;
   private ultimoValorVisualValido = '';
+  private centavos = new Decimal(0);
+
+  private readonly maxCentavos = new Decimal('999999999999');
 
   private onChange: (valor: string | null) => void = () => {};
   private onTouched: () => void = () => {};
@@ -46,9 +49,38 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
 
   writeValue(valor: string | null): void {
     this.valorContrato = valor;
-    const visual = this.formatarParaVisual(valor);
-    this.valorVisual.set(visual);
-    this.ultimoValorVisualValido = visual;
+
+    if (!valor) {
+      this.centavos = new Decimal(0);
+      this.valorVisual.set('');
+      this.ultimoValorVisualValido = '';
+      return;
+    }
+
+    try {
+      const decimalValor = new Decimal(valor);
+
+      if (!decimalValor.isFinite() || decimalValor.lessThanOrEqualTo(0)) {
+        this.centavos = new Decimal(0);
+        this.valorVisual.set('');
+        this.ultimoValorVisualValido = '';
+        return;
+      }
+
+      this.centavos = Decimal.min(
+        decimalValor.times(100),
+        this.maxCentavos,
+      );
+
+      const visual = this.formatarCentavos(this.centavos);
+
+      this.valorVisual.set(visual);
+      this.ultimoValorVisualValido = visual;
+    } catch {
+      this.centavos = new Decimal(0);
+      this.valorVisual.set('');
+      this.ultimoValorVisualValido = '';
+    }
   }
 
   registerOnChange(fn: (valor: string | null) => void): void {
@@ -93,112 +125,110 @@ export class MoneyInputComponent implements ControlValueAccessor, Validator {
     const elemento = event.target as HTMLInputElement;
     const valorDigitado = elemento.value;
 
-    if (valorDigitado.includes('-')) {
-      elemento.value = this.ultimoValorVisualValido;
+    const digitos = valorDigitado.replace(/\D/g, '');
+
+    if (!digitos) {
+      this.centavos = new Decimal(0);
+      this.aplicar(elemento, true);
       return;
     }
 
-    const valorLimpo = valorDigitado.replace(/[^\d.,]/g, '');
-    const indiceVirgula = valorLimpo.indexOf(',');
+    this.centavos = new Decimal(0);
 
-    if (indiceVirgula >= 0) {
-      const parteDecimal = valorLimpo.slice(indiceVirgula + 1).replace(/[.,]/g, '');
-      if (parteDecimal.length > 2) {
-        elemento.value = this.ultimoValorVisualValido;
-        return;
-      }
+    for (const digito of digitos) {
+      this.entrarDigito(Number(digito));
     }
 
-    const valorNormalizado = this.normalizarVisual(valorLimpo);
-
-    this.valorVisual.set(valorNormalizado);
-    elemento.value = this.valorVisual();
-
-    this.valorContrato = this.converterParaContrato(this.valorVisual());
-    this.ultimoValorVisualValido = this.valorVisual();
-
-    this.onChange(this.valorContrato);
-    this.onValidatorChange();
+    this.aplicar(elemento, true);
   }
 
   protected aoSairDoCampo(): void {
-    const visual = this.formatarParaVisual(this.valorContrato);
-    this.valorVisual.set(visual);
-    this.ultimoValorVisualValido = this.valorVisual();
+    this.aplicar(undefined, false);
 
     this.onTouched();
     this.onValidatorChange();
   }
 
-  private converterParaContrato(valorVisual: string): string | null {
-    if (!valorVisual) {
-      return null;
-    }
+  protected cursorNoFim(elemento: HTMLInputElement): void {
+  elemento.setSelectionRange(elemento.value.length, elemento.value.length);
+}
 
-    const semPontos = valorVisual.replace(/\./g, '');
-    const normalizado = semPontos.replace(',', '.');
+  protected aoFocar(event: Event): void {
+  this.cursorNoFim(event.target as HTMLInputElement);
+}
 
-    if (!normalizado || normalizado === '.') {
-      return null;
-    }
+  protected aoMouseDown(event: MouseEvent): void {
+  const wrapper = event.currentTarget as HTMLElement;
+  const input = wrapper.querySelector('input');
 
-    const partes = normalizado.split('.');
-    const inteiro = partes[0] || '0';
-    const parteDecimal = partes[1] ?? '';
+  if (input) {
+    this.cursorNoFim(input);
+  }
+}
 
-    if (partes.length > 2 || parteDecimal.length > 2) {
-      return null;
-    }
-
-    const valor = `${inteiro}.${parteDecimal.padEnd(2, '0')}`;
-
-    try {
-      const decimalValor = new Decimal(valor);
-
-      if (!decimalValor.isFinite() || decimalValor.lessThanOrEqualTo(0)) {
-        return null;
-      }
-
-      return decimalValor.toFixed(2);
-    } catch {
-      return null;
-    }
+  private entrarDigito(digito: number): void {
+    const proximo = this.centavos.times(10).plus(digito);
+    this.centavos = Decimal.min(proximo, this.maxCentavos);
   }
 
-  private normalizarVisual(valor: string): string {
-    const resultado = valor.replace(/[^\d.,]/g, '');
-    const indiceVirgula = resultado.indexOf(',');
+  private aplicar(
+    elemento: HTMLInputElement | undefined,
+    emitir: boolean,
+  ): void {
+    const visual = this.centavos.isZero()
+      ? ''
+      : this.formatarCentavos(this.centavos);
 
-    if (indiceVirgula >= 0) {
-      let parteInteira = resultado.slice(0, indiceVirgula).replace(/[.,]/g, '');
-      const parteDecimal = resultado.slice(indiceVirgula + 1).replace(/[.,]/g, '');
+    this.valorVisual.set(visual);
+    this.ultimoValorVisualValido = visual;
 
-      if (!parteInteira) {
-        parteInteira = '0';
-      }
-
-      return `${this.formatarMilhares(parteInteira)},${parteDecimal}`;
+    if (elemento) {
+      elemento.value = visual;
     }
 
-    const parteInteira = resultado.replace(/[.,]/g, '');
-    return this.formatarMilhares(parteInteira);
+    if (emitir) {
+      this.atualizarContrato();
+      this.onValidatorChange();
+    }
+
+     if (elemento) {
+    this.cursorNoFim(elemento);
+    }  
+  }
+
+  private formatarCentavos(centavos: Decimal): string {
+    const inteiro = centavos
+      .dividedBy(100)
+      .floor()
+      .toFixed(0);
+
+    const decimal = centavos
+      .modulo(100)
+      .toFixed(0)
+      .padStart(2, '0');
+
+    return `${this.formatarMilhares(inteiro)},${decimal}`;
+  }
+
+  private atualizarContrato(): void {
+    if (this.centavos.isZero()) {
+      this.valorContrato = null;
+      this.onChange(null);
+      return;
+    }
+
+    this.valorContrato = this.centavos
+      .dividedBy(100)
+      .toFixed(2);
+
+    this.onChange(this.valorContrato);
   }
 
   private formatarMilhares(valor: string): string {
-    if (!valor) return '';
-    return valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  }
-
-  private formatarParaVisual(valor: string | null): string {
-    if (!valor) return '';
-    try {
-      const decimalValor = new Decimal(valor);
-      if (!decimalValor.isFinite()) return '';
-
-      const [inteiro, decimal] = decimalValor.toFixed(2).split('.');
-      return `${this.formatarMilhares(inteiro)},${decimal}`;
-    } catch {
+    if (!valor) {
       return '';
     }
+
+    return valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 }
