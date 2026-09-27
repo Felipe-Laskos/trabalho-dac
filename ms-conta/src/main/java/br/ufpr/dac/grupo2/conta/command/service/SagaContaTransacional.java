@@ -1,7 +1,6 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +17,6 @@ import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class SagaContaTransacional {
-
-    private static final ZoneId FUSO_HORARIO = ZoneId.of("America/Sao_Paulo");
 
     @PersistenceContext(unitName = "command")
     private EntityManager entityManager;
@@ -229,6 +226,6 @@ public class SagaContaTransacional {
     }
 
     private LocalDateTime agora() {
-        return LocalDateTime.now(FUSO_HORARIO);
+        return LocalDateTime.now();
     }
 }
