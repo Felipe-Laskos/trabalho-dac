@@ -110,5 +110,85 @@
         />
       }
     </section>
+
+    <!-- Async Result -->
+  <section class="card-bloco">
+  <div class="bloco-titulo">
+    <span class="step-num">5</span>
+    <h2>Resultado Assíncrono</h2>
+  </div>
+
+  <div class="acoes-simulacao">
+    <p-button
+      label="Testar Sucesso"
+      icon="pi pi-check"
+      severity="success"
+      [outlined]="true"
+      (onClick)="testarAsyncSucesso()"
+    />
+
+    <p-button
+      label="Testar Falha do Job"
+      icon="pi pi-times"
+      severity="danger"
+      [outlined]="true"
+      (onClick)="testarAsyncFalha()"
+    />
+
+    <p-button
+      label="Testar Timeout"
+      icon="pi pi-clock"
+      severity="warn"
+      [outlined]="true"
+      (onClick)="testarAsyncTimeout()"
+    />
+  </div>
+</section>
+
+  <app-async-result
+  [visible]="exibirAsyncResult()"
+  [status]="asyncResultStatus()"
+  [titulo]="'Transferência concluída'"
+  [mensagem]="asyncResultMensagem()"
+  (fechar)="fecharAsyncResult()"
+>
+  @if (asyncResultStatus() === 'SUCESSO') {
+    <div class="resultado-detalhes">
+      <div class="detalhe-linha">
+        <span class="detalhe-label">Conta destino</span>
+        <strong class="detalhe-valor">
+          {{ numeroContaCriada() }}
+        </strong>
+      </div>
+
+      <div class="detalhe-linha">
+        <span class="detalhe-label">Valor transferido</span>
+        <strong class="detalhe-valor destaque">
+          R$ {{ valorControl.value }}
+        </strong>
+      </div>
+
+      <div class="detalhe-linha">
+        <span class="detalhe-label">Data e hora</span>
+        <strong class="detalhe-valor">
+          27/09/2026 às 21:15
+        </strong>
+      </div>
+
+      <div class="detalhe-linha">
+        <span class="detalhe-label">Status</span>
+        <strong class="detalhe-valor status-sucesso">
+          Concluída
+        </strong>
+      </div>
+    </div>
+  }
+</app-async-result>
+
+<app-job-progress
+  [visible]="exibirJobProgress()"
+  [titulo]="'Transferindo R$ ' + valorControl.value + '...'"
+  [subtitulo]="'Não feche esta janela. Assim que a operação registrar, o saldo é reconsultado.'"
+/>
   </div>
 </main>

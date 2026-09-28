@@ -10,6 +10,8 @@ import { ProgressSpinner } from 'primeng/progressspinner';
 })
 export class LoadingComponent {
 
+  readonly compacto = input(false);
+
   message = input('Carregando...');
 
 }

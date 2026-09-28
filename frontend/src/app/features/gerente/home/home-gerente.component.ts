@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -28,10 +28,12 @@ type Filtro = 'TODAS' | StatusSolicitacao;
 })
 export class HomeGerenteComponent implements OnInit {
 
+  private readonly solicitacoesProcessando = new Set<string>();
+
   filtroAtual: Filtro = 'TODAS';
 
   // Mock simulando o retorno do backend
-    solicitacoes: Solicitacao[] = [
+    readonly solicitacoes = signal<Solicitacao[]>([
     {
       cpf: '111.222.333-96',
       nome: 'Fulano de Tal',
@@ -148,23 +150,30 @@ export class HomeGerenteComponent implements OnInit {
       dataHoraProcessamento: '2026-08-02T09:40:00',
       _links: {}
     }
-  ];
+  ]);
 
   ngOnInit(): void {}
 
   get totais() {
-    return {
-      todas: this.solicitacoes.length,
-      pendentes: this.solicitacoes.filter(s => s.status === 'PENDENTE').length,
-      aprovadas: this.solicitacoes.filter(s => s.status === 'APROVADA').length,
-      naoAprovadas: this.solicitacoes.filter(s => s.status === 'NAO_APROVADA').length
-    };
+  const solicitacoes = this.solicitacoes();
+
+  return {
+    todas: solicitacoes.length,
+    pendentes: solicitacoes.filter(s => s.status === 'PENDENTE').length,
+    aprovadas: solicitacoes.filter(s => s.status === 'APROVADA').length,
+    naoAprovadas: solicitacoes.filter(s => s.status === 'NAO_APROVADA').length
+  };
+}
+
+get solicitacoesFiltradas() {
+  const solicitacoes = this.solicitacoes();
+
+  if (this.filtroAtual === 'TODAS') {
+    return solicitacoes;
   }
 
-  get solicitacoesFiltradas() {
-    if (this.filtroAtual === 'TODAS') return this.solicitacoes;
-    return this.solicitacoes.filter(s => s.status === this.filtroAtual);
-  }
+  return solicitacoes.filter(s => s.status === this.filtroAtual);
+}
 
   setFiltro(filtro: Filtro) {
     this.filtroAtual = filtro;
@@ -175,4 +184,29 @@ export class HomeGerenteComponent implements OnInit {
   atualizarLista(): void {
     console.log('Atualizando lista...');
   }
+
+  estaProcessando(cpf: string): boolean {
+  return this.solicitacoesProcessando.has(cpf);
+ }
+
+ aprovar(cpf: string): void {
+  this.solicitacoesProcessando.add(cpf);
+
+  setTimeout(() => {
+    this.solicitacoes.update(solicitacoes =>
+      solicitacoes.map(solicitacao =>
+        solicitacao.cpf === cpf
+          ? {
+              ...solicitacao,
+              status: 'APROVADA',
+              dataHoraProcessamento: new Date().toISOString(),
+              _links: {}
+            }
+          : solicitacao
+      )
+    );
+
+    this.solicitacoesProcessando.delete(cpf);
+  }, 2000);
+ }
 }

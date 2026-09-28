@@ -1,0 +1,29 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [closeOnEscape]="false"
+  [showHeader]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="job-dialog"
+>
+  <div class="job-container">
+    <div class="job-loading">
+      <app-loading
+        [compacto]="true"
+        message=""
+      />
+    </div>
+
+    <div class="job-content">
+      <h2 class="job-title">
+        {{ titulo() }}
+      </h2>
+
+      <p class="job-subtitle">
+        {{ subtitulo() }}
+      </p>
+    </div>
+  </div>
+</p-dialog>
