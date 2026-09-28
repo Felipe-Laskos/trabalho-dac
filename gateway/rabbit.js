@@ -15,7 +15,7 @@ async function conectar() {
   for (let i = 1; i <= TENTATIVAS; i += 1) {
     try {
       conexao = await amqp.connect(process.env.RABBIT_URL);
-      canal = await conexao.createChannel();
+      canal = await conexao.createConfirmChannel();
       return await topologia.declarar(canal);
     } catch (erro) {
       ultimoErro = erro;
@@ -27,4 +27,11 @@ async function conectar() {
   throw ultimoErro;
 }
 
-module.exports = { conectar, obterCanal: () => canal };
+async function publicar(fila, mensagem) {
+  canal.sendToQueue(fila, Buffer.from(JSON.stringify(mensagem)), {
+    persistent: true, contentType: 'application/json',
+  });
+  await canal.waitForConfirms();
+}
+
+module.exports = { conectar, publicar, obterCanal: () => canal };

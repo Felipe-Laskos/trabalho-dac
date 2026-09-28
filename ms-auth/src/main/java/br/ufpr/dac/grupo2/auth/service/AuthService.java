@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import br.ufpr.dac.grupo2.auth.dto.AuthResponseDTO;
 import br.ufpr.dac.grupo2.auth.model.Usuario;
+import br.ufpr.dac.grupo2.auth.repository.ComandoProcessadoRepository;
 import br.ufpr.dac.grupo2.auth.repository.UsuarioRepository;
 
 @Service
@@ -27,10 +28,14 @@ public class AuthService {
 
   private final UsuarioRepository repository;
 
+  private final ComandoProcessadoRepository processados;
+
   private final Argon2PasswordEncoder argon2;
 
-  public AuthService(UsuarioRepository repository, Argon2PasswordEncoder argon2) {
+  public AuthService(UsuarioRepository repository, ComandoProcessadoRepository processados,
+      Argon2PasswordEncoder argon2) {
     this.repository = repository;
+    this.processados = processados;
     this.argon2 = argon2;
   }
 
@@ -47,6 +52,7 @@ public class AuthService {
 
   public int recriarSeed() {
     repository.deleteAll();
+    processados.deleteAll();
 
     List<Usuario> usuarios = SEED.stream()
       .map(linha -> new Usuario(linha[0], linha[1], linha[2], argon2.encode(SENHA_SEED), true))
