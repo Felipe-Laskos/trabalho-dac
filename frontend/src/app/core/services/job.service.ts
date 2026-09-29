@@ -5,6 +5,9 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Job } from '../models/job.model';
 
+// o job pode ainda concluir depois do prazo: quem chama precisa distinguir isto de uma falha
+export class TempoEsgotadoError extends Error {}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -26,7 +29,7 @@ export class JobService {
       }
 
       if (Date.now() - inicio >= timeoutMs) {
-        throw new Error('A operação não concluiu no tempo esperado.');
+        throw new TempoEsgotadoError('A operação não concluiu no tempo esperado.');
       }
 
       await new Promise(resolve => setTimeout(resolve, intervalo));

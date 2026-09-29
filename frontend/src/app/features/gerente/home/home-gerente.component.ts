@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
-import { JobService } from '../../../core/services/job.service';
+import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
+import { mensagemDeErro } from '../../../core/services/erro.util';
 import type { Job } from '../../../core/models/job.model';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -255,11 +256,8 @@ get solicitacoesFiltradas() {
     });
   } catch (erro) {
     this.resultado.set({
-      status: 'FALHA',
-      mensagem:
-        erro instanceof Error
-          ? erro.message
-          : 'Não foi possível concluir a operação.'
+      status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
+      mensagem: mensagemDeErro(erro)
     });
   } finally {
     this.solicitacoesProcessando.update(processando => {
