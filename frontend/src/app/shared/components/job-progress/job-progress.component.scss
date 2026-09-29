@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  --job-dialog-width: 440px;
+}
+
+.job-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-32);
+  padding: var(--spacing-32);
+  font-family: var(--font-family);
+  text-align: center;
+}
+
+.job-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-16);
+  width: 100%;
+}
+
+.job-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-heading);
+  line-height: 1.4;
+}
+
+.job-subtitle {
+  max-width: 340px;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-body);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .job-container {
+    gap: var(--spacing-24);
+    padding: var(--spacing-24);
+  }
+
+  .job-content {
+    gap: var(--spacing-12);
+  }
+}

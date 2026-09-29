@@ -1,4 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { JobService } from '../../../core/services/job.service';
+import type { Job } from '../../../core/models/job.model';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -6,6 +9,10 @@ import { CardModule } from 'primeng/card';
 import { formatarBRL } from '../../../shared/util/dinheiro.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
+import { soDigitos } from '../../../shared/util/mascara.util';
+
+import { AsyncResultComponent, AsyncResultStatus } from '../../../shared/components/async-result/async-result.component';
+import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
 
 import type { Solicitacao, StatusSolicitacao } from '../../../core/models/solicitacao.model';
 
@@ -21,17 +28,30 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     ButtonModule,
     CardModule,
     DinheiroPipe,
-    DataHoraPipe
+    DataHoraPipe,
+    AsyncResultComponent,
+    JobProgressComponent
   ],
   templateUrl: './home-gerente.component.html',
   styleUrls: ['./home-gerente.component.scss']
 })
 export class HomeGerenteComponent implements OnInit {
+  private readonly api = inject(ApiService);
+  private readonly jobService = inject(JobService);
+
+  private readonly solicitacoesProcessando = signal<ReadonlySet<string>>(new Set());
+
+  readonly aprovando = signal<string | null>(null);
+
+  readonly resultado = signal<{
+    status: AsyncResultStatus;
+    mensagem: string;
+  } | null>(null);
 
   filtroAtual: Filtro = 'TODAS';
 
   // Mock simulando o retorno do backend
-    solicitacoes: Solicitacao[] = [
+    readonly solicitacoes = signal<Solicitacao[]>([
     {
       cpf: '111.222.333-96',
       nome: 'Fulano de Tal',
@@ -148,23 +168,30 @@ export class HomeGerenteComponent implements OnInit {
       dataHoraProcessamento: '2026-08-02T09:40:00',
       _links: {}
     }
-  ];
+  ]);
 
   ngOnInit(): void {}
 
   get totais() {
-    return {
-      todas: this.solicitacoes.length,
-      pendentes: this.solicitacoes.filter(s => s.status === 'PENDENTE').length,
-      aprovadas: this.solicitacoes.filter(s => s.status === 'APROVADA').length,
-      naoAprovadas: this.solicitacoes.filter(s => s.status === 'NAO_APROVADA').length
-    };
+  const solicitacoes = this.solicitacoes();
+
+  return {
+    todas: solicitacoes.length,
+    pendentes: solicitacoes.filter(s => s.status === 'PENDENTE').length,
+    aprovadas: solicitacoes.filter(s => s.status === 'APROVADA').length,
+    naoAprovadas: solicitacoes.filter(s => s.status === 'NAO_APROVADA').length
+  };
+}
+
+get solicitacoesFiltradas() {
+  const solicitacoes = this.solicitacoes();
+
+  if (this.filtroAtual === 'TODAS') {
+    return solicitacoes;
   }
 
-  get solicitacoesFiltradas() {
-    if (this.filtroAtual === 'TODAS') return this.solicitacoes;
-    return this.solicitacoes.filter(s => s.status === this.filtroAtual);
-  }
+  return solicitacoes.filter(s => s.status === this.filtroAtual);
+}
 
   setFiltro(filtro: Filtro) {
     this.filtroAtual = filtro;
@@ -175,4 +202,73 @@ export class HomeGerenteComponent implements OnInit {
   atualizarLista(): void {
     console.log('Atualizando lista...');
   }
+
+  estaProcessando(cpf: string): boolean {
+  return this.solicitacoesProcessando().has(cpf);
+ }
+
+ async aprovar(cpf: string): Promise<void> {
+  this.resultado.set(null);
+
+  this.solicitacoesProcessando.update(processando => {
+    const novoSet = new Set(processando);
+    novoSet.add(cpf);
+    return novoSet;
+  });
+
+  this.aprovando.set(cpf);
+
+  try {
+    const cpfSemMascara = soDigitos(cpf);
+
+    const job = await this.api.post<Job>(
+      `/solicitacoes/${cpfSemMascara}/aprovacao`
+    );
+
+    const jobFinal = await this.jobService.aguardar(job.jobId);
+
+    if (jobFinal.status === 'FALHA') {
+      this.resultado.set({
+        status: 'FALHA',
+        mensagem: jobFinal.erro ?? 'Não foi possível concluir a operação.'
+      });
+
+      return;
+    }
+
+    this.solicitacoes.update(solicitacoes =>
+      solicitacoes.map(solicitacao =>
+        solicitacao.cpf === cpf
+          ? {
+              ...solicitacao,
+              status: 'APROVADA',
+              dataHoraProcessamento: new Date().toISOString(),
+              _links: {}
+            }
+          : solicitacao
+      )
+    );
+
+    this.resultado.set({
+      status: 'SUCESSO',
+      mensagem: 'A solicitação foi aprovada e a conta do cliente foi criada.'
+    });
+  } catch (erro) {
+    this.resultado.set({
+      status: 'FALHA',
+      mensagem:
+        erro instanceof Error
+          ? erro.message
+          : 'Não foi possível concluir a operação.'
+    });
+  } finally {
+    this.solicitacoesProcessando.update(processando => {
+      const novoSet = new Set(processando);
+      novoSet.delete(cpf);
+      return novoSet;
+    });
+
+    this.aprovando.set(null);
+  }
+}
 }

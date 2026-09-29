@@ -1,0 +1,50 @@
+<p-dialog
+  [visible]="visible()"
+  [modal]="true"
+  [closable]="false"
+  [closeOnEscape]="false"
+  [showHeader]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px', 'max-width': 'calc(100vw - 32px)' }"
+  styleClass="async-result-dialog"
+>
+  <div
+    class="result-wrapper"
+    [class.is-success]="status() === 'SUCESSO'"
+    [class.is-error]="status() === 'FALHA'"
+    [class.is-timeout]="status() === 'TIMEOUT'"
+  >
+    <div class="dialog-header">
+      <div class="icon-badge">
+        <i
+          [class]="icone()"
+          aria-hidden="true"
+        ></i>
+      </div>
+
+      <div class="header-texts">
+        <h2>{{ tituloExibicao() }}</h2>
+
+        @if (mensagemExibicao()) {
+          <p>{{ mensagemExibicao() }}</p>
+        }
+      </div>
+    </div>
+
+    @if (mostrarDetalhes()) {
+      <div class="details-box">
+        <ng-content />
+      </div>
+    }
+
+    <div class="dialog-footer">
+      <p-button
+        label="Fechar"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="fecharResultado()"
+      />
+    </div>
+  </div>
+</p-dialog> 
