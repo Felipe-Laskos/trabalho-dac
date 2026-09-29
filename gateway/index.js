@@ -16,6 +16,7 @@ const rotasClientes = require("./rotas/clientes");
 const rotasContas = require("./rotas/contas");
 const rotasGerentes = require("./rotas/gerentes");
 const rotasSolicitacoes = require("./rotas/solicitacoes");
+const rotasJobs = require("./jobs");
 
 const PORTA = Number(process.env.PORT);
 
@@ -49,6 +50,8 @@ app.use("/contas", rotasContas);
 app.use("/gerentes", rotasGerentes);
 
 app.use("/solicitacoes", rotasSolicitacoes.gerente);
+
+app.use("/jobs", rotasJobs.router);
 
 app.use((_req, res) => {
   res.status(404).json({
