@@ -2,14 +2,20 @@
   display: block;
 }
 
+.async-result-dialog  {
+  .p-dialog-content {
+    padding: 0;
+  }
+}
+
 .result-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   font-family: var(--font-family);
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
 .dialog-header {
@@ -92,16 +98,6 @@
   gap: var(--spacing-md);
 }
 
-.result-message-box {
-  width: 100%;
-  box-sizing: border-box;
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius);
-  background: var(--color-background);
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
 
 .dialog-footer {
   display: flex;

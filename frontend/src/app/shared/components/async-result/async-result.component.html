@@ -6,7 +6,7 @@
   [showHeader]="false"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '520px', 'max-width': 'calc(100vw - 32px)' }"
+  [style]="{ width: '480px', 'max-width': 'calc(100vw - 32px)' }"
   styleClass="async-result-dialog"
 >
   <div
@@ -34,11 +34,7 @@
 
     @if (mostrarDetalhes()) {
       <div class="details-box">
-        <ng-content></ng-content>
-      </div>
-    } @else {
-      <div class="result-message-box">
-        <ng-content></ng-content>
+        <ng-content />
       </div>
     }
 
@@ -51,4 +47,4 @@
       />
     </div>
   </div>
-</p-dialog>
+</p-dialog> 

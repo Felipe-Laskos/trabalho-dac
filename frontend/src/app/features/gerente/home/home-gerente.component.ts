@@ -1,4 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
+import { JobService } from '../../../core/services/job.service';
+import type { Job } from '../../../core/models/job.model';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -6,6 +9,10 @@ import { CardModule } from 'primeng/card';
 import { formatarBRL } from '../../../shared/util/dinheiro.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
+import { soDigitos } from '../../../shared/util/mascara.util';
+
+import { AsyncResultComponent, AsyncResultStatus } from '../../../shared/components/async-result/async-result.component';
+import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
 
 import type { Solicitacao, StatusSolicitacao } from '../../../core/models/solicitacao.model';
 
@@ -21,14 +28,25 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     ButtonModule,
     CardModule,
     DinheiroPipe,
-    DataHoraPipe
+    DataHoraPipe,
+    AsyncResultComponent,
+    JobProgressComponent
   ],
   templateUrl: './home-gerente.component.html',
   styleUrls: ['./home-gerente.component.scss']
 })
 export class HomeGerenteComponent implements OnInit {
+  private readonly api = inject(ApiService);
+  private readonly jobService = inject(JobService);
 
-  private readonly solicitacoesProcessando = new Set<string>();
+  private readonly solicitacoesProcessando = signal<ReadonlySet<string>>(new Set());
+
+  readonly aprovando = signal<string | null>(null);
+
+  readonly resultado = signal<{
+    status: AsyncResultStatus;
+    mensagem: string;
+  } | null>(null);
 
   filtroAtual: Filtro = 'TODAS';
 
@@ -186,13 +204,38 @@ get solicitacoesFiltradas() {
   }
 
   estaProcessando(cpf: string): boolean {
-  return this.solicitacoesProcessando.has(cpf);
+  return this.solicitacoesProcessando().has(cpf);
  }
 
- aprovar(cpf: string): void {
-  this.solicitacoesProcessando.add(cpf);
+ async aprovar(cpf: string): Promise<void> {
+  this.resultado.set(null);
 
-  setTimeout(() => {
+  this.solicitacoesProcessando.update(processando => {
+    const novoSet = new Set(processando);
+    novoSet.add(cpf);
+    return novoSet;
+  });
+
+  this.aprovando.set(cpf);
+
+  try {
+    const cpfSemMascara = soDigitos(cpf);
+
+    const job = await this.api.post<Job>(
+      `/solicitacoes/${cpfSemMascara}/aprovacao`
+    );
+
+    const jobFinal = await this.jobService.aguardar(job.jobId);
+
+    if (jobFinal.status === 'FALHA') {
+      this.resultado.set({
+        status: 'FALHA',
+        mensagem: jobFinal.erro ?? 'Não foi possível concluir a operação.'
+      });
+
+      return;
+    }
+
     this.solicitacoes.update(solicitacoes =>
       solicitacoes.map(solicitacao =>
         solicitacao.cpf === cpf
@@ -206,7 +249,26 @@ get solicitacoesFiltradas() {
       )
     );
 
-    this.solicitacoesProcessando.delete(cpf);
-  }, 2000);
- }
+    this.resultado.set({
+      status: 'SUCESSO',
+      mensagem: 'A solicitação foi aprovada e a conta do cliente foi criada.'
+    });
+  } catch (erro) {
+    this.resultado.set({
+      status: 'FALHA',
+      mensagem:
+        erro instanceof Error
+          ? erro.message
+          : 'Não foi possível concluir a operação.'
+    });
+  } finally {
+    this.solicitacoesProcessando.update(processando => {
+      const novoSet = new Set(processando);
+      novoSet.delete(cpf);
+      return novoSet;
+    });
+
+    this.aprovando.set(null);
+  }
+}
 }

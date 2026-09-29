@@ -76,28 +76,38 @@
           <td class="text-center text-muted">{{ row.dataHoraProcessamento | dataHora }}</td>
 
           <td class="text-right actions-cell">
-            @if (row._links['aprovacao'] && row._links['rejeicao']) {
-              <div class="actions-group">
-                <p-button 
-                label="Aprovar" 
-                styleClass="btn-aprovar" 
+          @if (row._links['aprovacao'] && row._links['rejeicao']) {
+            <div class="actions-group">
+              <p-button
+                label="Aprovar"
+                styleClass="btn-aprovar"
                 [disabled]="estaProcessando(row.cpf)"
                 (onClick)="aprovar(row.cpf)">
-                </p-button>
+              </p-button>
 
-                <p-button 
-                label="Recusar" 
-                styleClass="btn-recusar" 
+              <p-button
+                label="Recusar"
+                styleClass="btn-recusar"
                 [disabled]="estaProcessando(row.cpf)">
-                </p-button>
-
-              </div>
-            } @else {
-              <span class="sem-acoes">sem ações</span>
-            }
-          </td>
+              </p-button>
+            </div>
+          } @else {
+            <span class="sem-acoes">sem ações</span>
+          }
+        </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
+  <app-job-progress
+  [visible]="aprovando() !== null"
+  titulo="Aprovando cliente…"
+  />
+
+  <app-async-result
+  [visible]="resultado() !== null"
+  [status]="resultado()?.status ?? 'SUCESSO'"
+  [mensagem]="resultado()?.mensagem ?? ''"
+  (fechar)="resultado.set(null)"
+  />
 </div>

@@ -22,21 +22,17 @@ export class AsyncResultComponent {
   protected readonly mensagemTimeout = 'A operação não concluiu no tempo esperado.';
 
   protected tituloExibicao(): string {
-    if (this.titulo()) {
-      return this.titulo();
-    }
+  switch (this.status()) {
+    case 'SUCESSO':
+      return this.titulo() || 'Operação Concluída';
 
-    switch (this.status()) {
-      case 'SUCESSO':
-        return 'Operação Concluída'; 
+    case 'FALHA':
+      return 'Não foi possível concluir a operação';
 
-      case 'FALHA':
-        return 'Não foi possível concluir a operação';
-
-      case 'TIMEOUT':
-        return 'Tempo de espera excedido';
-    }
+    case 'TIMEOUT':
+      return 'Tempo de espera excedido';
   }
+}
 
   protected mensagemExibicao(): string {
     if (this.status() === 'TIMEOUT') {
