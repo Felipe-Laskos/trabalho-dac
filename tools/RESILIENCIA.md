@@ -31,10 +31,20 @@ Configurado em:
 
 | Serviço | Consumidor(es) | Status |
 |---|---|---|
-| `ms-orquestrador` | (ainda sem `@RabbitListener` — entram na S7) | configurado desde a S2 |
+| `ms-orquestrador` | `OrquestradorSaga` (`saga.cmd`, `orquestrador.reply`, e as 4 DLQs de comando — ver nota abaixo) | configurado desde a S2, consumidores chegaram na S7 (SAGA #1) |
 | `ms-conta` | `ProjecaoContaListener` (`ms.conta.events`) | configurado nesta tarefa (S5) |
 | `ms-email` | `EmailListener` (`ms.email.cmd`) | configurado nesta tarefa (S5), mas inerte: o listener captura toda exceção e descarta (§5.9), então nenhuma falha chega a ser retentada |
 | `ms-cliente`, `ms-gerente`, `ms-auth` | nenhum `@RabbitListener` ainda | não se aplica |
+
+⚠️ **Nota (S7, SAGA #1):** `OrquestradorSaga.falhaTecnica` agora é `@RabbitListener` de
+`ms.cliente.cmd.dlq`, `ms.gerente.cmd.dlq`, `ms.conta.cmd.dlq` e `ms.auth.cmd.dlq` (não de
+`ms.conta.events.dlq`) — quando um comando de uma SAGA em curso cai numa dessas 4 DLQs, o
+orquestrador consome a mensagem e marca o passo como falho, disparando a compensação. Isso
+**não é reenfileiramento automático** (a regra abaixo continua valendo: nada volta pra fila
+original sozinho) — é só o orquestrador reagindo à falha. Mas na prática, essas 4 DLQs podem
+aparecer vazias em `tools/dlq.sh listar` quase imediatamente após a falha, mesmo sem
+intervenção manual: o orquestrador já as drenou. `ms.conta.events.dlq` não tem esse consumidor
+e continua se comportando exatamente como descrito no resto deste documento.
 
 ## Filas de comando e suas DLQs
 
