@@ -33,6 +33,26 @@ async function lerJob(jobId) {
   return salvo ? JSON.parse(salvo) : null;
 }
 
+async function fecharJob(jobId, desfecho) {
+  const job = await lerJob(jobId);
+
+  if (!job) return false;
+
+  await redis.setEx(`job:${jobId}`, TTL_JOB, JSON.stringify({ ...job, ...desfecho }));
+
+  return true;
+}
+
+function concluirJob(jobId, resultado) {
+  return fecharJob(jobId, {
+    status: "CONCLUIDO", resultType: "inline", resourceId: null, erro: null, resultado
+  });
+}
+
+function falharJob(jobId, erro) {
+  return fecharJob(jobId, { status: "FALHA", resultType: null, resourceId: null, erro });
+}
+
 async function consultarStatus(req, res) {
   const job = await lerJob(req.params.jobId);
 
@@ -57,4 +77,4 @@ router.get("/:jobId/status", exigirPerfil("CLIENTE", "GERENTE"), consultarStatus
 
 router.get("/:jobId/result", exigirPerfil("CLIENTE", "GERENTE"), consultarResultado);
 
-module.exports = { router, criarJob };
+module.exports = { router, criarJob, concluirJob, falharJob };

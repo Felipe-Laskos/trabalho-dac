@@ -22,6 +22,8 @@ import br.ufpr.dac.grupo2.auth.repository.UsuarioRepository;
 public class UsuarioSagaService {
   private static final String CRIAR = "criar-usuario";
   private static final String COMPENSAR = "compensar-criar-usuario";
+  private static final String DESATIVAR = "desativar-usuario";
+  private static final String COMPENSAR_DESATIVAR = "compensar-desativar-usuario";
 
   private static final Set<String> TIPOS = Set.of("CLIENTE", "GERENTE");
 
@@ -56,6 +58,8 @@ public class UsuarioSagaService {
     RespostaSagaDTO resposta = switch (cmd.tipo()) {
       case CRIAR -> criar(cmd);
       case COMPENSAR -> compensar(cmd);
+      case DESATIVAR -> desativar(cmd);
+      case COMPENSAR_DESATIVAR -> reativar(cmd);
       default -> falha(cmd, "Tipo de comando não suportado: " + cmd.tipo(), Map.of());
     };
 
@@ -75,7 +79,9 @@ public class UsuarioSagaService {
       return falha(cmd, "Payload inválido para " + CRIAR, Map.of());
     }
 
-    String senha = gerarSenha();
+    String informada = cmd.texto("senha");
+    boolean gerada = informada == null || informada.isBlank();
+    String senha = gerada ? gerarSenha() : informada;
     Usuario usuario = new Usuario(cpf, tipo, login, argon2.encode(senha), true);
     usuario.setSagaId(cmd.sagaId());
 
@@ -85,7 +91,7 @@ public class UsuarioSagaService {
       return loginDuplicado(cmd, login, cpf);
     }
 
-    return sucesso(cmd, Map.of("cpf", cpf, "senha", senha));
+    return sucesso(cmd, gerada ? Map.of("cpf", cpf, "senha", senha) : Map.of("cpf", cpf));
   }
 
   private RespostaSagaDTO loginDuplicado(ComandoSagaDTO cmd, String login, String cpf) {
@@ -103,6 +109,32 @@ public class UsuarioSagaService {
   private RespostaSagaDTO compensar(ComandoSagaDTO cmd) {
     long removidos = usuarios.deleteBySagaId(cmd.sagaId());
     return sucesso(cmd, Map.of("removido", removidos > 0));
+  }
+
+  private RespostaSagaDTO desativar(ComandoSagaDTO cmd) {
+    if (processados.existsBySagaIdAndTipo(cmd.sagaId(), COMPENSAR_DESATIVAR)) {
+      return falha(cmd, "SAGA já compensada", Map.of());
+    }
+
+    String cpf = cmd.texto("cpf");
+    Optional<Usuario> gerente = cpf == null ? Optional.empty() : usuarios.findByCpfAndTipo(cpf, "GERENTE");
+    if (gerente.isEmpty()) {
+      return falha(cmd, "Gerente sem usuário no MS Auth", Map.of());
+    }
+
+    gerente.get().setAtivo(false);
+    usuarios.save(gerente.get());
+    return sucesso(cmd, Map.of("cpf", cpf));
+  }
+
+  private RespostaSagaDTO reativar(ComandoSagaDTO cmd) {
+    String cpf = cmd.texto("cpf");
+    Optional<Usuario> gerente = cpf == null ? Optional.empty() : usuarios.findByCpfAndTipo(cpf, "GERENTE");
+    gerente.ifPresent(usuario -> {
+      usuario.setAtivo(true);
+      usuarios.save(usuario);
+    });
+    return sucesso(cmd, Map.of("reativado", gerente.isPresent()));
   }
 
   private String gerarSenha() {

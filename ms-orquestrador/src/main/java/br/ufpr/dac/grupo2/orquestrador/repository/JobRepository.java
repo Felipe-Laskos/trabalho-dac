@@ -38,6 +38,16 @@ public class JobRepository {
 		atualizar(jobId, desfecho);
 	}
 
+	public void concluirInline(String jobId, Map<String, Object> resultado) {
+		Map<String, Object> desfecho = new LinkedHashMap<>();
+		desfecho.put("status", "CONCLUIDO");
+		desfecho.put("resultType", "inline");
+		desfecho.put("resourceId", null);
+		desfecho.put("erro", null);
+		desfecho.put("resultado", resultado);
+		atualizar(jobId, desfecho);
+	}
+
 	public void falhar(String jobId, String erro) {
 		Map<String, Object> desfecho = new LinkedHashMap<>();
 		desfecho.put("status", "FALHA");
