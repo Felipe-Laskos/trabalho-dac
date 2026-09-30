@@ -1,6 +1,7 @@
 package br.ufpr.dac.grupo2.orquestrador.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import br.ufpr.dac.grupo2.orquestrador.model.DadosSaga;
@@ -19,6 +20,10 @@ public interface Saga {
 	Optional<Passo> emailDeFalha();
 
 	List<String> cacheInvalidado(DadosSaga dados);
+
+	default Optional<Map<String, Object>> resultadoInline(DadosSaga dados) {
+		return Optional.empty();
+	}
 
 	default Passo passo(int numero) {
 		return passos().stream().filter(passo -> passo.numero() == numero).findFirst().orElse(null);

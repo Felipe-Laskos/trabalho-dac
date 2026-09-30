@@ -167,9 +167,15 @@ public class OrquestradorSaga {
 			return;
 		}
 
-		Map<String, Object> payload;
+		DadosSaga dados = dados(estado);
+		List<Map<String, Object>> payloads;
 		try {
-			payload = passo.payload().apply(dados(estado));
+			if (!passo.condicao().test(dados)) {
+				log.info("sagaId={} passo={} {} pulado (condicional)", estado.getSagaId(), numero, passo.tipo());
+				avancar(saga, estado, numero + 1);
+				return;
+			}
+			payloads = passo.local() ? List.of() : passo.payloads(dados);
 		} catch (IllegalStateException e) {
 			falhar(saga, estado, e.getMessage(), false);
 			return;
@@ -177,13 +183,27 @@ public class OrquestradorSaga {
 
 		estado.setEtapaAtual(numero);
 
-		if (passo.fireAndForget()) {
-			publicador.publicar(passo.fila(), comando(estado, passo.tipo(), payload));
-			log.info("sagaId={} passo={} {} -> {} (fire-and-forget)", estado.getSagaId(), numero, passo.tipo(), passo.fila());
+		if (passo.local()) {
+			try {
+				passo.acaoLocal().accept(dados);
+			} catch (RuntimeException e) {
+				falhar(saga, estado, "falha no passo " + numero + " (" + passo.tipo() + "): " + e.getMessage(), false);
+				return;
+			}
+			log.info("sagaId={} passo={} {} (local)", estado.getSagaId(), numero, passo.tipo());
 			avancar(saga, estado, numero + 1);
 			return;
 		}
 
+		if (passo.fireAndForget()) {
+			payloads.forEach(payload -> publicador.publicar(passo.fila(), comando(estado, passo.tipo(), payload)));
+			log.info("sagaId={} passo={} {} -> {} x{} (fire-and-forget)", estado.getSagaId(), numero, passo.tipo(),
+					passo.fila(), payloads.size());
+			avancar(saga, estado, numero + 1);
+			return;
+		}
+
+		Map<String, Object> payload = payloads.getFirst();
 		estado.aguardar(passo.tipo(), System.currentTimeMillis());
 		estados.salvar(estado);
 		publicador.publicar(passo.fila(), comando(estado, passo.tipo(), payload));
@@ -253,7 +273,9 @@ public class OrquestradorSaga {
 		estados.salvar(estado);
 		senhas.descartar(estado.getSagaId());
 
-		jobs.concluir(estado.getSagaId(), saga.dominio(), saga.recurso(dados));
+		saga.resultadoInline(dados).ifPresentOrElse(
+				resultado -> jobs.concluirInline(estado.getSagaId(), resultado),
+				() -> jobs.concluir(estado.getSagaId(), saga.dominio(), saga.recurso(dados)));
 		cache.invalidar(saga.cacheInvalidado(dados));
 		log.info("sagaId={} tipo={} CONCLUIDA", estado.getSagaId(), estado.getTipo());
 	}
