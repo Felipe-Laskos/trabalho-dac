@@ -1,21 +1,25 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
 import { JobService } from '../../../core/services/job.service';
+import { SolicitacaoService } from '../../../core/services/solicitacao.service';
+import { mensagemDeErro } from '../../../core/services/erro.util';
 import type { Job } from '../../../core/models/job.model';
+import type { Cliente } from '../../../core/models/cliente.model';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { formatarBRL } from '../../../shared/util/dinheiro.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
-import { soDigitos } from '../../../shared/util/mascara.util';
+import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { MessageComponent } from '../../../shared/components/message/message.component';
 
 import { AsyncResultComponent, AsyncResultStatus } from '../../../shared/components/async-result/async-result.component';
 import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
 
 import type { Solicitacao, StatusSolicitacao } from '../../../core/models/solicitacao.model';
-
+import { caminhoDoHref, temRel } from '../../../shared/util/hateoas.util';
 
 type Filtro = 'TODAS' | StatusSolicitacao;
 
@@ -29,15 +33,19 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     CardModule,
     DinheiroPipe,
     DataHoraPipe,
+    CpfPipe,
+    LoadingComponent,
+    MessageComponent,
     AsyncResultComponent,
-    JobProgressComponent
+    JobProgressComponent,
   ],
   templateUrl: './home-gerente.component.html',
-  styleUrls: ['./home-gerente.component.scss']
+  styleUrls: ['./home-gerente.component.scss'],
 })
 export class HomeGerenteComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly jobService = inject(JobService);
+  private readonly solicitacaoService = inject(SolicitacaoService);
 
   private readonly solicitacoesProcessando = signal<ReadonlySet<string>>(new Set());
 
@@ -48,227 +56,116 @@ export class HomeGerenteComponent implements OnInit {
     mensagem: string;
   } | null>(null);
 
-  filtroAtual: Filtro = 'TODAS';
+  readonly filtroAtual = signal<Filtro>('TODAS');
+  readonly solicitacoes = signal<Solicitacao[]>([]);
+  readonly carregando = signal(true);
+  readonly erro = signal('');
 
-  // Mock simulando o retorno do backend
-    readonly solicitacoes = signal<Solicitacao[]>([
-    {
-      cpf: '111.222.333-96',
-      nome: 'Fulano de Tal',
-      email: 'fulano@email.com',
-      telefone: '41999999999',
-      salario: '4500.00',
-      endereco: {
-        logradouro: 'Rua Exemplo',
-        numero: '100',
-        complemento: null,
-        cep: '80000000',
-        cidade: 'Curitiba',
-        uf: 'PR'
-      },
-      status: 'PENDENTE',
-      motivo: null,
-      dataHoraProcessamento: null,
-      _links: {
-        aprovacao: {
-          href: '/solicitacoes/11122233396/aprovacao'
-        },
-        rejeicao: {
-          href: '/solicitacoes/11122233396/rejeicao'
-        }
-      }
-    },
-    {
-      cpf: '444.555.666-01',
-      nome: 'Beltrana Souza',
-      email: 'beltrana@email.com',
-      telefone: '41988888888',
-      salario: '2100.00',
-      endereco: {
-        logradouro: 'Rua Exemplo',
-        numero: '200',
-        complemento: null,
-        cep: '80000000',
-        cidade: 'Curitiba',
-        uf: 'PR'
-      },
-      status: 'PENDENTE',
-      motivo: null,
-      dataHoraProcessamento: null,
-      _links: {
-        aprovacao: {
-          href: '/solicitacoes/44455566601/aprovacao'
-        },
-        rejeicao: {
-          href: '/solicitacoes/44455566601/rejeicao'
-        }
-      }
-    },
-    {
-      cpf: '778.899.001-23',
-      nome: 'Ciclana Ribeiro',
-      email: 'ciclana@email.com',
-      telefone: '41977777777',
-      salario: '8900.00',
-      endereco: {
-        logradouro: 'Rua Exemplo',
-        numero: '300',
-        complemento: null,
-        cep: '80000000',
-        cidade: 'Curitiba',
-        uf: 'PR'
-      },
-      status: 'PENDENTE',
-      motivo: null,
-      dataHoraProcessamento: null,
-      _links: {
-        aprovacao: {
-          href: '/solicitacoes/77889900123/aprovacao'
-        },
-        rejeicao: {
-          href: '/solicitacoes/77889900123/rejeicao'
-        }
-      }
-    },
-    {
-      cpf: '129.128.610-12',
-      nome: 'Catharyna',
-      email: 'catharyna@email.com',
-      telefone: '41966666666',
-      salario: '10000.00',
-      endereco: {
-        logradouro: 'Rua Exemplo',
-        numero: '400',
-        complemento: null,
-        cep: '80000000',
-        cidade: 'Curitiba',
-        uf: 'PR'
-      },
-      status: 'APROVADA',
-      motivo: null,
-      dataHoraProcessamento: '2026-08-04T14:12:00',
-      _links: {}
-    },
-    {
-      cpf: '332.211.445-60',
-      nome: 'Sicrano Alves',
-      email: 'sicrano@email.com',
-      telefone: '41955555555',
-      salario: '600.00',
-      endereco: {
-        logradouro: 'Rua Exemplo',
-        numero: '500',
-        complemento: null,
-        cep: '80000000',
-        cidade: 'Curitiba',
-        uf: 'PR'
-      },
-      status: 'NAO_APROVADA',
-      motivo: 'Renda incompatível com a política do banco',
-      dataHoraProcessamento: '2026-08-02T09:40:00',
-      _links: {}
+  readonly temRel = temRel;
+
+  readonly totais = computed(() => {
+    const lista = this.solicitacoes();
+    return {
+      todas: lista.length,
+      pendentes: lista.filter(s => s.status === 'PENDENTE').length,
+      aprovadas: lista.filter(s => s.status === 'APROVADA').length,
+      naoAprovadas: lista.filter(s => s.status === 'NAO_APROVADA').length,
+    };
+  });
+
+  readonly solicitacoesFiltradas = computed(() => {
+    const filtro = this.filtroAtual();
+    const lista = this.solicitacoes();
+    if (filtro === 'TODAS') {
+      return lista;
     }
-  ]);
+    return lista.filter(s => s.status === filtro);
+  });
 
-  ngOnInit(): void {}
-
-  get totais() {
-  const solicitacoes = this.solicitacoes();
-
-  return {
-    todas: solicitacoes.length,
-    pendentes: solicitacoes.filter(s => s.status === 'PENDENTE').length,
-    aprovadas: solicitacoes.filter(s => s.status === 'APROVADA').length,
-    naoAprovadas: solicitacoes.filter(s => s.status === 'NAO_APROVADA').length
-  };
-}
-
-get solicitacoesFiltradas() {
-  const solicitacoes = this.solicitacoes();
-
-  if (this.filtroAtual === 'TODAS') {
-    return solicitacoes;
+  ngOnInit(): void {
+    void this.carregarLista();
   }
 
-  return solicitacoes.filter(s => s.status === this.filtroAtual);
-}
-
-  setFiltro(filtro: Filtro) {
-    this.filtroAtual = filtro;
+  setFiltro(filtro: Filtro): void {
+    this.filtroAtual.set(filtro);
   }
-
-  formatarBRL = formatarBRL;
 
   atualizarLista(): void {
-    console.log('Atualizando lista...');
+    void this.carregarLista();
   }
 
   estaProcessando(cpf: string): boolean {
-  return this.solicitacoesProcessando().has(cpf);
- }
+    return this.solicitacoesProcessando().has(cpf);
+  }
 
- async aprovar(cpf: string): Promise<void> {
-  this.resultado.set(null);
-
-  this.solicitacoesProcessando.update(processando => {
-    const novoSet = new Set(processando);
-    novoSet.add(cpf);
-    return novoSet;
-  });
-
-  this.aprovando.set(cpf);
-
-  try {
-    const cpfSemMascara = soDigitos(cpf);
-
-    const job = await this.api.post<Job>(
-      `/solicitacoes/${cpfSemMascara}/aprovacao`
-    );
-
-    const jobFinal = await this.jobService.aguardar(job.jobId);
-
-    if (jobFinal.status === 'FALHA') {
-      this.resultado.set({
-        status: 'FALHA',
-        mensagem: jobFinal.erro ?? 'Não foi possível concluir a operação.'
-      });
-
+  async aprovar(solicitacao: Solicitacao): Promise<void> {
+    const href = solicitacao._links['aprovacao']?.href;
+    if (!href || this.estaProcessando(solicitacao.cpf)) {
       return;
     }
 
-    this.solicitacoes.update(solicitacoes =>
-      solicitacoes.map(solicitacao =>
-        solicitacao.cpf === cpf
-          ? {
-              ...solicitacao,
-              status: 'APROVADA',
-              dataHoraProcessamento: new Date().toISOString(),
-              _links: {}
-            }
-          : solicitacao
-      )
-    );
+    this.resultado.set(null);
+    this.marcarProcessando(solicitacao.cpf, true);
+    this.aprovando.set(solicitacao.cpf);
 
-    this.resultado.set({
-      status: 'SUCESSO',
-      mensagem: 'A solicitação foi aprovada e a conta do cliente foi criada.'
-    });
-  } catch (erro) {
-    this.resultado.set({
-      status: 'FALHA',
-      mensagem:
-        erro instanceof Error
-          ? erro.message
-          : 'Não foi possível concluir a operação.'
-    });
-  } finally {
+    try {
+      const job = await this.api.post<Job>(caminhoDoHref(href));
+      const jobFinal = await this.jobService.aguardar(job.jobId);
+
+      if (jobFinal.status === 'FALHA') {
+        this.resultado.set({
+          status: 'FALHA',
+          mensagem: mensagemDeErro(jobFinal),
+        });
+        return;
+      }
+
+      const cliente = await this.jobService.resultado<Cliente>(jobFinal);
+      this.resultado.set({
+        status: 'SUCESSO',
+        mensagem: `A solicitação de ${cliente.nome} foi aprovada e a conta foi criada.`,
+      });
+    } catch (erro) {
+      this.resultado.set({
+        status: 'FALHA',
+        mensagem: mensagemDeErro(erro),
+      });
+    } finally {
+      this.marcarProcessando(solicitacao.cpf, false);
+      this.aprovando.set(null);
+      await this.carregarLista(true);
+    }
+  }
+
+  private marcarProcessando(cpf: string, ativo: boolean): void {
     this.solicitacoesProcessando.update(processando => {
       const novoSet = new Set(processando);
-      novoSet.delete(cpf);
+      if (ativo) {
+        novoSet.add(cpf);
+      } else {
+        novoSet.delete(cpf);
+      }
       return novoSet;
     });
-
-    this.aprovando.set(null);
   }
-}
+
+  private async carregarLista(silencioso = false): Promise<void> {
+    if (!silencioso) {
+      this.carregando.set(true);
+      this.erro.set('');
+    }
+
+    try {
+      const resposta = await this.solicitacaoService.listar();
+      this.solicitacoes.set(resposta.solicitacoes ?? []);
+      this.erro.set('');
+    } catch (e) {
+      if (!silencioso) {
+        this.solicitacoes.set([]);
+        this.erro.set(mensagemDeErro(e));
+      }
+    } finally {
+      this.carregando.set(false);
+    }
+  }
 }

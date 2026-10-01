@@ -1,9 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Job } from '../models/job.model';
+import { mensagemDeErro } from './erro.util';
+
+const OPERACAO_EXPIRADA = 'A operação expirou.';
 
 @Injectable({
   providedIn: 'root'
@@ -17,9 +20,17 @@ export class JobService {
     let intervalo = 300;
 
     while (true) {
-      const job = await firstValueFrom(
-        this.http.get<Job>(`${this.base}/jobs/${jobId}/status`)
-      );
+      let job: Job;
+      try {
+        job = await firstValueFrom(
+          this.http.get<Job>(`${this.base}/jobs/${jobId}/status`)
+        );
+      } catch (erro) {
+        if (erro instanceof HttpErrorResponse && erro.status === 404) {
+          throw new Error(OPERACAO_EXPIRADA);
+        }
+        throw erro;
+      }
 
       if (job.status !== 'PENDENTE') {
         return job;
@@ -37,7 +48,7 @@ export class JobService {
   
   async resultado<T>(job: Job): Promise<T> {
     if (job.status === 'FALHA') {
-      throw new Error(job.erro ?? 'Operação falhou');
+      throw new Error(mensagemDeErro(job));
     }
 
     if (job.resultType === 'resource') {
