@@ -86,4 +86,63 @@ class SagaContaIntegracaoTest {
                 a.get().evento().objetoId()).size());
         }
     }
+    @Test void atribuiDeduplicaCompensaEProjetaSemAlterarSaldo()
+            throws Exception {
+        String sagaId=UUID.randomUUID().toString();
+        String anterior="64065268052";
+        String novo="11111111111";
+        var saldo=leitura.replay("7617").getSaldo();
+        var atribuir=new ComandoSaga(sagaId,"atribuir-conta",
+            "2026-09-30T10:00:00",
+            Map.of("numeroConta","7617","cpfGerente",novo));
+
+        var atribuicao=service.executar(atribuir,null);
+        var repetida=service.executar(atribuir,null);
+
+        assertEquals(atribuicao,repetida);
+        assertEquals("atribuir-conta",atribuicao.resposta().tipo());
+        assertEquals("GerenteAlterado",atribuicao.evento().tipo());
+        assertEquals(3,atribuicao.evento().versao());
+        assertEquals(anterior,atribuicao.evento().payload()
+            .get("cpfGerenteAnterior"));
+        assertEquals(novo,atribuicao.evento().payload().get("cpfGerente"));
+        assertEquals(3,eventos.findByObjetoIdOrderByVersaoAsc("7617").size());
+        assertEquals(novo,leitura.replay("7617").getCpfGerente());
+        assertEquals(saldo,leitura.replay("7617").getSaldo());
+
+        projecao.projetar(json.writeValueAsString(atribuicao.evento()));
+        assertEquals(novo,contas.findById("7617").orElseThrow()
+            .getCpfGerente());
+
+        var compensar=new ComandoSaga(sagaId,"compensar-atribuir-conta",
+            "2026-09-30T10:01:00",
+            Map.of("numeroConta","7617","cpfGerente",anterior));
+        var compensacao=service.executar(compensar,null);
+
+        assertEquals("compensar-atribuir-conta",
+            compensacao.resposta().tipo());
+        assertEquals("GerenteAlterado",compensacao.evento().tipo());
+        assertEquals(4,compensacao.evento().versao());
+        assertEquals(anterior,leitura.replay("7617").getCpfGerente());
+        assertEquals(saldo,leitura.replay("7617").getSaldo());
+
+        projecao.projetar(json.writeValueAsString(compensacao.evento()));
+        var finalProjetado=contas.findById("7617").orElseThrow();
+        assertEquals(anterior,finalProjetado.getCpfGerente());
+        assertEquals(0, saldo.compareTo(finalProjetado.getSaldo()),
+            "GerenteAlterado não pode modificar o valor do saldo");
+        assertEquals(4,finalProjetado.getUltimaVersao());
+    }
+    @Test void tipoDesconhecidoRespondeFalhaComMesmoTipo() {
+        var cmd=new ComandoSaga(UUID.randomUUID().toString(),
+            "comando-inexistente","2026-09-30T10:03:00",Map.of());
+
+        var resultado=service.executar(cmd,null);
+
+        assertEquals("comando-inexistente",resultado.resposta().tipo());
+        assertEquals("FALHA",resultado.resposta().status());
+        assertEquals("Tipo de comando não suportado: comando-inexistente",
+            resultado.resposta().erro());
+        assertNull(resultado.evento());
+    }
 }
