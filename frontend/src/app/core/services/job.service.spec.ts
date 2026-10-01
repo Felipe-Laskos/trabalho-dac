@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { vi } from 'vitest';
 
-import { JobService } from './job.service';
+import { JobService, TempoEsgotadoError } from './job.service';
 import type { Job } from '../models/job.model';
 import { environment } from '../../../environments/environment';
 
@@ -213,9 +213,13 @@ describe('JobService', () => {
 
   segunda.flush(pendente);
 
-    await expect(promise)
-      .rejects
-      .toThrow('A operação não concluiu no tempo esperado.');
+  await expect(promise)
+    .rejects
+    .toThrow('A operação não concluiu no tempo esperado.');
+
+  await expect(promise)
+    .rejects
+    .toBeInstanceOf(TempoEsgotadoError);
 });
 
   it('deve tratar 404 do status como operação expirada', async () => {

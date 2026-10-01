@@ -31,10 +31,83 @@ Configurado em:
 
 | Serviço | Consumidor(es) | Status |
 |---|---|---|
-| `ms-orquestrador` | (ainda sem `@RabbitListener` — entram na S7) | configurado desde a S2 |
+| `ms-orquestrador` | `OrquestradorSaga` (`saga.cmd`, `orquestrador.reply`, e as 4 DLQs de comando — ver nota abaixo) | configurado desde a S2, consumidores chegaram na S7 (SAGA #1) |
 | `ms-conta` | `ProjecaoContaListener` (`ms.conta.events`) | configurado nesta tarefa (S5) |
 | `ms-email` | `EmailListener` (`ms.email.cmd`) | configurado nesta tarefa (S5), mas inerte: o listener captura toda exceção e descarta (§5.9), então nenhuma falha chega a ser retentada |
 | `ms-cliente`, `ms-gerente`, `ms-auth` | nenhum `@RabbitListener` ainda | não se aplica |
+
+⚠️ **Nota (S7, SAGA #1):** `OrquestradorSaga.falhaTecnica` agora é `@RabbitListener` de
+`ms.cliente.cmd.dlq`, `ms.gerente.cmd.dlq`, `ms.conta.cmd.dlq` e `ms.auth.cmd.dlq` (não de
+`ms.conta.events.dlq`) — quando um comando de uma SAGA em curso cai numa dessas 4 DLQs, o
+orquestrador consome a mensagem e marca o passo como falho, disparando a compensação. Isso
+**não é reenfileiramento automático** (a regra abaixo continua valendo: nada volta pra fila
+original sozinho) — é só o orquestrador reagindo à falha. Mas na prática, essas 4 DLQs podem
+aparecer vazias em `tools/dlq.sh listar` quase imediatamente após a falha, mesmo sem
+intervenção manual: o orquestrador já as drenou. `ms.conta.events.dlq` não tem esse consumidor
+e continua se comportando exatamente como descrito no resto deste documento.
+
+## Como a SAGA detecta e reage a falha técnica (S7+)
+
+Além do retry de mensageria acima, a SAGA (`OrquestradorSaga`) tem sua própria
+camada de detecção de falha, para os passos em que ela está esperando resposta
+de outro serviço. O estado de cada SAGA em curso fica no Redis, chave
+`saga:<sagaId>`, TTL de 1h (`EstadoSagaRepository`).
+
+Duas fontes, independentes, alimentam o mesmo caminho de falha
+(`sinalizarFalha` → `falhar` → `proximaCompensacao`):
+
+1. **DLQ técnica** (`OrquestradorSaga.falhaTecnica`, ver nota acima): o
+   comando enviado por essa SAGA esgotou as 3 retentativas no serviço de
+   destino e caiu na DLQ. Detecção quase imediata (~15–20 s após a 1ª
+   tentativa, ver seção de evidência).
+2. **Timeout de 30 s** (`OrquestradorSaga.verificarTimeouts`,
+   `@Scheduled(fixedDelay = 5000)`): a cada 5 s, varre as SAGAs em curso no
+   Redis e verifica se alguma está esperando resposta (`aguardando != null`)
+   há mais de 30 s (`timestampPasso`). Cobre os casos que a DLQ não cobre:
+   serviço de destino simplesmente não respondeu (travou, caiu antes de
+   consumir, resposta se perdeu) — sem retry esgotado, sem mensagem na DLQ,
+   só silêncio.
+
+Ambos chamam `sinalizarFalha`, que trata dois casos: se a SAGA já estava
+`COMPENSANDO` (uma falha durante a própria compensação), só avança pra
+próxima compensação pendente. Caso contrário, chama
+`falhar(saga, estado, erro, passoIncerto=true)` — o `true` importa: como nem
+a DLQ nem o timeout dizem se o passo atual chegou a ter efeito do outro lado
+(diferente de uma resposta explícita de erro, que dá certeza), `falhar`
+primeiro dispara, fire-and-forget, a compensação do **próprio passo
+incerto** (`compensarSemEsperar`) — por segurança, caso ele tenha
+parcialmente executado — e só depois monta `compensacoesPendentes` com os
+passos anteriores já confirmados (ordem inversa, só os `compensavel()`),
+marca o status como `COMPENSANDO` e começa a desfazer um por um
+(`proximaCompensacao`).
+
+### Walkthrough: comando cai na DLQ durante uma SAGA em curso
+
+1. SAGA `sagaId=abc123` está no passo 2, `aguardando="ReservarSaldo"`,
+   publicado em `ms.conta.cmd`.
+2. `ms-conta` falha ao processar 4 vezes seguidas (1 entrega + 3
+   retentativas, ~15 s) e a mensagem cai em `ms.conta.cmd.dlq`.
+3. `OrquestradorSaga.falhaTecnica` (consumidor dessa DLQ) recebe a mensagem,
+   lê o `sagaId` do comando, confere que bate com o `aguardando` atual da
+   SAGA `abc123` — bate.
+4. Chama `sinalizarFalha` → como a SAGA não estava `COMPENSANDO`, vira
+   `falhar(..., "falha técnica: ReservarSaldo foi para a DLQ", true)`.
+5. Por ser passo incerto, `falhar` primeiro publica a compensação do próprio
+   passo 2 sem esperar resposta (`compensarSemEsperar`) — se `ReservarSaldo`
+   não for compensável, isso é pulado sem erro.
+6. Em seguida monta `compensacoesPendentes` com os passos 1..1 já
+   confirmados, muda o status para `COMPENSANDO` e chama
+   `proximaCompensacao`, que publica a compensação do passo mais recente e
+   volta a esperar resposta.
+7. Esse ciclo se repete a cada resposta de compensação (via
+   `orquestrador.reply`) até `compensacoesPendentes` esvaziar —
+   `encerrarComFalha` marca a SAGA como `COMPENSADA`, dispara e-mail de falha
+   (se a SAGA tiver um) e conclui o job como falho.
+
+Se em vez de cair na DLQ o `ms-conta` nunca respondesse (sem falha
+explícita, sem retry, só silêncio — ex.: contêiner reiniciando), o mesmo
+desfecho aconteceria pelo caminho do timeout: `verificarTimeouts` acharia
+essa SAGA travada há mais de 30 s e chamaria o mesmo `sinalizarFalha`.
 
 ## Filas de comando e suas DLQs
 

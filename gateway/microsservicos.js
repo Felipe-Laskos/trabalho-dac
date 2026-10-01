@@ -44,6 +44,12 @@ async function criar(url, corpo, headers = {}) {
   return { corpo: resposta.data, location: resposta.headers?.location };
 }
 
+async function atualizar(url, corpo, headers = {}) {
+  const resposta = await axios.put(url, corpo, { headers, timeout: TIMEOUT_MS });
+
+  return resposta.data;
+}
+
 async function recriarSeed(base) {
   const resposta = await axios.post(
     montarUrl(base, "admin", "seed"), null, { timeout: TIMEOUT_MS }
@@ -79,4 +85,4 @@ function responderErro(erro, res, repassar = []) {
   return res.status(500).json(ERRO_INTERNO);
 }
 
-module.exports = { montarUrl, identidadeDe, consultar, criar, recriarSeed, responderErro };
+module.exports = { montarUrl, identidadeDe, consultar, criar, atualizar, recriarSeed, responderErro };

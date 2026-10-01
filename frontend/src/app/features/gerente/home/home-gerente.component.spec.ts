@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeGerenteComponent } from './home-gerente.component';
 import { vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api.service';
-import { JobService } from '../../../core/services/job.service';
+import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import type { Job } from '../../../core/models/job.model';
 import type { Solicitacao } from '../../../core/models/solicitacao.model';
@@ -169,5 +170,34 @@ describe('HomeGerenteComponent', () => {
     await component.aprovar(pendente);
 
     expect(component.resultado()?.mensagem).toBe('A operação expirou.');
+  });
+
+  it('deve avisar timeout, e não falha, quando o JobService esgota o prazo', async () => {
+    apiMock.post.mockResolvedValue({ jobId: 'job-123' });
+    jobServiceMock.aguardar.mockRejectedValue(
+      new TempoEsgotadoError('A operação não concluiu no tempo esperado.')
+    );
+
+    await component.aprovar(pendente);
+
+    expect(component.resultado()?.status).toBe('TIMEOUT');
+    expect(component.estaProcessando(pendente.cpf)).toBe(false);
+  });
+
+  it('deve mostrar a mensagem do back quando o Gateway responde erro', async () => {
+    apiMock.post.mockResolvedValue({ jobId: 'job-123' });
+    jobServiceMock.aguardar.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 404,
+        error: { status: 404, erro: 'Not Found', mensagem: 'Job inexistente ou expirado' }
+      })
+    );
+
+    await component.aprovar(pendente);
+
+    expect(component.resultado()).toEqual({
+      status: 'FALHA',
+      mensagem: 'Job inexistente ou expirado'
+    });
   });
 });

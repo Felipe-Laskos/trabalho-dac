@@ -1,6 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
-import { JobService } from '../../../core/services/job.service';
+import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
 import type { Job } from '../../../core/models/job.model';
@@ -127,7 +127,7 @@ export class HomeGerenteComponent implements OnInit {
       });
     } catch (erro) {
       this.resultado.set({
-        status: 'FALHA',
+        status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
         mensagem: mensagemDeErro(erro),
       });
     } finally {
