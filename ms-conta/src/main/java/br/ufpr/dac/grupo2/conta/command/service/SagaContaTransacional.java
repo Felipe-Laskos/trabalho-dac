@@ -184,6 +184,12 @@ public class SagaContaTransacional {
         String numero = numeroConta(cmd.payload());
         String novoGerente = cpf(cmd.payload(), "cpfGerente");
         EstadoConta estado = leitura.replay(numero);
+        ResultadoSaga selecao = resultado(cmd.sagaId(), "conta-a-transferir");
+        if (selecao != null && !estado.getCpfGerente().equals(
+                selecao.resposta().payload().get("cpfGerenteAnterior"))) {
+            throw new IllegalArgumentException(
+                    "A conta escolhida mudou de gerente durante a inserção. Tente novamente.");
+        }
 
         Evento evento = eventos.saveAndFlush(new Evento(
                 numero,
@@ -206,8 +212,12 @@ public class SagaContaTransacional {
         String gerenteAnterior = cpf(cmd.payload(), "cpfGerente");
         ResultadoSaga atribuicao = resultado(cmd.sagaId(), "atribuir-conta");
 
-        if (atribuicao == null || atribuicao.evento() == null
-                || !numero.equals(atribuicao.evento().objetoId())) {
+        if (atribuicao == null || atribuicao.evento() == null) {
+            return sucesso(cmd, Map.of(
+                    "numeroConta", numero,
+                    "revertida", false), null);
+        }
+        if (!numero.equals(atribuicao.evento().objetoId())) {
             throw new IllegalArgumentException(
                     "Atribuição da SAGA não encontrada para a conta");
         }

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.service.SagaContaTransacional;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ContaParaTransferir;
@@ -92,6 +93,29 @@ class ContaSagaListenerTest {
         verify(publisher).publicar(SagaMessagePublisher.FILA_EVENTOS, evento);
         verify(publisher).publicar(SagaMessagePublisher.FILA_RESPOSTAS,
                 resultado.resposta());
+    }
+
+    @Test
+    void contaNaoEncontradaGeraRespostaDeFalha() {
+        ComandoSaga cmd = comando("saga-conta-inexistente", "sacar", Map.of(
+                "numeroConta", "9999",
+                "valor", "100.00"));
+        ContaNaoEncontradaException excecao =
+                new ContaNaoEncontradaException("9999");
+        ResultadoSaga falha = new ResultadoSaga(new ResultadoSaga.Resposta(
+                cmd.sagaId(), cmd.tipo(), cmd.timestamp(), Map.of(),
+                "FALHA", excecao.getMessage()), null);
+        when(command.executar(cmd, null)).thenThrow(excecao);
+        when(command.registrarFalha(cmd, excecao.getMessage()))
+                .thenReturn(falha);
+
+        listener.receber(mensagem(cmd));
+
+        verify(command).registrarFalha(cmd, excecao.getMessage());
+        verify(publisher).publicar(SagaMessagePublisher.FILA_RESPOSTAS,
+                falha.resposta());
+        verify(publisher, never()).publicar(
+                SagaMessagePublisher.FILA_EVENTOS, null);
     }
 
     @Test

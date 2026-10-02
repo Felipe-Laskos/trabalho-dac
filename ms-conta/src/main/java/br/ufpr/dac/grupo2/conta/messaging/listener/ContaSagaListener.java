@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
+import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.service.SagaContaTransacional;
 import br.ufpr.dac.grupo2.conta.messaging.config.SagaRabbitConfig;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
@@ -46,13 +47,21 @@ public class ContaSagaListener {
         ResultadoSaga resultado = switch (cmd.tipo()) {
             case "gerente-com-menos-clientes" -> escolherGerente(cmd);
             case "conta-a-transferir" -> contaATransferir(cmd);
-            default -> command.executar(cmd, null);
+            default -> executar(cmd);
         };
 
         if (resultado.evento() != null) {
             publisher.publicar(SagaMessagePublisher.FILA_EVENTOS, resultado.evento());
         }
         publisher.publicar(SagaMessagePublisher.FILA_RESPOSTAS, resultado.resposta());
+    }
+
+    private ResultadoSaga executar(ComandoSaga cmd) {
+        try {
+            return command.executar(cmd, null);
+        } catch (ContaNaoEncontradaException e) {
+            return command.registrarFalha(cmd, e.getMessage());
+        }
     }
 
     private ResultadoSaga escolherGerente(ComandoSaga cmd) {

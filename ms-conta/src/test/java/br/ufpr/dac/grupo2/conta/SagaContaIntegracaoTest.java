@@ -92,6 +92,10 @@ class SagaContaIntegracaoTest {
         String anterior="64065268052";
         String novo="11111111111";
         var saldo=leitura.replay("7617").getSaldo();
+        service.registrarSelecaoTransferencia(new ComandoSaga(sagaId,
+            "conta-a-transferir", "2026-09-30T09:59:00", Map.of()),
+            Optional.of(new ContaParaTransferir("7617",
+                "76179646090", anterior)));
         var atribuir=new ComandoSaga(sagaId,"atribuir-conta",
             "2026-09-30T10:00:00",
             Map.of("numeroConta","7617","cpfGerente",novo));
@@ -132,6 +136,38 @@ class SagaContaIntegracaoTest {
         assertEquals(0, saldo.compareTo(finalProjetado.getSaldo()),
             "GerenteAlterado não pode modificar o valor do saldo");
         assertEquals(4,finalProjetado.getUltimaVersao());
+    }
+    @Test void atribuirFalhaQuandoContaMudouDeGerenteAposSelecao() {
+        String sagaId=UUID.randomUUID().toString();
+        service.registrarSelecaoTransferencia(new ComandoSaga(sagaId,
+            "conta-a-transferir", "2026-09-30T09:59:00", Map.of()),
+            Optional.of(new ContaParaTransferir("7617",
+                "76179646090", "99999999999")));
+        var atribuir=new ComandoSaga(sagaId,"atribuir-conta",
+            "2026-09-30T10:00:00",
+            Map.of("numeroConta","7617","cpfGerente","11111111111"));
+
+        var resultado=service.executar(atribuir,null);
+
+        assertEquals("FALHA",resultado.resposta().status());
+        assertEquals("A conta escolhida mudou de gerente durante a inserção. Tente novamente.",
+            resultado.resposta().erro());
+        assertNull(resultado.evento());
+        assertEquals(2,eventos.findByObjetoIdOrderByVersaoAsc("7617").size());
+        assertEquals("64065268052",leitura.replay("7617").getCpfGerente());
+    }
+    @Test void compensarSemAtribuicaoRespondeSucessoSemReverter() {
+        var compensar=new ComandoSaga(UUID.randomUUID().toString(),
+            "compensar-atribuir-conta", "2026-09-30T10:01:00",
+            Map.of("numeroConta","7617","cpfGerente","64065268052"));
+
+        var resultado=service.executar(compensar,null);
+
+        assertEquals("SUCESSO",resultado.resposta().status());
+        assertEquals(Map.of("numeroConta","7617","revertida",false),
+            resultado.resposta().payload());
+        assertNull(resultado.evento());
+        assertEquals(2,eventos.findByObjetoIdOrderByVersaoAsc("7617").size());
     }
     @Test void tipoDesconhecidoRespondeFalhaComMesmoTipo() {
         var cmd=new ComandoSaga(UUID.randomUUID().toString(),
