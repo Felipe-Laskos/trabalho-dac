@@ -3,10 +3,13 @@ package br.ufpr.dac.grupo2.conta.command.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
+import br.ufpr.dac.grupo2.conta.messaging.dto.ContaParaTransferir;
 import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ResultadoSaga;
 import jakarta.persistence.EntityManager;
@@ -23,12 +26,15 @@ public class SagaContaTransacional {
 
     private final EventoRepository eventos;
     private final NumeroConta numeros;
+    private final ContaLeituraService leitura;
     private final ObjectMapper objectMapper;
 
     public SagaContaTransacional(EventoRepository eventos,
-            NumeroConta numeros, ObjectMapper objectMapper) {
+            NumeroConta numeros, ContaLeituraService leitura,
+            ObjectMapper objectMapper) {
         this.eventos = eventos;
         this.numeros = numeros;
+        this.leitura = leitura;
         this.objectMapper = objectMapper;
     }
 
@@ -46,14 +52,41 @@ public class SagaContaTransacional {
             novo = switch (cmd.tipo()) {
                 case "gerente-com-menos-clientes" -> sucesso(cmd,
                         Map.of("cpfGerente", gerenteObrigatorio(gerenteEscolhido)), null);
+                case "atribuir-conta" -> atribuirConta(cmd);
                 case "criar-conta" -> criar(cmd);
                 case "compensar-criar-conta" -> compensar(cmd);
+                case "compensar-atribuir-conta" -> compensarAtribuicao(cmd);
                 default -> throw new IllegalArgumentException(
                         "Tipo de comando não suportado: " + cmd.tipo());
             };
         } catch (IllegalArgumentException e) {
             novo = falha(cmd, e.getMessage());
         }
+
+        persistirResultado(cmd, novo);
+        return novo;
+    }
+
+    @Transactional(transactionManager = "commandTransactionManager")
+    public ResultadoSaga registrarSelecaoTransferencia(
+            ComandoSaga cmd,
+            Optional<ContaParaTransferir> selecionada) {
+        bloquearEventStore();
+
+        ResultadoSaga anterior = resultado(cmd.sagaId(), cmd.tipo());
+        if (anterior != null) {
+            return anterior;
+        }
+
+        ResultadoSaga novo = selecionada
+                .map(conta -> sucesso(cmd, Map.of(
+                        "transferir", true,
+                        "numeroConta", conta.numeroConta(),
+                        "cpfCliente", conta.cpfCliente(),
+                        "cpfGerenteAnterior",
+                        conta.cpfGerenteAnterior()), null))
+                .orElseGet(() -> sucesso(cmd,
+                        Map.of("transferir", false), null));
 
         persistirResultado(cmd, novo);
         return novo;
@@ -147,6 +180,78 @@ public class SagaContaTransacional {
                 "removida", true), cancelado);
     }
 
+    private ResultadoSaga atribuirConta(ComandoSaga cmd) {
+        String numero = numeroConta(cmd.payload());
+        String novoGerente = cpf(cmd.payload(), "cpfGerente");
+        EstadoConta estado = leitura.replay(numero);
+        ResultadoSaga selecao = resultado(cmd.sagaId(), "conta-a-transferir");
+        if (selecao != null && !estado.getCpfGerente().equals(
+                selecao.resposta().payload().get("cpfGerenteAnterior"))) {
+            throw new IllegalArgumentException(
+                    "A conta escolhida mudou de gerente durante a inserção. Tente novamente.");
+        }
+
+        Evento evento = eventos.saveAndFlush(new Evento(
+                numero,
+                "GerenteAlterado",
+                Map.of(
+                        "cpfGerenteAnterior", estado.getCpfGerente(),
+                        "cpfGerente", novoGerente,
+                        "sagaId", cmd.sagaId()),
+                estado.getVersao() + 1,
+                agora()));
+
+        return sucesso(cmd, Map.of(
+                "numeroConta", numero,
+                "cpfGerenteAnterior", estado.getCpfGerente(),
+                "cpfGerente", novoGerente), evento);
+    }
+
+    private ResultadoSaga compensarAtribuicao(ComandoSaga cmd) {
+        String numero = numeroConta(cmd.payload());
+        String gerenteAnterior = cpf(cmd.payload(), "cpfGerente");
+        ResultadoSaga atribuicao = resultado(cmd.sagaId(), "atribuir-conta");
+
+        if (atribuicao == null || atribuicao.evento() == null) {
+            return sucesso(cmd, Map.of(
+                    "numeroConta", numero,
+                    "revertida", false), null);
+        }
+        if (!numero.equals(atribuicao.evento().objetoId())) {
+            throw new IllegalArgumentException(
+                    "Atribuição da SAGA não encontrada para a conta");
+        }
+
+        String gerenteNovo = texto(
+                atribuicao.evento().payload(), "cpfGerente");
+        String gerenteOriginal = texto(
+                atribuicao.evento().payload(), "cpfGerenteAnterior");
+        if (!gerenteAnterior.equals(gerenteOriginal)) {
+            throw new IllegalArgumentException(
+                    "Gerente anterior não corresponde à atribuição da SAGA");
+        }
+
+        EstadoConta estado = leitura.replay(numero);
+        if (!estado.getCpfGerente().equals(gerenteNovo)) {
+            throw new IllegalArgumentException(
+                    "Conta não pertence mais ao gerente atribuído pela SAGA");
+        }
+
+        Evento reversao = eventos.saveAndFlush(new Evento(
+                numero,
+                "GerenteAlterado",
+                Map.of(
+                        "cpfGerenteAnterior", gerenteNovo,
+                        "cpfGerente", gerenteAnterior,
+                        "sagaId", cmd.sagaId()),
+                estado.getVersao() + 1,
+                agora()));
+
+        return sucesso(cmd, Map.of(
+                "numeroConta", numero,
+                "cpfGerente", gerenteAnterior), reversao);
+    }
+
     private void bloquearEventStore() {
         // Serializa a escolha de número, a criação e a deduplicação do comando.
         entityManager.createNativeQuery(
@@ -216,6 +321,23 @@ public class SagaContaTransacional {
             throw new IllegalArgumentException("CPF inválido: " + campo);
         }
         return cpf;
+    }
+
+    private String numeroConta(Map<String, Object> payload) {
+        String numero = texto(payload, "numeroConta");
+        if (!numero.matches("[0-9]{4}")) {
+            throw new IllegalArgumentException("Número de conta inválido");
+        }
+        return numero;
+    }
+
+    private String texto(Map<String, Object> payload, String campo) {
+        Object valor = payload.get(campo);
+        if (!(valor instanceof String texto) || texto.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Campo obrigatório inválido: " + campo);
+        }
+        return texto;
     }
 
     private String gerenteObrigatorio(String cpf) {
