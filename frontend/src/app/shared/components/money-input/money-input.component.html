@@ -5,10 +5,7 @@
     </label>
   }
 
-  <div
-    class="money-input-wrapper"
-    (mousedown)="aoMouseDown($event)"
-  >
+  <div class="money-input-wrapper" (mousedown)="aoMouseDown($event)">
     <span class="currency-prefix">R$</span>
 
     <input
@@ -17,10 +14,11 @@
       [placeholder]="placeholder()"
       [value]="valorVisual()"
       [disabled]="desabilitado()"
-      inputmode="decimal"
+      inputmode="numeric"
       autocomplete="off"
       aria-label="Valor monetário"
       (focus)="aoFocar($event)"
+      (click)="aoClicar($event)"
       (input)="aoDigitar($event)"
       (blur)="aoSairDoCampo()"
     />

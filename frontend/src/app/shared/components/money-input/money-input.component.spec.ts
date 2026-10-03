@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MoneyInputComponent } from './money-input.component';
-import  Decimal  from 'decimal.js';
+import Decimal from 'decimal.js';
 
 @Component({
   imports: [ReactiveFormsModule, MoneyInputComponent],
@@ -49,10 +49,6 @@ describe('MoneyInputComponent', () => {
       expect((component as any).valorVisual()).toBe('');
     });
 
-    it('deve iniciar com último valor visual válido vazio', () => {
-      expect((component as any).ultimoValorVisualValido).toBe('');
-    });
-
     it('deve iniciar com zero centavos', () => {
       expect((component as any).centavos.toString()).toBe('0');
     });
@@ -69,22 +65,25 @@ describe('MoneyInputComponent', () => {
       component.writeValue(null);
 
       expect((component as any).valorVisual()).toBe('');
-      expect((component as any).ultimoValorVisualValido).toBe('');
       expect((component as any).centavos.toString()).toBe('0');
+    });
+
+    it('deve truncar para centavos o valor recebido com mais de duas casas', () => {
+      component.writeValue('10.995');
+
+      expect((component as any).valorVisual()).toBe('10,99');
     });
 
     it('deve limpar o valor visual quando receber string vazia', () => {
       component.writeValue('');
 
       expect((component as any).valorVisual()).toBe('');
-      expect((component as any).ultimoValorVisualValido).toBe('');
     });
 
     it('deve limpar o valor visual quando receber valor inválido', () => {
       component.writeValue('abc');
 
       expect((component as any).valorVisual()).toBe('');
-      expect((component as any).ultimoValorVisualValido).toBe('');
       expect((component as any).centavos.toString()).toBe('0');
     });
 
@@ -92,7 +91,6 @@ describe('MoneyInputComponent', () => {
       component.writeValue('0.00');
 
       expect((component as any).valorVisual()).toBe('');
-      expect((component as any).ultimoValorVisualValido).toBe('');
       expect((component as any).centavos.toString()).toBe('0');
     });
 
@@ -318,17 +316,13 @@ describe('MoneyInputComponent', () => {
     });
 
     it('deve formatar centavos corretamente', () => {
-        const resultado = (component as any).formatarCentavos(
-        new Decimal(123450),
-      );
+      const resultado = (component as any).formatarCentavos(new Decimal(123450));
 
       expect(resultado).toBe('1.234,50');
     });
 
     it('deve formatar zero centavos como zero', () => {
-      const resultado = (component as any).formatarCentavos(
-        new Decimal(0),
-      );
+      const resultado = (component as any).formatarCentavos(new Decimal(0));
 
       expect(resultado).toBe('0,00');
     });
@@ -369,25 +363,119 @@ describe('MoneyInputComponent', () => {
       input.remove();
     });
 
-    it('deve posicionar o cursor no final ao clicar no wrapper', () => {
+    it('deve focar o input ao clicar no wrapper fora dele', () => {
       const wrapper = document.createElement('div');
+      const prefixo = document.createElement('span');
       const input = document.createElement('input');
 
-      input.value = '1.234,50';
-
-      wrapper.appendChild(input);
+      wrapper.append(prefixo, input);
       document.body.appendChild(wrapper);
+
+      let prevenido = false;
 
       const evento = {
         currentTarget: wrapper,
+        target: prefixo,
+        preventDefault: () => {
+          prevenido = true;
+        },
       } as unknown as MouseEvent;
 
       (component as any).aoMouseDown(evento);
 
+      expect(document.activeElement).toBe(input);
+      expect(prevenido).toBe(true);
+
+      wrapper.remove();
+    });
+
+    it('não deve interferir no clique sobre o próprio input', () => {
+      const wrapper = document.createElement('div');
+      const input = document.createElement('input');
+
+      wrapper.appendChild(input);
+      document.body.appendChild(wrapper);
+
+      let prevenido = false;
+
+      const evento = {
+        currentTarget: wrapper,
+        target: input,
+        preventDefault: () => {
+          prevenido = true;
+        },
+      } as unknown as MouseEvent;
+
+      (component as any).aoMouseDown(evento);
+
+      expect(prevenido).toBe(false);
+
+      wrapper.remove();
+    });
+
+    it('não deve focar o input desabilitado ao clicar no wrapper', () => {
+      const wrapper = document.createElement('div');
+      const prefixo = document.createElement('span');
+      const input = document.createElement('input');
+
+      input.disabled = true;
+
+      wrapper.append(prefixo, input);
+      document.body.appendChild(wrapper);
+
+      const evento = {
+        currentTarget: wrapper,
+        target: prefixo,
+        preventDefault: () => {},
+      } as unknown as MouseEvent;
+
+      (component as any).aoMouseDown(evento);
+
+      expect(document.activeElement).not.toBe(input);
+
+      wrapper.remove();
+    });
+
+    it('deve levar o cursor ao final num clique simples no input', () => {
+      const input = document.createElement('input');
+
+      input.value = '1.234,50';
+
+      document.body.appendChild(input);
+
+      input.setSelectionRange(0, 0);
+
+      const evento = {
+        target: input,
+      } as unknown as MouseEvent;
+
+      (component as any).aoClicar(evento);
+
       expect(input.selectionStart).toBe(input.value.length);
       expect(input.selectionEnd).toBe(input.value.length);
 
-      wrapper.remove();
+      input.remove();
+    });
+
+    it('deve preservar a seleção feita com o mouse', () => {
+      const input = document.createElement('input');
+
+      input.value = '1.234,50';
+
+      document.body.appendChild(input);
+
+      input.setSelectionRange(0, input.value.length);
+
+      const evento = {
+        target: input,
+      } as unknown as MouseEvent;
+
+      (component as any).aoClicar(evento);
+
+      expect(input.selectionStart).toBe(0);
+      expect(input.selectionEnd).toBe(input.value.length);
+
+      input.remove();
     });
 
     it('deve posicionar o cursor no final ao aplicar o valor', () => {
@@ -418,9 +506,7 @@ describe('MoneyInputComponent', () => {
       hospedeiro.detectChanges();
       await hospedeiro.whenStable();
 
-      input = hospedeiro.nativeElement.querySelector(
-        'input',
-      ) as HTMLInputElement;
+      input = hospedeiro.nativeElement.querySelector('input') as HTMLInputElement;
     });
 
     it('deve exibir o valor do formulário no input, habilitado', () => {
@@ -458,6 +544,29 @@ describe('MoneyInputComponent', () => {
       expect(input.value).toBe('2.500,00');
     });
 
+    it('deve focar o input ao pressionar o mouse no prefixo R$', () => {
+      const prefixo = hospedeiro.nativeElement.querySelector('.currency-prefix') as HTMLElement;
+
+      const evento = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+      });
+
+      prefixo.dispatchEvent(evento);
+
+      expect(document.activeElement).toBe(input);
+      expect(evento.defaultPrevented).toBe(true);
+    });
+
+    it('deve levar o cursor ao final quando o usuário clica no meio do valor', () => {
+      input.focus();
+      input.setSelectionRange(0, 0);
+
+      input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+      expect(input.selectionStart).toBe(input.value.length);
+    });
+
     it('deve desabilitar o input quando o formulário é desabilitado', async () => {
       hospedeiro.componentInstance.valor.disable();
 
@@ -474,17 +583,6 @@ describe('MoneyInputComponent', () => {
       await hospedeiro.whenStable();
 
       expect(input.disabled).toBe(false);
-    });
-  });
-
-  describe('Template', () => {
-    it('não deve possuir handlers keyup ou select', () => {
-      const input = fixture.nativeElement.querySelector(
-        'input',
-      ) as HTMLInputElement;
-
-      expect(input.outerHTML).not.toContain('(keyup)');
-      expect(input.outerHTML).not.toContain('(select)');
     });
   });
 });
