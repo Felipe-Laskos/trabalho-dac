@@ -9,14 +9,18 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.service.SagaContaTransacional;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
+import br.ufpr.dac.grupo2.conta.messaging.dto.ContaParaTransferir;
 import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ResultadoSaga;
 import br.ufpr.dac.grupo2.conta.messaging.listener.ContaSagaListener;
 import br.ufpr.dac.grupo2.conta.messaging.service.SagaMessagePublisher;
 import br.ufpr.dac.grupo2.conta.query.service.EscolhaGerenteService;
+import br.ufpr.dac.grupo2.conta.query.service.TransferenciaNovoGerenteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +41,9 @@ class ContaSagaListenerTest {
     private EscolhaGerenteService query;
 
     @Mock
+    private TransferenciaNovoGerenteService transferencia;
+
+    @Mock
     private SagaMessagePublisher publisher;
 
     private ObjectMapper json;
@@ -45,7 +52,8 @@ class ContaSagaListenerTest {
     @BeforeEach
     void preparar() {
         json = JsonMapper.builder().findAndAddModules().build();
-        listener = new ContaSagaListener(json, command, query, publisher);
+        listener = new ContaSagaListener(
+                json, command, query, transferencia, publisher);
     }
 
     @Test
@@ -88,6 +96,78 @@ class ContaSagaListenerTest {
     }
 
     @Test
+    void contaNaoEncontradaGeraRespostaDeFalha() {
+        ComandoSaga cmd = comando("saga-conta-inexistente", "sacar", Map.of(
+                "numeroConta", "9999",
+                "valor", "100.00"));
+        ContaNaoEncontradaException excecao =
+                new ContaNaoEncontradaException("9999");
+        ResultadoSaga falha = new ResultadoSaga(new ResultadoSaga.Resposta(
+                cmd.sagaId(), cmd.tipo(), cmd.timestamp(), Map.of(),
+                "FALHA", excecao.getMessage()), null);
+        when(command.executar(cmd, null)).thenThrow(excecao);
+        when(command.registrarFalha(cmd, excecao.getMessage()))
+                .thenReturn(falha);
+
+        listener.receber(mensagem(cmd));
+
+        verify(command).registrarFalha(cmd, excecao.getMessage());
+        verify(publisher).publicar(SagaMessagePublisher.FILA_RESPOSTAS,
+                falha.resposta());
+        verify(publisher, never()).publicar(
+                SagaMessagePublisher.FILA_EVENTOS, null);
+    }
+
+    @Test
+    void selecionaContaParaTransferirEPublicaRespostaComMesmoTipo() {
+        ComandoSaga cmd = comando(
+                "saga-r13",
+                "conta-a-transferir",
+                Map.of("cpfGerente", "11111111111"));
+        var conta = new ContaParaTransferir(
+                "7617", "76179646090", "64065268052");
+        ResultadoSaga resultado = sucesso(cmd, Map.of(
+                "transferir", true,
+                "numeroConta", "7617",
+                "cpfCliente", "76179646090",
+                "cpfGerenteAnterior", "64065268052"), null);
+        when(transferencia.escolher("11111111111"))
+                .thenReturn(Optional.of(conta));
+        when(command.registrarSelecaoTransferencia(
+                cmd, Optional.of(conta))).thenReturn(resultado);
+
+        listener.receber(mensagem(cmd));
+
+        verify(command).registrarSelecaoTransferencia(
+                cmd, Optional.of(conta));
+        verify(publisher).publicar(
+                SagaMessagePublisher.FILA_RESPOSTAS,
+                resultado.resposta());
+    }
+
+    @Test
+    void selecaoSemContaRespondeTransferirFalse() {
+        ComandoSaga cmd = comando(
+                "saga-r13-sem-conta",
+                "conta-a-transferir",
+                Map.of("cpfGerente", "11111111111"));
+        ResultadoSaga resultado = sucesso(
+                cmd, Map.of("transferir", false), null);
+        when(transferencia.escolher("11111111111"))
+                .thenReturn(Optional.empty());
+        when(command.registrarSelecaoTransferencia(
+                cmd, Optional.empty())).thenReturn(resultado);
+
+        listener.receber(mensagem(cmd));
+
+        verify(command).registrarSelecaoTransferencia(
+                cmd, Optional.empty());
+        verify(publisher).publicar(
+                SagaMessagePublisher.FILA_RESPOSTAS,
+                resultado.resposta());
+    }
+
+    @Test
     void listaInvalidaGeraRespostaDeFalhaDeduplicavel() {
         ComandoSaga cmd = comando("saga-invalida", "gerente-com-menos-clientes",
                 Map.of("cpfsAtivos", List.of()));
@@ -114,7 +194,7 @@ class ContaSagaListenerTest {
         assertThrows(IllegalArgumentException.class,
                 () -> listener.receber(mensagem(cmd)));
 
-        verifyNoInteractions(command, query, publisher);
+        verifyNoInteractions(command, query, transferencia, publisher);
     }
 
     private ComandoSaga comando(String sagaId, String tipo, Map<String, Object> payload) {
