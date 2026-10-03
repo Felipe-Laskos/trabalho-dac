@@ -8,4 +8,8 @@ import br.ufpr.dac.grupo2.auth.model.Usuario;
 
 public interface UsuarioRepository extends MongoRepository<Usuario, String> {
   Optional<Usuario> findByLogin(String login);
+
+  Optional<Usuario> findByCpfAndTipo(String cpf, String tipo);
+
+  long deleteBySagaId(String sagaId);
 }

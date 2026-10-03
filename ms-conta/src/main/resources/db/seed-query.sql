@@ -1,3 +1,4 @@
+TRUNCATE TABLE conta_query.contas_compensadas;
 TRUNCATE TABLE conta_query.movimentacoes RESTART IDENTITY CASCADE;
 TRUNCATE TABLE conta_query.contas CASCADE;
 

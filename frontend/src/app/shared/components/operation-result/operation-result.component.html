@@ -73,10 +73,22 @@
       </div>
     }
 
-    @if (dados().tipo === 'ERRO_NEGOCIO' || dados().tipo === 'ERRO_PERMISSAO') {
+    @if (
+      dados().tipo === 'ERRO_NEGOCIO' ||
+      dados().tipo === 'ERRO_PERMISSAO' ||
+      dados().tipo === 'ERRO_TECNICO'
+    ) {
       @if (dados().mensagem) {
         <div class="alert-box">
-          <i [class]="dados().tipo === 'ERRO_NEGOCIO' ? 'pi pi-info-circle' : 'pi pi-shield'"></i>
+          <i
+            [class]="
+              dados().tipo === 'ERRO_NEGOCIO'
+                ? 'pi pi-info-circle'
+                : dados().tipo === 'ERRO_PERMISSAO'
+                  ? 'pi pi-shield'
+                  : 'pi pi-times-circle'
+            "
+          ></i>
 
           <span class="alert-message">{{ dados().mensagem }}</span>
         </div>

@@ -27,6 +27,8 @@ public class Usuario {
 
   private boolean ativo;
 
+  private String sagaId;
+
   public Usuario(String cpf, String tipo, String login, String senha, boolean ativo) {
     this.cpf = cpf;
     this.tipo = tipo;

@@ -1,4 +1,5 @@
 import { signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { OperacaoPageComponent } from './operacao-page.component';
@@ -28,21 +29,25 @@ const authMock = {
 };
 
 describe('OperacaoPageComponent', () => {
+  const contas = {
+    obterPorCliente: vi.fn(() => Promise.resolve(contaMock)),
+    aguardarNovoSaldo: vi.fn(),
+  };
+  const operacoes = {
+    depositar: vi.fn(),
+    transferir: vi.fn(),
+  };
+
   async function montar(tipo: 'DEPOSITO' | 'TRANSFERENCIA'): Promise<ComponentFixture<OperacaoPageComponent>> {
+    contas.obterPorCliente.mockResolvedValue(contaMock);
     await TestBed.configureTestingModule({
       imports: [OperacaoPageComponent],
       providers: [
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { data: { tipo } } } },
         { provide: AuthService, useValue: authMock },
-        {
-          provide: ContaService,
-          useValue: { obterPorCliente: () => Promise.resolve(contaMock) },
-        },
-        {
-          provide: OperacaoService,
-          useValue: { depositar: vi.fn(), transferir: vi.fn() },
-        },
+        { provide: ContaService, useValue: contas },
+        { provide: OperacaoService, useValue: operacoes },
       ],
     }).compileComponents();
 
@@ -52,7 +57,10 @@ describe('OperacaoPageComponent', () => {
     return fixture;
   }
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+  });
 
   it('should create', async () => {
     const fixture = await montar('DEPOSITO');
@@ -66,5 +74,24 @@ describe('OperacaoPageComponent', () => {
     componente.pedirConfirmacao();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('própria conta');
+  });
+
+  it('mantém sucesso se a reconsulta do saldo falhar depois do 201', async () => {
+    operacoes.depositar.mockResolvedValue({
+      tipo: 'DEPOSITO',
+      numeroConta: '1291',
+      valor: '150.00',
+      dataHora: '2026-09-19T12:00:00Z',
+    });
+    contas.aguardarNovoSaldo.mockRejectedValue(new HttpErrorResponse({ status: 0 }));
+
+    const fixture = await montar('DEPOSITO');
+    const componente = fixture.componentInstance;
+    componente.form.setValue({ valor: '150.00', contaDestino: '' });
+    await componente.confirmar();
+    fixture.detectChanges();
+
+    expect(componente['resultado']()?.tipo).toBe('SUCESSO');
+    expect(componente['avisoTimeout']()).toContain('não conseguimos confirmar o saldo');
   });
 });

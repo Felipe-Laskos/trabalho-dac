@@ -74,59 +74,40 @@
             </span>
           </td>
           <td class="text-center text-muted">{{ row.dataHoraProcessamento | dataHora }}</td>
+
           <td class="text-right actions-cell">
-            @if (row._links['aprovacao'] && row._links['rejeicao']) {
-              <div class="actions-group">
-                <p-button label="Aprovar" styleClass="btn-aprovar"></p-button>
-                <p-button label="Recusar" styleClass="btn-recusar"></p-button>
-              </div>
-            } @else {
-              <span class="sem-acoes">sem ações</span>
-            }
-          </td>
+          @if (row._links['aprovacao'] && row._links['rejeicao']) {
+            <div class="actions-group">
+              <p-button
+                label="Aprovar"
+                styleClass="btn-aprovar"
+                [disabled]="estaProcessando(row.cpf)"
+                (onClick)="aprovar(row.cpf)">
+              </p-button>
+
+              <p-button
+                label="Recusar"
+                styleClass="btn-recusar"
+                [disabled]="estaProcessando(row.cpf)">
+              </p-button>
+            </div>
+          } @else {
+            <span class="sem-acoes">sem ações</span>
+          }
+        </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
+  <app-job-progress
+  [visible]="aprovando() !== null"
+  titulo="Aprovando cliente…"
+  />
 
-  <div class="info-banner">
-    <i class="pi pi-info-circle banner-icon"></i>
-    <p>
-      <strong>Aprovar</strong> e <strong>Recusar</strong> só aparecem nas linhas cujo <code>_links</code> traz aprovacao e rejeicao. 
-      O front não olha o campo status para decidir isso — é o HATEOAS dirigindo a interface.
-    </p>
-  </div>
-
-  <div class="instruction-grid">
-    <p-card styleClass="instruction-card">
-      <div class="card-flex">
-        <div class="step-badge badge-primary">1</div>
-        <div class="card-text">
-          <h4>Aprovar devolve 202</h4>
-          <p>A linha entra em "processando"; a tela não trava.</p>
-        </div>
-      </div>
-    </p-card>
-
-    <p-card styleClass="instruction-card">
-      <div class="card-flex">
-        <div class="step-badge badge-secondary">2</div>
-        <div class="card-text">
-          <h4>Recusar é síncrono</h4>
-          <p>Abre modal com o motivo obrigatório e responde 200.</p>
-        </div>
-      </div>
-    </p-card>
-
-    <p-card styleClass="instruction-card">
-      <div class="card-flex">
-        <div class="step-badge badge-warning">!</div>
-        <div class="card-text">
-          <h4>Job FALHA não é erro HTTP</h4>
-          <p>Aprovar duas vezes volta 202 e falha depois. Mostrar o erro do job.</p>
-        </div>
-      </div>
-    </p-card>
-  </div>
-
+  <app-async-result
+  [visible]="resultado() !== null"
+  [status]="resultado()?.status ?? 'SUCESSO'"
+  [mensagem]="resultado()?.mensagem ?? ''"
+  (fechar)="resultado.set(null)"
+  />
 </div>

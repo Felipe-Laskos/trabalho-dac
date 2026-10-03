@@ -2,7 +2,6 @@ import { Component, computed, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
-import { DateTime } from 'luxon';
 
 import { Dinheiro } from '../../core/models/dinheiro';
 
@@ -19,6 +18,11 @@ import {
 import { AccountNumberInputComponent } from '../../shared/components/account-number-input/account-number-input.component';
 import { MoneyInputComponent } from '../../shared/components/money-input/money-input.component';
 import { BalanceIndicatorComponent } from '../../shared/components/balance-indicator/balance-indicator.component';
+import { JobProgressComponent } from '../../shared/components/job-progress/job-progress.component';
+import {
+  AsyncResultComponent,
+  AsyncResultStatus,
+} from '../../shared/components/async-result/async-result.component';
 
 export interface OperacaoPayload {
   numeroConta: string;
@@ -37,6 +41,8 @@ export interface OperacaoPayload {
     AccountNumberInputComponent,
     MoneyInputComponent,
     BalanceIndicatorComponent,
+    JobProgressComponent,
+    AsyncResultComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -44,10 +50,17 @@ export interface OperacaoPayload {
 export class DashboardComponent {
   readonly exibirModalConfirmacao = signal(false);
   readonly carregando = signal(false);
+  readonly exibirJobProgress = signal(false);
   readonly resultado = signal<DadosResultadoOperacao | null>(null);
 
   readonly saldoConta = signal<Dinheiro>('1850.50');
   readonly reconsultandoSaldo = signal<boolean>(false);
+
+  readonly exibirAsyncResult = signal(false);
+  readonly asyncResultStatus = signal<AsyncResultStatus>('SUCESSO');
+  readonly asyncResultMensagem = signal('');
+
+  readonly numeroContaCriada = signal('0950');
 
   readonly numeroContaControl = new FormControl<string>('0950', {
     nonNullable: true,
@@ -57,13 +70,19 @@ export class DashboardComponent {
     nonNullable: true,
   });
 
-  private readonly numeroConta = toSignal(this.numeroContaControl.valueChanges, {
-    initialValue: this.numeroContaControl.value,
-  });
+  private readonly numeroConta = toSignal(
+    this.numeroContaControl.valueChanges,
+    {
+      initialValue: this.numeroContaControl.value,
+    }
+  );
 
-  private readonly valor = toSignal(this.valorControl.valueChanges, {
-    initialValue: this.valorControl.value,
-  });
+  private readonly valor = toSignal(
+    this.valorControl.valueChanges,
+    {
+      initialValue: this.valorControl.value,
+    }
+  );
 
   readonly detalhesModal = computed<DetalheOperacao[]>(() => {
     return [
@@ -96,6 +115,7 @@ export class DashboardComponent {
 
   fecharConfirmacao(): void {
     if (this.carregando()) return;
+
     this.exibirModalConfirmacao.set(false);
   }
 
@@ -106,35 +126,70 @@ export class DashboardComponent {
       this.carregando.set(false);
       this.exibirModalConfirmacao.set(false);
 
-      this.resultado.set({
-        tipo: 'SUCESSO',
-        tipoOperacao: 'TRANSFERENCIA',
-        numeroConta: this.numeroContaControl.value,
-        valor: this.valorControl.value,
-        dataHora: DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss"),
-      });
+      setTimeout(() => {
+        this.exibirJobProgress.set(true);
 
-      this.simularAtualizacaoSaldo();
-    }, 1000);
+        setTimeout(() => {
+          this.exibirJobProgress.set(false);
+
+          this.resultado.set({
+            tipo: 'SUCESSO',
+            tipoOperacao: 'TRANSFERENCIA',
+            numeroConta: this.numeroContaControl.value,
+            valor: this.valorControl.value,
+          });
+
+          this.simularAtualizacaoSaldo();
+        }, 7000);
+      }, 150);
+    }, 500);
   }
 
   testarErroNegocio422(): void {
     this.exibirModalConfirmacao.set(false);
+
     this.resultado.set({
       tipo: 'ERRO_NEGOCIO',
-      mensagem: 'Saldo insuficiente para cobrir o valor da transferência e a taxa da transação.',
+      mensagem:
+        'Saldo insuficiente para cobrir o valor da transferência e a taxa da transação.',
     });
   }
 
   testarErroPermissao403(): void {
     this.exibirModalConfirmacao.set(false);
+
     this.resultado.set({
       tipo: 'ERRO_PERMISSAO',
-      mensagem: 'A operação não é permitida para o seu perfil de usuário.',
+      mensagem:
+        'A operação não é permitida para o seu perfil de usuário.',
     });
   }
 
   reiniciarResultado(): void {
     this.resultado.set(null);
+  }
+
+  testarAsyncSucesso(): void {
+    this.asyncResultStatus.set('SUCESSO');
+    this.asyncResultMensagem.set('A transferência foi concluída com sucesso.');
+    this.exibirAsyncResult.set(true);
+  }
+
+  testarAsyncFalha(): void {
+    this.asyncResultStatus.set('FALHA');
+    this.asyncResultMensagem.set(
+      'Não foi possível concluir a operação: cliente já possui uma conta.'
+    );
+    this.exibirAsyncResult.set(true);
+  }
+
+  testarAsyncTimeout(): void {
+    this.asyncResultStatus.set('TIMEOUT');
+    this.asyncResultMensagem.set('');
+    this.exibirAsyncResult.set(true);
+  }
+
+  fecharAsyncResult(): void {
+    this.exibirAsyncResult.set(false);
   }
 }

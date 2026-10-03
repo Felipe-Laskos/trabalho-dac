@@ -10,6 +10,9 @@ const emConstrucao = () =>
 const homeGerente = () =>
   import('./features/gerente/home/home-gerente.component').then((m) => m.HomeGerenteComponent);
 
+const clientesGerente = () =>
+  import('./features/gerente/clientes/clientes-gerente.component').then((m) => m.ClientesGerenteComponent);
+
 const operacao = () =>
   import('./features/cliente/operacao/operacao-page.component').then((m) => m.OperacaoPageComponent);
 
@@ -66,7 +69,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'home' },
       { path: 'home', loadComponent: homeGerente },
       { path: 'solicitacoes', loadComponent: homeGerente },
-      { path: 'clientes', loadComponent: emConstrucao },
+      { path: 'clientes', loadComponent: clientesGerente },
       { path: 'gerentes', loadComponent: emConstrucao },
       { path: 'gerentes/novo', loadComponent: emConstrucao },
       { path: 'gerentes/:cpf/editar', loadComponent: emConstrucao },

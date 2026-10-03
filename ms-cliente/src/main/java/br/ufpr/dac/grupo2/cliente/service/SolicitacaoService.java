@@ -2,7 +2,8 @@ package br.ufpr.dac.grupo2.cliente.service;
 
 import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
-import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoDuplicadaException;
+import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoException;
+import br.ufpr.dac.grupo2.cliente.exception.SolicitacaoNaoEncontradaException;
 
 import br.ufpr.dac.grupo2.cliente.model.Solicitacao;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
@@ -10,24 +11,38 @@ import br.ufpr.dac.grupo2.cliente.repository.ClienteRepository;
 import br.ufpr.dac.grupo2.cliente.dto.EnderecoDTO;
 
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 public class SolicitacaoService {
 
+    private static final Logger log = LoggerFactory.getLogger(SolicitacaoService.class);
+
     private final SolicitacaoRepository solicitacaoRepository;
+    private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
     private final ClienteRepository clienteRepository;
     private final ModelMapper mapper;
 
-    public SolicitacaoService(SolicitacaoRepository solicitacaoRepository, ClienteRepository clienteRepository, ModelMapper mapper) {
+    public SolicitacaoService(SolicitacaoRepository solicitacaoRepository, ClienteRepository clienteRepository, ModelMapper mapper, RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
         this.solicitacaoRepository = solicitacaoRepository;
         this.clienteRepository = clienteRepository;
         this.mapper = mapper;
+        this.rabbitTemplate = rabbitTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -69,15 +84,15 @@ public class SolicitacaoService {
     @Transactional
     public SolicitacaoResponseDTO criarSolicitacao(SolicitacaoRequestDTO request) {
         if (solicitacaoRepository.existsById(request.getCpf())) {
-            throw new SolicitacaoDuplicadaException("Solicitação já existe para o CPF: " + request.getCpf());
+            throw new SolicitacaoException("Solicitação já existe para o CPF: " + request.getCpf());
         }
 
         if (clienteRepository.existsById(request.getCpf())) {
-            throw new SolicitacaoDuplicadaException("CPF já possui conta: " + request.getCpf());
+            throw new SolicitacaoException("CPF já possui conta: " + request.getCpf());
         }
 
         if (solicitacaoRepository.existsByEmail(request.getEmail())) {
-            throw new SolicitacaoDuplicadaException("Solicitação já existe para o email: " + request.getEmail());
+            throw new SolicitacaoException("Solicitação já existe para o email: " + request.getEmail());
         }
 
         Solicitacao solicitacao = new Solicitacao();
@@ -100,6 +115,42 @@ public class SolicitacaoService {
         Solicitacao salva = solicitacaoRepository.save(solicitacao);
 
         return paraDTO(salva);
+    }
+
+    @Transactional
+    public SolicitacaoResponseDTO rejeitarSolicitacao(String cpf, String motivo) {
+        Solicitacao solicitacao = solicitacaoRepository.findById(cpf)
+            .orElseThrow(() -> new SolicitacaoNaoEncontradaException("Solicitação não encontrada para o CPF: " + cpf));
+
+        if (!"PENDENTE".equals(solicitacao.getStatus())) {
+            throw new SolicitacaoException("Solicitação com status " + solicitacao.getStatus() + " não pode ser rejeitada");
+        }
+
+        solicitacao.setStatus("NAO_APROVADA");
+        solicitacao.setMotivo(motivo);
+        solicitacao.setDataHoraProcessamento(LocalDateTime.now());
+
+        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+
+        SolicitacaoResponseDTO salvaDTO = paraDTO(salva);
+        
+        try {
+            Map<String, Object> payload = Map.of(
+                "para", salvaDTO.getEmail(),
+                "nome", salvaDTO.getNome(),
+                "motivo", motivo
+            );
+
+            MensagemSaga mensagem = MensagemSaga.semSaga("email.solicitacao-rejeitada", payload);
+
+            String json = objectMapper.writeValueAsString(mensagem);
+
+            rabbitTemplate.convertAndSend("ms.email.cmd", json);
+        } catch (Exception e) {
+            log.error("cpf={} rejeicao gravada mas e-mail NAO publicado em ms.email.cmd", cpf, e);
+        }
+
+        return salvaDTO;
     }
 
 }

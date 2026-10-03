@@ -160,3 +160,43 @@
     }
   }
 }
+
+.resultado-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.detalhe-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+
+  &:not(:last-child) {
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+.detalhe-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-body);
+}
+
+.detalhe-valor {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  font-weight: var(--font-weight-heading);
+  text-align: right;
+  word-break: break-word;
+}
+
+.detalhe-valor.destaque {
+  font-size: 1.2rem;
+}
+
+.status-sucesso {
+  color: var(--color-success);
+}

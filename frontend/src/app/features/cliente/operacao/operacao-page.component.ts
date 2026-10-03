@@ -82,6 +82,8 @@ export class OperacaoPageComponent {
   protected readonly processando = signal(false);
   protected readonly modalAberto = signal(false);
   protected readonly resultado = signal<DadosResultadoOperacao | null>(null);
+  protected readonly valorParaConfirmar = signal<Dinheiro | null>(null);
+  protected readonly destinoParaConfirmar = signal('');
 
   readonly form = new FormGroup({
     valor: new FormControl<Dinheiro | null>(null),
@@ -91,12 +93,12 @@ export class OperacaoPageComponent {
   protected readonly detalhesModal = computed<DetalheOperacao[]>(() => {
     const itens: DetalheOperacao[] = [
       { rotulo: 'Conta', valor: this.conta()?.numero },
-      { rotulo: 'Valor', valor: this.form.controls.valor.value, destaque: true, moeda: true },
+      { rotulo: 'Valor', valor: this.valorParaConfirmar(), destaque: true, moeda: true },
     ];
     if (this.ehTransferencia) {
       itens.splice(1, 0, {
         rotulo: 'Destino',
-        valor: this.form.controls.contaDestino.value,
+        valor: this.destinoParaConfirmar(),
       });
     }
     return itens;
@@ -147,6 +149,8 @@ export class OperacaoPageComponent {
       }
     }
 
+    this.valorParaConfirmar.set(this.form.controls.valor.value);
+    this.destinoParaConfirmar.set(this.form.controls.contaDestino.value ?? '');
     this.modalAberto.set(true);
   }
 
@@ -173,11 +177,17 @@ export class OperacaoPageComponent {
       this.atualizandoSaldo.set(true);
 
       if (saldoAnterior !== undefined) {
-        const consulta = await this.contas.aguardarNovoSaldo(numero, saldoAnterior);
-        this.conta.set(consulta.conta);
-        if (!consulta.convergiu) {
+        try {
+          const consulta = await this.contas.aguardarNovoSaldo(numero, saldoAnterior);
+          this.conta.set(consulta.conta);
+          if (!consulta.convergiu) {
+            this.avisoTimeout.set(
+              'O saldo ainda não atualizou. Ele deve aparecer em instantes — não usamos um valor calculado aqui.',
+            );
+          }
+        } catch {
           this.avisoTimeout.set(
-            'O saldo ainda não atualizou. Ele deve aparecer em instantes — não usamos um valor calculado aqui.',
+            'A operação foi concluída, mas não conseguimos confirmar o saldo agora.',
           );
         }
       }
@@ -221,10 +231,10 @@ export class OperacaoPageComponent {
   }
 
   private tipoDeErro(erro: unknown): DadosResultadoOperacao['tipo'] {
-    if (erro instanceof HttpErrorResponse && erro.status === 403) {
-      return 'ERRO_PERMISSAO';
-    }
-    return 'ERRO_NEGOCIO';
+    if (!(erro instanceof HttpErrorResponse)) return 'ERRO_TECNICO';
+    if (erro.status === 403) return 'ERRO_PERMISSAO';
+    if (erro.status === 422) return 'ERRO_NEGOCIO';
+    return 'ERRO_TECNICO';
   }
 
   private textoDeErro(erro: unknown): string {

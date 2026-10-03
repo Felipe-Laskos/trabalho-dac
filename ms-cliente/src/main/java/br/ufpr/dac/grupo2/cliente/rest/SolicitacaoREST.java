@@ -10,6 +10,7 @@ import br.ufpr.dac.grupo2.cliente.dto.request.SolicitacaoRequestDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.SolicitacaoResponseDTO;
 import br.ufpr.dac.grupo2.cliente.service.SolicitacaoService;
 import br.ufpr.dac.grupo2.cliente.dto.Link;
+import br.ufpr.dac.grupo2.cliente.dto.RejeicaoRequestDTO;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import org.springframework.http.ResponseEntity;
 
 @CrossOrigin
@@ -60,6 +60,16 @@ public class SolicitacaoREST {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("solicitacoes", solicitacoes);
         response.put("_links", Map.of("self", new Link("/solicitacoes")));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{cpf}/rejeicao")
+    public ResponseEntity<SolicitacaoResponseDTO> rejeitarSolicitacao(
+        @PathVariable String cpf, 
+        @Valid @RequestBody RejeicaoRequestDTO rejeicaoRequest) {
+
+        SolicitacaoResponseDTO response = service.rejeitarSolicitacao(cpf, rejeicaoRequest.getMotivo());
+
         return ResponseEntity.ok(response);
     }
 }

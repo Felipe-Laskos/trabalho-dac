@@ -1,4 +1,6 @@
+TRUNCATE TABLE conta_command.comandos_processados;
 TRUNCATE TABLE conta_command.eventos RESTART IDENTITY CASCADE;
+TRUNCATE TABLE conta_command.comandos_processados;
 
 INSERT INTO conta_command.eventos
     (id, objeto_id, tipo, payload, versao, timestamp)

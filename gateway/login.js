@@ -57,7 +57,7 @@ async function login(req, res) {
 
   await Promise.all([
     redis.setEx(`sessao:${jti}`, TTL_SESSAO, sessao),
-    redis.setEx(`sessao:cpf:${credencial.cpf}`, TTL_SESSAO, jti)
+    registrarSessao(credencial.cpf, jti)
   ]);
 
   return res.json({
@@ -68,14 +68,25 @@ async function login(req, res) {
   });
 }
 
+async function registrarSessao(cpf, jti) {
+  const reversa = `sessao:cpf:${cpf}`;
+
+  if (await redis.type(reversa) === "string") await redis.del(reversa);
+
+  await redis.multi().sAdd(reversa, jti).expire(reversa, TTL_SESSAO).exec();
+}
+
 async function logout(req, res) {
   const { jti, cpf, exp } = req.usuario;
 
   const restante = Math.max(1, exp - Math.floor(Date.now() / 1000));
 
+  const reversa = `sessao:cpf:${cpf}`;
+  const ehSet = await redis.type(reversa) === "set";
+
   await Promise.all([
     redis.del(`sessao:${jti}`),
-    redis.del(`sessao:cpf:${cpf}`),
+    ehSet ? redis.sRem(reversa, jti) : redis.del(reversa),
     redis.setEx(`revogado:${jti}`, restante, "1")
   ]);
 

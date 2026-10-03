@@ -1,7 +1,9 @@
-<div class="loading-container">
-
+<div
+  class="loading-container"
+  [class.loading-container-compact]="compacto()"
+>
   <p-progress-spinner
-    [style]="{ width: '32px', height: '32px' }"
+    class="loading-spinner"
     strokeWidth="2"
     ariaLabel="Carregando">
   </p-progress-spinner>
@@ -9,5 +11,4 @@
   <span class="loading-message">
     {{ message() }}
   </span>
-
 </div>
