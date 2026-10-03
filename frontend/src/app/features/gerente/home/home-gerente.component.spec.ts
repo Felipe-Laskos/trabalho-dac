@@ -99,12 +99,15 @@ describe('HomeGerenteComponent', () => {
 
   it('mostra Aprovar só quando existe o rel aprovacao', () => {
     const html = fixture.nativeElement as HTMLElement;
-    const linhas = html.querySelectorAll('tr');
-    const texto = html.textContent ?? '';
-    expect(texto).toContain('Aprovar');
-    expect(texto).toContain('Recusar');
-    expect(texto).toContain('sem ações');
-    expect(linhas.length).toBeGreaterThan(1);
+    const linhas = Array.from(html.querySelectorAll('tbody tr'));
+    const so = linhas.find((tr) => tr.textContent?.includes('Só Aprovar'));
+    const processada = linhas.find((tr) => tr.textContent?.includes('Catharyna'));
+
+    expect(so?.textContent).toContain('Aprovar');
+    expect(so?.textContent).not.toContain('Recusar');
+    expect(processada?.textContent).toContain('sem ações');
+    expect(processada?.textContent).not.toContain('Aprovar');
+    expect(processada?.textContent).not.toContain('Recusar');
   });
 
   it('deve aprovar a solicitação após o processamento e recarregar a lista', async () => {

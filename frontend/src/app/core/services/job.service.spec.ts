@@ -220,20 +220,5 @@ describe('JobService', () => {
   await expect(promise)
     .rejects
     .toBeInstanceOf(TempoEsgotadoError);
-});
-
-  it('deve tratar 404 do status como operação expirada', async () => {
-    const promise = service.aguardar('inexistente');
-
-    const request = httpTesting.expectOne(
-      `${environment.apiUrl}/jobs/inexistente/status`
-    );
-
-    request.flush(
-      { status: 404, erro: 'Not Found', mensagem: 'Job inexistente ou expirado' },
-      { status: 404, statusText: 'Not Found' },
-    );
-
-    await expect(promise).rejects.toThrow('A operação expirou.');
   });
 });

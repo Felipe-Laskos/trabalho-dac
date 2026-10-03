@@ -11,6 +11,9 @@ describe('hateoas.util', () => {
     expect(caminhoDoHref('http://localhost:8000/solicitacoes/1/aprovacao')).toBe(
       '/solicitacoes/1/aprovacao',
     );
+    expect(caminhoDoHref('http://localhost:8000/contas/1?incluir=saldo')).toBe(
+      '/contas/1?incluir=saldo',
+    );
     expect(caminhoDoHref('/solicitacoes/1/aprovacao')).toBe('/solicitacoes/1/aprovacao');
   });
 });

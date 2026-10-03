@@ -6,7 +6,8 @@ export function caminhoDoHref(href: string): string {
   }
   try {
     if (/^https?:\/\//i.test(href)) {
-      return new URL(href).pathname;
+      const url = new URL(href);
+      return url.pathname + url.search;
     }
   } catch {
     // href relativo malformado: usa o valor como caminho
