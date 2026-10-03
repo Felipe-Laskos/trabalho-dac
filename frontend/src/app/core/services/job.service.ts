@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Job } from '../models/job.model';
+import { mensagemDeErro } from './erro.util';
 
 // o job pode ainda concluir depois do prazo: quem chama precisa distinguir isto de uma falha
 export class TempoEsgotadoError extends Error {}
@@ -21,7 +22,7 @@ export class JobService {
 
     while (true) {
       const job = await firstValueFrom(
-        this.http.get<Job>(`${this.base}/jobs/${jobId}/status`)
+        this.http.get<Job>(`${this.base}/jobs/${jobId}/status`),
       );
 
       if (job.status !== 'PENDENTE') {
@@ -40,7 +41,7 @@ export class JobService {
   
   async resultado<T>(job: Job): Promise<T> {
     if (job.status === 'FALHA') {
-      throw new Error(job.erro ?? 'Operação falhou');
+      throw new Error(mensagemDeErro(job));
     }
 
     if (job.resultType === 'resource') {

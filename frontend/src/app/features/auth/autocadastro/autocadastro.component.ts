@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   AbstractControl,
   FormBuilder,
@@ -19,6 +18,7 @@ import { paraContrato, paraDecimal } from '../../../shared/util/dinheiro.util';
 
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import { AutocadastroInput } from '../../../core/models/cliente.model';
+import { tratarErro } from '../../../core/services/erro.util';
 
 type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
 
@@ -216,75 +216,35 @@ export class AutocadastroComponent implements OnInit {
 
   private tratarErro(erro: unknown): void {
     this.estado.set('erro');
+    const tratado = tratarErro(erro);
+    this.mensagemErro.set(tratado.mensagem);
+    this.destacarCampos(tratado.campos);
 
-    if (!(erro instanceof HttpErrorResponse)) {
-      this.mensagemErro.set('Não foi possível enviar sua solicitação. Tente novamente.');
-      return;
-    }
-
-    switch (erro.status) {
-      case 400:
-        this.tratarErro400(erro);
-        break;
-      case 409:
-        this.tratarErro409(erro);
-        break;
-      default:
-        console.error('Erro inesperado ao enviar solicitação:', erro);
-        this.mensagemErro.set('Não foi possível enviar sua solicitação. Tente novamente.');
-        break;
-    }
-  }
-
-  private tratarErro409(erro: HttpErrorResponse): void {
-    const mensagem = this.extrairMensagemErro(erro).toLowerCase();
-    if (mensagem.includes('cpf')) {
-      this.mensagemErro.set('Já existe solicitação para este CPF.');
-      this.form.controls.cpf.markAsTouched();
-      return;
-    }
-    if (mensagem.includes('e-mail') || mensagem.includes('email')) {
-      this.mensagemErro.set('Este e-mail já está sendo utilizado.');
-      this.form.controls.email.markAsTouched();
-      return;
-    }
-    this.mensagemErro.set('Já existe uma solicitação para os dados informados.');
-  }
-
-  private extrairMensagemErro(erro: HttpErrorResponse): string {
-    if (typeof erro.error === 'string') {
-      return erro.error;
-    }
-    if (erro.error?.message) {
-      return erro.error.message;
-    }
-    if (erro.error?.mensagem) {
-      return erro.error.mensagem;
-    }
-    return erro.message || '';
-  }
-
-  private tratarErro400(erro: HttpErrorResponse): void {
-    const mensagem = this.extrairMensagemErro(erro);
-    this.mensagemErro.set(mensagem || 'Verifique os campos informados.');
-  }
-
-  private extrairCamposInvalidos(erro: HttpErrorResponse): Record<string, string> {
-    const resultado: Record<string, string> = {};
-    const campos = erro.error?.fields ?? erro.error?.errors ?? erro.error?.fieldErrors;
-    if (Array.isArray(campos)) {
-      for (const item of campos) {
-        if (item.field) {
-          resultado[item.field] = item.message || 'Campo inválido.';
-        }
+    if (tratado.status === 409) {
+      const texto = tratado.mensagem.toLowerCase();
+      if (texto.includes('cpf')) {
+        this.form.controls.cpf.markAsTouched();
+      }
+      if (texto.includes('e-mail') || texto.includes('email')) {
+        this.form.controls.email.markAsTouched();
       }
     }
-    if (campos && !Array.isArray(campos) && typeof campos === 'object') {
-      Object.entries(campos).forEach(([campo, mensagem]) => {
-        resultado[campo] = String(mensagem);
-      });
+
+    if (tratado.status === 400 && Object.keys(tratado.campos).length > 0) {
+      this.hasFormError.set(true);
     }
-    return resultado;
+  }
+
+  private destacarCampos(campos: Record<string, string>): void {
+    for (const [nome, mensagem] of Object.entries(campos)) {
+      const controle =
+        this.form.get(nome) ?? this.form.controls.endereco.get(nome);
+      if (!controle) {
+        continue;
+      }
+      controle.setErrors({ servidor: mensagem });
+      controle.markAsTouched();
+    }
   }
 
   private somenteDigitos(valor: string | null): string {

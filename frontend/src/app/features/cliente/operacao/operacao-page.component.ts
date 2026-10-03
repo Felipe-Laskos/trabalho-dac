@@ -124,7 +124,7 @@ export class OperacaoPageComponent {
       this.estado.set('ok');
     } catch (erro) {
       this.estado.set('erro');
-      this.mensagemErro.set(this.textoDeErro(erro));
+      this.mensagemErro.set(mensagemDeErro(erro));
     }
   }
 
@@ -205,7 +205,7 @@ export class OperacaoPageComponent {
       this.modalAberto.set(false);
       this.resultado.set({
         tipo: this.tipoDeErro(erro),
-        mensagem: this.textoDeErro(erro),
+        mensagem: mensagemDeErro(erro),
       });
     } finally {
       this.processando.set(false);
@@ -235,12 +235,5 @@ export class OperacaoPageComponent {
     if (erro.status === 403) return 'ERRO_PERMISSAO';
     if (erro.status === 422) return 'ERRO_NEGOCIO';
     return 'ERRO_TECNICO';
-  }
-
-  private textoDeErro(erro: unknown): string {
-    if (erro instanceof HttpErrorResponse && erro.status === 403) {
-      return mensagemDeErro(erro) || 'Você não tem permissão para esta operação.';
-    }
-    return mensagemDeErro(erro);
   }
 }
