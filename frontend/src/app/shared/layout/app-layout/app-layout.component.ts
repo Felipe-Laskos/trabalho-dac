@@ -37,7 +37,6 @@ export class AppLayoutComponent {
   protected readonly menuItems = computed<MenuItem[]>(() => {
     if (this.auth.ehPerfil('GERENTE')) {
       return [
-        { label: 'Início', icon: 'pi pi-home', routerLink: '/gerente/home' },
         { label: 'Solicitações', icon: 'pi pi-inbox', routerLink: '/gerente/solicitacoes' },
         { label: 'Clientes', icon: 'pi pi-users', routerLink: '/gerente/clientes' },
         { label: 'Gerentes', icon: 'pi pi-user', routerLink: '/gerente/gerentes' },

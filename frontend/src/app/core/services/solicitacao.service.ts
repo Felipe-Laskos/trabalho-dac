@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
-import { Solicitacao, SolicitacoesList } from '../models/solicitacao.model';
+import { RejeicaoInput, Solicitacao, SolicitacoesList } from '../models/solicitacao.model';
 import { AutocadastroInput } from '../models/cliente.model';
+import { caminhoDoHref } from '../../shared/util/hateoas.util';
 
 @Injectable({
   providedIn: 'root',
@@ -15,5 +16,9 @@ export class SolicitacaoService {
 
   listar(): Promise<SolicitacoesList> {
     return this.api.get<SolicitacoesList>('/solicitacoes');
+  }
+
+  rejeitar(href: string, dados: RejeicaoInput): Promise<Solicitacao> {
+  return this.api.post<Solicitacao>(caminhoDoHref(href), dados);
   }
 }
