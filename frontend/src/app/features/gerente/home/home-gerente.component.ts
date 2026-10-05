@@ -14,6 +14,7 @@ import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
 import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { MessageComponent } from '../../../shared/components/message/message.component';
+import { ModalRejectionComponent } from '../../../shared/components/modal-rejection/modal-rejection.component';
 
 import { AsyncResultComponent, AsyncResultStatus } from '../../../shared/components/async-result/async-result.component';
 import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
@@ -38,6 +39,7 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     MessageComponent,
     AsyncResultComponent,
     JobProgressComponent,
+    ModalRejectionComponent
   ],
   templateUrl: './home-gerente.component.html',
   styleUrls: ['./home-gerente.component.scss'],
@@ -81,6 +83,14 @@ export class HomeGerenteComponent implements OnInit {
     }
     return lista.filter(s => s.status === filtro);
   });
+
+  readonly recusando = signal<Solicitacao | null>(null);
+  readonly motivoRecusa = signal('');
+  readonly enviandoRecusa = signal(false);
+
+  readonly motivoRecusaValido = computed(() =>
+  this.motivoRecusa().trim().length > 0
+);
 
   ngOnInit(): void {
     void this.carregarLista();
@@ -166,6 +176,62 @@ export class HomeGerenteComponent implements OnInit {
       }
     } finally {
       this.carregando.set(false);
+    }
+  }
+
+  abrirRecusa(solicitacao: Solicitacao): void {
+  const href = solicitacao._links['rejeicao']?.href;
+
+  if (!href || this.estaProcessando(solicitacao.cpf)) {
+    return;
+  }
+
+  this.resultado.set(null);
+  this.motivoRecusa.set('');
+  this.recusando.set(solicitacao);
+}
+
+  async confirmarRecusa(): Promise<void> {
+  const solicitacao = this.recusando();
+  const motivo = this.motivoRecusa().trim();
+  const href = solicitacao?._links['rejeicao']?.href;
+
+  if (!solicitacao || !href ||!motivo || this.enviandoRecusa()) {
+    return;
+  }
+
+  this.enviandoRecusa.set(true);
+
+  try {
+    const atualizada = await this.solicitacaoService.rejeitar(
+      href,
+      { motivo }
+    );
+
+    this.solicitacoes.update(lista =>
+      lista.map(s =>
+        s.cpf === atualizada.cpf ? atualizada : s
+      )
+    );
+
+    this.recusando.set(null);
+    this.motivoRecusa.set('');
+
+    this.resultado.set({
+      status: 'SUCESSO',
+      mensagem: `A solicitação de ${atualizada.nome} foi recusada.`,
+    });
+  } catch (erro) {
+    this.recusando.set(null);
+
+    this.resultado.set({  
+      status: 'FALHA',
+      mensagem: mensagemDeErro(erro),
+    });
+
+    await this.carregarLista(true);
+  } finally {
+    this.enviandoRecusa.set(false);
     }
   }
 }

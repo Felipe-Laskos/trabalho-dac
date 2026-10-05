@@ -1,0 +1,60 @@
+<p-dialog
+  [visible]="visivel()"
+  [modal]="true"
+  [closable]="!carregando()"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '440px' }"
+  (onHide)="aoCancelar()"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <div class="icon-badge">
+        <i class="pi pi-times"></i>
+      </div>
+
+      <div class="header-texts">
+        <h2>{{ titulo() }}</h2>
+        <p>{{ subtitulo() }}</p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="reason-content">
+    <label for="motivo-rejeicao">Motivo da recusa</label>
+
+    <textarea
+      pTextarea
+      id="motivo-rejeicao"
+      rows="5"
+      maxlength="255"
+      [value]="motivo()"
+      placeholder="Informe o motivo da recusa..."
+      [disabled]="carregando()"
+      (input)="aoAlterarMotivo($event)"
+    ></textarea>
+
+    <div class="character-counter">
+      {{ motivo().length }}/255 
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <div class="dialog-footer">
+      <p-button
+        label="Voltar"
+        severity="secondary"
+        [disabled]="carregando()"
+        (onClick)="aoCancelar()"
+      />
+
+      <p-button
+        label="Recusar"
+        severity="danger"
+        [loading]="carregando()"
+        [disabled]="motivo().trim().length === 0"
+        (onClick)="aoConfirmar()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

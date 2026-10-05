@@ -3,7 +3,10 @@ import { HomeGerenteComponent } from './home-gerente.component';
 import { vi } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api.service';
-import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
+import {
+  JobService,
+  TempoEsgotadoError,
+} from '../../../core/services/job.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import type { Job } from '../../../core/models/job.model';
 import type { Solicitacao } from '../../../core/models/solicitacao.model';
@@ -64,6 +67,7 @@ describe('HomeGerenteComponent', () => {
 
   const solicitacaoServiceMock = {
     listar: vi.fn(),
+    rejeitar: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -100,8 +104,12 @@ describe('HomeGerenteComponent', () => {
   it('mostra Aprovar só quando existe o rel aprovacao', () => {
     const html = fixture.nativeElement as HTMLElement;
     const linhas = Array.from(html.querySelectorAll('tbody tr'));
-    const so = linhas.find((tr) => tr.textContent?.includes('Só Aprovar'));
-    const processada = linhas.find((tr) => tr.textContent?.includes('Catharyna'));
+    const so = linhas.find((tr) =>
+      tr.textContent?.includes('Só Aprovar')
+    );
+    const processada = linhas.find((tr) =>
+      tr.textContent?.includes('Catharyna')
+    );
 
     expect(so?.textContent).toContain('Aprovar');
     expect(so?.textContent).not.toContain('Recusar');
@@ -129,20 +137,33 @@ describe('HomeGerenteComponent', () => {
 
     apiMock.post.mockResolvedValue(job);
     jobServiceMock.aguardar.mockResolvedValue(jobConcluido);
-    jobServiceMock.resultado.mockResolvedValue({ nome: 'Fulano de Tal' });
+    jobServiceMock.resultado.mockResolvedValue({
+      nome: 'Fulano de Tal',
+    });
+
     solicitacaoServiceMock.listar.mockResolvedValue({
-      solicitacoes: [{ ...pendente, status: 'APROVADA', _links: {} }],
+      solicitacoes: [
+        {
+          ...pendente,
+          status: 'APROVADA',
+          _links: {},
+        },
+      ],
       _links: {},
     });
 
     await component.aprovar(pendente);
 
-    expect(apiMock.post).toHaveBeenCalledWith('/solicitacoes/11122233396/aprovacao');
+    expect(apiMock.post).toHaveBeenCalledWith(
+      '/solicitacoes/11122233396/aprovacao'
+    );
     expect(jobServiceMock.aguardar).toHaveBeenCalledWith('job-123');
     expect(jobServiceMock.resultado).toHaveBeenCalledWith(jobConcluido);
     expect(component.resultado()?.status).toBe('SUCESSO');
     expect(component.resultado()?.mensagem).toContain('Fulano de Tal');
-    expect(solicitacaoServiceMock.listar.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(
+      solicitacaoServiceMock.listar.mock.calls.length
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('mostra a mensagem do job quando a aprovação falha', async () => {
@@ -150,6 +171,7 @@ describe('HomeGerenteComponent', () => {
       jobId: 'job-falha',
       status: 'PENDENTE',
     });
+
     jobServiceMock.aguardar.mockResolvedValue({
       jobId: 'job-falha',
       status: 'FALHA',
@@ -163,22 +185,37 @@ describe('HomeGerenteComponent', () => {
 
     expect(jobServiceMock.resultado).not.toHaveBeenCalled();
     expect(component.resultado()?.status).toBe('FALHA');
-    expect(component.resultado()?.mensagem).toBe('A solicitação já foi aprovada.');
+    expect(component.resultado()?.mensagem).toBe(
+      'A solicitação já foi aprovada.'
+    );
   });
 
   it('mostra operação expirada quando o polling recebe 404', async () => {
-    apiMock.post.mockResolvedValue({ jobId: 'sumiu', status: 'PENDENTE' });
-    jobServiceMock.aguardar.mockRejectedValue(new Error('A operação expirou.'));
+    apiMock.post.mockResolvedValue({
+      jobId: 'sumiu',
+      status: 'PENDENTE',
+    });
+
+    jobServiceMock.aguardar.mockRejectedValue(
+      new Error('A operação expirou.')
+    );
 
     await component.aprovar(pendente);
 
-    expect(component.resultado()?.mensagem).toBe('A operação expirou.');
+    expect(component.resultado()?.mensagem).toBe(
+      'A operação expirou.'
+    );
   });
 
   it('deve avisar timeout, e não falha, quando o JobService esgota o prazo', async () => {
-    apiMock.post.mockResolvedValue({ jobId: 'job-123' });
+    apiMock.post.mockResolvedValue({
+      jobId: 'job-123',
+    });
+
     jobServiceMock.aguardar.mockRejectedValue(
-      new TempoEsgotadoError('A operação não concluiu no tempo esperado.')
+      new TempoEsgotadoError(
+        'A operação não concluiu no tempo esperado.'
+      )
     );
 
     await component.aprovar(pendente);
@@ -188,11 +225,18 @@ describe('HomeGerenteComponent', () => {
   });
 
   it('deve mostrar a mensagem do back quando o Gateway responde erro', async () => {
-    apiMock.post.mockResolvedValue({ jobId: 'job-123' });
+    apiMock.post.mockResolvedValue({
+      jobId: 'job-123',
+    });
+
     jobServiceMock.aguardar.mockRejectedValue(
       new HttpErrorResponse({
         status: 404,
-        error: { status: 404, erro: 'Not Found', mensagem: 'Job inexistente ou expirado' }
+        error: {
+          status: 404,
+          erro: 'Not Found',
+          mensagem: 'Job inexistente ou expirado',
+        },
       })
     );
 
@@ -200,7 +244,113 @@ describe('HomeGerenteComponent', () => {
 
     expect(component.resultado()).toEqual({
       status: 'FALHA',
-      mensagem: 'Job inexistente ou expirado'
+      mensagem: 'Job inexistente ou expirado',
+    });
+  });
+
+  it('deve abrir a modal de recusa quando existe o rel rejeicao', () => {
+    component.abrirRecusa(pendente);
+
+    expect(component.recusando()).toEqual(pendente);
+    expect(component.motivoRecusa()).toBe('');
+  });
+
+  it('não deve abrir a modal de recusa quando não existe o rel rejeicao', () => {
+    component.abrirRecusa(soAprovacao);
+
+    expect(component.recusando()).toBeNull();
+  });
+
+  it('não deve enviar recusa quando o motivo está vazio', async () => {
+    component.abrirRecusa(pendente);
+
+    await component.confirmarRecusa();
+
+    expect(solicitacaoServiceMock.rejeitar).not.toHaveBeenCalled();
+    expect(component.recusando()).toEqual(pendente);
+  });
+
+  it('deve recusar a solicitação, atualizar a linha e mostrar sucesso', async () => {
+    const atualizada: Solicitacao = {
+      ...pendente,
+      status: 'NAO_APROVADA',
+      motivo: 'Documentação inválida.',
+      dataHoraProcessamento: '2026-09-29T14:12:00',
+      _links: {},
+    };
+
+    solicitacaoServiceMock.rejeitar.mockResolvedValue(atualizada);
+
+    component.abrirRecusa(pendente);
+    component.motivoRecusa.set('Documentação inválida.');
+
+    await component.confirmarRecusa();
+
+    expect(solicitacaoServiceMock.rejeitar).toHaveBeenCalledWith(
+      '/solicitacoes/11122233396/rejeicao',
+      { motivo: 'Documentação inválida.' }
+    );
+
+    expect(component.solicitacoes()).toContainEqual(atualizada);
+    expect(component.solicitacoes()).not.toContainEqual(pendente);
+    expect(component.recusando()).toBeNull();
+    expect(component.motivoRecusa()).toBe('');
+    expect(component.resultado()).toEqual({
+      status: 'SUCESSO',
+      mensagem: 'A solicitação de Fulano de Tal foi recusada.',
+    });
+  });
+
+  it('deve mostrar a mensagem do back quando a recusa responde conflito', async () => {
+    solicitacaoServiceMock.rejeitar.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 409,
+        error: {
+          status: 409,
+          erro: 'Conflict',
+          mensagem: 'CPF ou e-mail já cadastrado',
+        },
+      })
+    );
+
+    component.abrirRecusa(pendente);
+    component.motivoRecusa.set('Cliente já possui cadastro.');
+
+    await component.confirmarRecusa();
+
+    expect(solicitacaoServiceMock.rejeitar).toHaveBeenCalledWith(
+      '/solicitacoes/11122233396/rejeicao',
+      { motivo: 'Cliente já possui cadastro.' }
+    );
+
+    expect(component.recusando()).toBeNull();
+    expect(component.resultado()).toEqual({
+      status: 'FALHA',
+      mensagem: 'CPF ou e-mail já cadastrado',
+    });
+  });
+
+  it('deve mostrar a mensagem do back quando a solicitação não for encontrada', async () => {
+    solicitacaoServiceMock.rejeitar.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 404,
+        error: {
+          status: 404,
+          erro: 'Not Found',
+          mensagem: 'Solicitação não encontrada',
+        },
+      })
+    );
+
+    component.abrirRecusa(pendente);
+    component.motivoRecusa.set('Motivo da recusa.');
+
+    await component.confirmarRecusa();
+
+    expect(component.recusando()).toBeNull();
+    expect(component.resultado()).toEqual({
+      status: 'FALHA',
+      mensagem: 'Solicitação não encontrada',
     });
   });
 });
