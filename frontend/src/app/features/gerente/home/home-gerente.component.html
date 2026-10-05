@@ -9,7 +9,7 @@
     <p-button 
       label="Atualizar" 
       icon="pi pi-refresh" 
-      styleClass="btn-outline-dark"
+      severity="secondary"
       [disabled]="carregando()"
       (onClick)="atualizarLista()">
     </p-button>
@@ -46,7 +46,10 @@
         }
       </div>
     } @else {
-      <p-table [value]="solicitacoesFiltradas()" styleClass="bantads-table">
+      <p-table 
+      [value]="solicitacoesFiltradas()"
+       styleClass="bantads-table"
+       >
         <ng-template pTemplate="header">
           <tr>
             <th>CPF</th>

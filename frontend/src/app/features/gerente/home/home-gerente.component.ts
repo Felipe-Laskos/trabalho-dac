@@ -228,6 +228,8 @@ export class HomeGerenteComponent implements OnInit {
       status: 'FALHA',
       mensagem: mensagemDeErro(erro),
     });
+
+    await this.carregarLista(true);
   } finally {
     this.enviandoRecusa.set(false);
     }
