@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Button } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
@@ -69,19 +68,12 @@ export class HomeClienteComponent {
       this.conta.set(atual);
       this.estado.set('ok');
     } catch (erro) {
-      this.mensagemErro.set(this.textoDeErro(erro));
+      this.mensagemErro.set(mensagemDeErro(erro));
       if (!jaTemConta) {
         this.estado.set('erro');
       }
     } finally {
       this.atualizandoSaldo.set(false);
     }
-  }
-
-  private textoDeErro(erro: unknown): string {
-    if (erro instanceof HttpErrorResponse && erro.status === 403) {
-      return 'Você não tem permissão para ver esta conta.';
-    }
-    return mensagemDeErro(erro);
   }
 }

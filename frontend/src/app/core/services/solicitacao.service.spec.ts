@@ -149,4 +149,28 @@ describe('SolicitacaoService', () => {
       status: 409,
     });
   });
+
+  it('deve listar solicitações no GET /solicitacoes', async () => {
+    const resposta = {
+      solicitacoes: [
+        {
+          cpf: '12345678901',
+          nome: 'Maria Silva',
+          status: 'PENDENTE' as const,
+          motivo: null,
+          dataHoraProcessamento: null,
+          _links: {
+            aprovacao: { href: '/solicitacoes/12345678901/aprovacao' },
+          },
+        },
+      ],
+      _links: { self: { href: '/solicitacoes' } },
+    };
+
+    const promise = service.listar();
+    const requisicao = httpMock.expectOne('http://localhost:8000/solicitacoes');
+    expect(requisicao.request.method).toBe('GET');
+    requisicao.flush(resposta);
+    await expect(promise).resolves.toEqual(resposta);
+  });
 });

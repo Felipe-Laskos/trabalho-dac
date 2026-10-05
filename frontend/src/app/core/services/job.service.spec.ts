@@ -220,5 +220,5 @@ describe('JobService', () => {
   await expect(promise)
     .rejects
     .toBeInstanceOf(TempoEsgotadoError);
-});
+  });
 });

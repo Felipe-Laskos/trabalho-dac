@@ -88,6 +88,29 @@
   overflow: hidden;
 }
 
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-height: 180px;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 14px;
+
+  > i {
+    font-size: 24px;
+  }
+
+  h5 {
+    margin: 0.1rem 0;
+    font-weight: var(--font-weight-label);
+    color: var(--color-text-secondary);
+  }
+}
+
 .bantads-table {
   width: 100%;
   table-layout: fixed;
