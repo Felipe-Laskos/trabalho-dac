@@ -1,23 +1,27 @@
 package br.ufpr.dac.grupo2.cliente.messaging.listener;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
-import br.ufpr.dac.grupo2.cliente.exception.ClienteNaoEncontradoException;
+import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.config.SagaRabbitConfig;
-import br.ufpr.dac.grupo2.cliente.messaging.dto.ComandoSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.dto.ResultadoSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.service.SagaMessagePublisher;
 import br.ufpr.dac.grupo2.cliente.service.ClienteService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import tools.jackson.databind.ObjectMapper; 
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class ClienteSagaListener {
+
+    private static final Logger log = LoggerFactory.getLogger(ClienteSagaListener.class);
 
     private final ObjectMapper json;
     private final ClienteService command;
@@ -33,34 +37,24 @@ public class ClienteSagaListener {
 
     @RabbitListener(queues = SagaRabbitConfig.FILA_COMANDOS, concurrency = "1")
     public void receber(Message mensagem) {
-        ComandoSaga cmd;
+        MensagemSaga cmd;
         try {
-            cmd = json.readValue(new String(mensagem.getBody(), StandardCharsets.UTF_8), ComandoSaga.class);
+            cmd = json.readValue(new String(mensagem.getBody(), StandardCharsets.UTF_8), MensagemSaga.class);
             validarEnvelope(cmd);
         } catch (Exception e) {
+            log.warn("comando descartado em {}: {}", SagaRabbitConfig.FILA_COMANDOS, e.getMessage());
             return;
         }
 
         ResultadoSaga resultado = switch (cmd.tipo()) {
             case "obter-clientes-por-cpf" -> clientePorCpf(cmd);
-            default -> executar(cmd);
+            default -> command.registrarFalha(cmd, "Comando não suportado pelo MS Cliente: " + cmd.tipo());
         };
 
-        if (resultado.evento() != null) {
-            publisher.publicar(SagaMessagePublisher.FILA_EVENTOS, resultado.evento());
-        }
         publisher.publicar(SagaMessagePublisher.FILA_RESPOSTAS, resultado.resposta());
     }
 
-    private ResultadoSaga executar(ComandoSaga cmd) {
-        try {
-            return command.executar(cmd, null);
-        } catch (ClienteNaoEncontradoException e) {
-            return command.registrarFalha(cmd, e.getMessage());
-        }
-    }
-
-    private ResultadoSaga clientePorCpf(ComandoSaga cmd) {
+    private ResultadoSaga clientePorCpf(MensagemSaga cmd) {
         try {
             List<String> cpfs = cpfsDoPayload(cmd);
             return command.executar(cmd, cpfs);
@@ -69,25 +63,25 @@ public class ClienteSagaListener {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private List<String> cpfsDoPayload(ComandoSaga cmd) {
+    private List<String> cpfsDoPayload(MensagemSaga cmd) {
         Object valor = cmd.payload().get("cpfs");
-        
+
         if (!(valor instanceof List<?> lista) || lista.isEmpty()) {
             throw new IllegalArgumentException("Payload deve conter uma lista não vazia de CPFs no campo 'cpfs'");
         }
 
-        List<String> cpfs = (List<String>) lista;
-        for (String cpf : cpfs) {
-            if (cpf == null || !cpf.matches("[0-9]{11}")) {
-                throw new IllegalArgumentException("CPF inválido na lista: " + cpf);
+        List<String> cpfs = new ArrayList<>();
+        for (Object item : lista) {
+            if (!(item instanceof String cpf) || !cpf.matches("[0-9]{11}")) {
+                throw new IllegalArgumentException("CPF inválido na lista: " + item);
             }
+            cpfs.add(cpf);
         }
 
         return cpfs;
     }
 
-    private void validarEnvelope(ComandoSaga cmd) {
+    private void validarEnvelope(MensagemSaga cmd) {
         if (cmd == null
                 || cmd.sagaId() == null
                 || cmd.sagaId().isBlank()

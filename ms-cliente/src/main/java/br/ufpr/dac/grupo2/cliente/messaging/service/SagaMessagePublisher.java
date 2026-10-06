@@ -1,6 +1,5 @@
 package br.ufpr.dac.grupo2.cliente.messaging.service;
 
-import br.ufpr.dac.grupo2.cliente.messaging.config.RabbitClienteConfig;
 import br.ufpr.dac.grupo2.cliente.messaging.config.SagaRabbitConfig;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageBuilder;
@@ -13,7 +12,6 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class SagaMessagePublisher {
 
-    public static final String FILA_EVENTOS = RabbitClienteConfig.FILA_EVENTOS;
     public static final String FILA_RESPOSTAS = SagaRabbitConfig.FILA_RESPOSTAS;
 
     private static final long CONFIRMACAO_TIMEOUT_MS = 5_000;

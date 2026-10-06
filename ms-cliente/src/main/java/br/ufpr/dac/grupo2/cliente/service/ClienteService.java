@@ -7,7 +7,7 @@ import br.ufpr.dac.grupo2.cliente.model.Cliente;
 import br.ufpr.dac.grupo2.cliente.repository.ClienteRepository;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
 import br.ufpr.dac.grupo2.cliente.repository.ComandosProcessadosRepository;
-import br.ufpr.dac.grupo2.cliente.messaging.dto.ComandoSaga;
+import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.dto.ResultadoSaga;
 
 import org.modelmapper.ModelMapper;
@@ -176,7 +176,7 @@ public class ClienteService {
     }
 
     @Transactional(readOnly = true)
-    public List<ClienteResponseDTO> obterClientesPorCpf(List<String> cpfs) {
+    public List<Map<String, Object>> obterClientesPorCpf(List<String> cpfs) {
         if (cpfs == null || cpfs.isEmpty()) {
             throw new IllegalArgumentException("A lista de CPFs não pode ser vazia.");
         }
@@ -190,21 +190,15 @@ public class ClienteService {
         }
 
         return clientes.stream()
-        .map(c -> {
-            ClienteResponseDTO dto = new ClienteResponseDTO();
-            dto.setCpf(c.getCpf());
-            dto.setNome(c.getNome());
-            dto.setEmail(c.getEmail());
-            return dto;
-        })
+        .map(c -> Map.<String, Object>of("cpf", c.getCpf(), "nome", c.getNome(), "email", c.getEmail()))
         .toList();
     }
 
     @Transactional(readOnly = true)
-    public ResultadoSaga executar(ComandoSaga cmd, List<String> cpfs) {
+    public ResultadoSaga executar(MensagemSaga cmd, List<String> cpfs) {
         try {
-            List<ClienteResponseDTO> dtos = obterClientesPorCpf(cpfs);
-            Map<String, Object> payloadMap = Map.of("clientes", dtos);
+            List<Map<String, Object>> clientes = obterClientesPorCpf(cpfs);
+            Map<String, Object> payloadMap = Map.of("clientes", clientes);
 
             ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
                     cmd.sagaId(),
@@ -215,7 +209,7 @@ public class ClienteService {
                     null
             );
 
-            return new ResultadoSaga(resposta, null);
+            return new ResultadoSaga(resposta);
 
         } catch (IllegalArgumentException e) {
             return registrarFalha(cmd, e.getMessage());
@@ -224,12 +218,7 @@ public class ClienteService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public ResultadoSaga executar(ComandoSaga cmd, Object obj) {
-        return registrarFalha(cmd, "Comando não suportado: " + cmd.tipo());
-    }
-
-    public ResultadoSaga registrarFalha(ComandoSaga cmd, String mensagemErro) {
+    public ResultadoSaga registrarFalha(MensagemSaga cmd, String mensagemErro) {
 
         ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
                 cmd.sagaId(),
@@ -240,6 +229,6 @@ public class ClienteService {
                 mensagemErro
         );
 
-        return new ResultadoSaga(resposta, null);
+        return new ResultadoSaga(resposta);
     }
 }
