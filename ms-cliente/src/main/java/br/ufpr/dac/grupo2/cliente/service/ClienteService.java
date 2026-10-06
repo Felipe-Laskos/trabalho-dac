@@ -7,6 +7,8 @@ import br.ufpr.dac.grupo2.cliente.model.Cliente;
 import br.ufpr.dac.grupo2.cliente.repository.ClienteRepository;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
 import br.ufpr.dac.grupo2.cliente.repository.ComandosProcessadosRepository;
+import br.ufpr.dac.grupo2.cliente.messaging.dto.ComandoSaga;
+import br.ufpr.dac.grupo2.cliente.messaging.dto.ResultadoSaga;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class ClienteService {
@@ -169,5 +173,73 @@ public class ClienteService {
         clienteRepository.saveAll(clientes);
 
         return clientes.size();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClienteResponseDTO> obterClientesPorCpf(List<String> cpfs) {
+        if (cpfs == null || cpfs.isEmpty()) {
+            throw new IllegalArgumentException("A lista de CPFs não pode ser vazia.");
+        }
+
+        List<String> cpfsUnicos = cpfs.stream().distinct().toList();
+
+        List<Cliente> clientes = clienteRepository.findByCpfIn(cpfsUnicos);
+
+        if (clientes.size() != cpfsUnicos.size()) {
+            throw new IllegalArgumentException("Um ou mais CPFs solicitados não foram encontrados.");
+        }
+
+        return clientes.stream()
+        .map(c -> {
+            ClienteResponseDTO dto = new ClienteResponseDTO();
+            dto.setCpf(c.getCpf());
+            dto.setNome(c.getNome());
+            dto.setEmail(c.getEmail());
+            return dto;
+        })
+        .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResultadoSaga executar(ComandoSaga cmd, List<String> cpfs) {
+        try {
+            List<ClienteResponseDTO> dtos = obterClientesPorCpf(cpfs);
+            Map<String, Object> payloadMap = Map.of("clientes", dtos);
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta, null);
+
+        } catch (IllegalArgumentException e) {
+            return registrarFalha(cmd, e.getMessage());
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao buscar clientes: " + e.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ResultadoSaga executar(ComandoSaga cmd, Object obj) {
+        return registrarFalha(cmd, "Comando não suportado: " + cmd.tipo());
+    }
+
+    public ResultadoSaga registrarFalha(ComandoSaga cmd, String mensagemErro) {
+
+        ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                cmd.sagaId(),
+                cmd.tipo(),
+                LocalDateTime.now().toString(),
+                null,
+                "FALHA",
+                mensagemErro
+        );
+
+        return new ResultadoSaga(resposta, null);
     }
 }
