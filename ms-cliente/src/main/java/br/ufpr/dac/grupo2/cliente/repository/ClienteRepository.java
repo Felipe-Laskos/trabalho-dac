@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, String> {
@@ -25,4 +26,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, String> {
              ORDER BY nome COLLATE "pt-BR-x-icu"
             """, nativeQuery = true)
     List<Cliente> buscarOrdenado(@Param("busca") String busca);
+
+    List<Cliente> findByCpfIn(Collection<String> cpfs);
 }

@@ -12,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+
 public class ClienteResponseDTO extends DTOComLinks {
 
     private String cpf;
