@@ -25,6 +25,11 @@ export class ModalConfirmationComponent {
   readonly textoCancelar = input<string>('Voltar');
   readonly carregando = input<boolean>(false);
   readonly detalhes = input<DetalheOperacao[]>([]);
+  readonly severidadeConfirmar = input<
+    'primary' | 'secondary' | 'success' | 'info' | 'warn' | 'danger'
+  >('primary');
+  readonly icone = input<string>('pi pi-arrow-right-arrow-left');
+  readonly varianteIcone = input<'primary' | 'danger'>('primary');
 
   readonly confirmar = output<void>();
   readonly cancelar = output<void>();

@@ -9,8 +9,8 @@
 >
   <ng-template #header>
     <div class="dialog-header">
-      <div class="icon-badge">
-        <i class="pi pi-arrow-right-arrow-left"></i>
+      <div class="icon-badge" [class.icon-badge-danger]="varianteIcone() === 'danger'">
+        <i class="pi" [class]="icone()"></i>
       </div>
       <div class="header-texts">
         <h2>{{ titulo() }}</h2>
@@ -46,7 +46,7 @@
       />
       <p-button
         [label]="textoConfirmar()"
-        severity="primary"
+        [severity]="severidadeConfirmar()"
         [loading]="carregando()"
         (onClick)="aoConfirmar()"
       />

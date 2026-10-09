@@ -1,0 +1,177 @@
+<div class="page-container">
+  <div class="header-section">
+    <div class="header-titles">
+      <span class="role-badge">GERENTE</span>
+
+      <h1 class="page-title">Gerentes</h1>
+
+      <p class="page-subtitle">
+        Gerentes ativos, em ordem alfabética, com a quantidade de clientes atendidos.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <p-button
+        label="Atualizar"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="carregando()"
+        [disabled]="carregando()"
+        (onClick)="carregarGerentes()"
+      />
+
+      <p-button
+        label="Novo gerente"
+        icon="pi pi-plus"
+        (onClick)="novoGerente()"
+      />
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    @if (carregando()) {
+      <div class="loading-state">
+        <app-loading
+          message="Carregando gerentes..."
+        />
+      </div>
+    } @else if (erro()) {
+      <app-message
+       type="error"
+       [message]="erro()!"/>
+    } @else if (gerentes().length === 0) {
+       <app-message
+        type="empty"
+        message="Nenhum gerente ativo encontrado."
+       />
+    } @else {
+      <div class="table-info-bar">
+        <span>
+          {{ gerentes().length }}
+          {{ gerentes().length === 1 ? 'gerente ativo' : 'gerentes ativos' }}
+        </span>
+
+        <span class="table-info-order">
+          <i class="pi pi-sort-alpha-down"></i>
+          Ordenados por nome
+        </span>
+      </div>
+
+      <div class="table-responsive">
+      <p-table
+        [value]="gerentes()"
+        styleClass="bantads-table"
+      >
+        <ng-template #header>
+          <tr>
+            <th class="col-nome">
+              Nome
+              <i class="pi pi-sort-alpha-down sort-icon"></i>
+            </th>
+
+            <th class="col-cpf">
+              CPF
+            </th>
+
+            <th class="col-email">
+              E-mail
+            </th>
+
+            <th class="col-telefone">
+              Telefone
+            </th>
+
+            <th class="col-clientes text-center">
+              Qt. Clientes
+            </th>
+
+            <th class="col-acoes text-right">
+              Ações
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template #body let-gerente>
+          <tr>
+            <td class="col-nome">
+            <div class="name-cell">
+              <div class="avatar">
+                {{ obterIniciais(gerente.nome) }}
+              </div>
+
+              <span
+                class="user-name"
+                [title]="gerente.nome"
+              >
+                {{ gerente.nome }}
+              </span>
+            </div>
+          </td>
+
+            <td class="col-cpf">
+              {{ gerente.cpf | cpf }}
+            </td>
+
+            <td class="col-email">
+              <span
+                class="cell-truncate"
+                [title]="gerente.email"
+              >
+                {{ gerente.email }}
+              </span>
+            </td>
+
+            <td class="col-telefone">
+              {{ formatarTelefone(gerente.telefone) }}
+            </td>
+
+            <td class="col-clientes text-center">
+              <span class="client-count">
+                {{ gerente.quantidadeClientes ?? 0 }}
+              </span>
+            </td>
+
+            <td class="col-acoes">
+              <div class="actions-group">
+                @if (gerente._links?.['atualizacao']?.href) {
+                  <p-button
+                    icon="pi pi-pencil"
+                    label="Editar"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="editar(gerente)"
+                  />
+                }
+
+                @if (gerente._links?.['remocao']?.href) {
+                  <p-button
+                    icon="pi pi-trash"
+                    label="Remover"
+                    severity="danger"
+                    [outlined]="true"
+                    (onClick)="confirmarRemocao(gerente)"
+                  />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      </div>
+    }
+    <app-modal-confirmation
+    [visivel]="gerenteParaRemover() !== null"
+    titulo="Remover gerente"
+    subtitulo="Essa ação removerá o gerente do sistema."
+    textoConfirmar="Remover"
+    textoCancelar="Cancelar"
+    icone="pi-trash"
+    varianteIcone="danger"
+    [severidadeConfirmar]="'danger'"
+    [detalhes]="detalhesRemocao()"
+    (confirmar)="confirmarRemocaoGerente()"
+    (cancelar)="cancelarRemocao()"
+    />
+  </div>
+</div>

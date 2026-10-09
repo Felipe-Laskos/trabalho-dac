@@ -1,0 +1,250 @@
+<div class="page-container">
+  <div class="header-section">
+    <div class="header-titles">
+      <span class="breadcrumb">GERENTES &nbsp;&rsaquo;&nbsp; EDITAR</span>
+      <h1 class="page-title">Editar gerente</h1>
+      <p class="page-subtitle">
+        Altere nome e telefone. Ao salvar, você volta para a listagem com a confirmação.
+      </p>
+    </div>
+
+    <button class="btn-voltar" type="button" [disabled]="salvando()" (click)="voltar()">
+      <i class="pi pi-arrow-left"></i> Voltar para gerentes
+    </button>
+  </div>
+
+  @if (carregando()) {
+    <div class="content-layout">
+      <div class="form-card skeleton-container">
+        <div class="skeleton-box skeleton-title"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-box skeleton-input"></div>
+          <div class="skeleton-box skeleton-input"></div>
+        </div>
+        <div class="skeleton-box skeleton-title mt-lg"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-box skeleton-input"></div>
+          <div class="skeleton-box skeleton-input"></div>
+        </div>
+      </div>
+
+      <div class="info-card skeleton-container">
+        <div class="skeleton-box skeleton-title skeleton-avatar"></div>
+        <div class="skeleton-box skeleton-title mt-md"></div>
+      </div>
+    </div>
+  } @else if (erro() && !gerente()) {
+    <div class="state-container">
+      <app-message type="error" [message]="erro()!" />
+      <div class="state-actions">
+        <p-button
+          label="Voltar"
+          icon="pi pi-arrow-left"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="voltar()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="content-layout">
+      <div class="form-card">
+        <form class="gerente-form" [formGroup]="formulario" (ngSubmit)="salvar()" novalidate>
+          <div class="form-section">
+            <h3 class="section-title-2">DADOS EDITÁVEIS</h3>
+
+            <div class="form-grid">
+              <div class="field-2">
+                <label for="nome">
+                  Nome <span class="required-mark" aria-hidden="true">*</span>
+                </label>
+
+                <input
+                  id="nome"
+                  pInputText
+                  type="text"
+                  formControlName="nome"
+                  autocomplete="name"
+                  required
+                  aria-required="true"
+                  [attr.aria-invalid]="formulario.controls.nome.invalid && formulario.controls.nome.touched"
+                  [class.ng-invalid]="formulario.controls.nome.invalid && formulario.controls.nome.touched"
+                />
+
+                @if (formulario.controls.nome.invalid && formulario.controls.nome.touched) {
+                  <small class="field-error">
+                    @if (
+                      formulario.controls.nome.hasError('required') ||
+                      formulario.controls.nome.hasError('pattern')
+                    ) {
+                      Informe o nome do gerente.
+                    } @else if (formulario.controls.nome.hasError('minlength')) {
+                      O nome deve ter pelo menos 3 caracteres.
+                    }
+                  </small>
+                }
+              </div>
+
+              <div class="field-2">
+                <label for="telefone">
+                  Telefone <span class="required-mark" aria-hidden="true">*</span>
+                </label>
+
+                <input
+                id="telefone"
+                pInputText
+                type="tel"
+                inputmode="numeric"
+                maxlength="15"
+                formControlName="telefone"
+                autocomplete="tel"
+                required
+                aria-required="true"
+                placeholder="(41) 99999-9999"
+                [attr.aria-invalid]="
+                    formulario.controls.telefone.invalid &&
+                    formulario.controls.telefone.touched
+                "
+                [class.ng-invalid]="
+                    formulario.controls.telefone.invalid &&
+                    formulario.controls.telefone.touched
+                "
+                (input)="telefoneInput()"
+                />
+
+                @if (formulario.controls.telefone.invalid && formulario.controls.telefone.touched) {
+                  <small class="field-error">
+                    @if (formulario.controls.telefone.hasError('required')) {
+                      Informe o telefone.
+                    } @else {
+                      Informe um telefone válido com DDD.
+                    }
+                  </small>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section mt-lg">
+            <h3 class="section-title">
+              <i class="pi pi-lock lock-icon"></i>
+              IDENTIFICAÇÃO &middot; NÃO EDITÁVEL
+            </h3>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="cpf">CPF</label>
+                <div class="input-with-icon">
+                  <input
+                    id="cpf"
+                    pInputText
+                    type="text"
+                    [value]="gerente()?.cpf | cpf"
+                    disabled
+                    aria-describedby="identificacao-ajuda"
+                  />
+                  <i class="pi pi-lock" aria-hidden="true"></i>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="email">E-mail</label>
+                <div class="input-with-icon">
+                  <input
+                    id="email"
+                    pInputText
+                    type="email"
+                    [value]="gerente()?.email"
+                    disabled
+                    aria-describedby="identificacao-ajuda"
+                  />
+                  <i class="pi pi-lock" aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+
+            <small id="identificacao-ajuda" class="section-help">
+              O e-mail é o login e o CPF identifica o gerente nos serviços do sistema.
+              Por isso, nenhum dos dois pode ser alterado aqui.
+            </small>
+          </div>
+
+          @if (erro() && gerente()) {
+            <app-message type="error" [message]="erro()!" />
+          }
+
+          <div class="form-footer">
+            <div
+              class="status-indicator"
+              [class.status-pending]="alteracoesPendentes()"
+              [class.status-saving]="salvando()"
+              role="status"
+              aria-live="polite"
+            >
+              <span class="dot" aria-hidden="true"></span>
+              <span>
+                @if (salvando()) {
+                  Salvando alterações…
+                } @else if (alteracoesPendentes()) {
+                  Alterações não salvas
+                } @else {
+                  Sem alterações pendentes
+                }
+              </span>
+            </div>
+
+            <div class="actions">
+              <p-button
+                type="button"
+                label="Cancelar"
+                severity="secondary"
+                [outlined]="true"
+                [disabled]="salvando()"
+                (onClick)="voltar()"
+              />
+
+              <p-button
+                type="submit"
+                label="Salvar alterações"
+                icon="pi pi-check"
+                [loading]="salvando()"
+                [disabled]="salvando() || !alteracoesPendentes()"
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <aside class="info-card">
+        <div class="profile-header">
+          <div class="avatar">
+            {{ iniciaisGerente() }}
+          </div>
+
+        <div class="profile-title">
+            <h4 class="profile-name">{{ gerente()?.nome }}</h4>
+
+        @if (gerente()?.ativo) {
+            <span class="badge badge-active">ATIVO</span>
+        } @else {
+            <span class="badge badge-inactive">INATIVO</span>
+        }
+        </div>
+        </div>
+
+        <div class="profile-body">
+          <div class="info-row">
+            <span class="info-label">Clientes atendidos</span>
+            <span class="info-value">{{ quantidadeClientes() }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="info-label">Login</span>
+            <span class="info-value info-email">{{ gerente()?.email }}</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</div>
+
