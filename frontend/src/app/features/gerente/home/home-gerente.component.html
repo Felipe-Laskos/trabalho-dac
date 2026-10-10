@@ -9,7 +9,7 @@
     <p-button 
       label="Atualizar" 
       icon="pi pi-refresh" 
-      styleClass="btn-outline-dark"
+      severity="secondary"
       [disabled]="carregando()"
       (onClick)="atualizarLista()">
     </p-button>
@@ -42,11 +42,14 @@
         @if (filtroAtual() === 'TODAS') {
           <h5>Ainda não há solicitações de abertura.</h5>
         } @else {
-          <h5>Nada neste filtro. Tente “Todas” para ver os demais status.</h5>
+          <h5>Nada neste filtro. <br> Tente “Todas” para ver os demais status.</h5>
         }
       </div>
     } @else {
-      <p-table [value]="solicitacoesFiltradas()" styleClass="bantads-table">
+      <p-table 
+      [value]="solicitacoesFiltradas()"
+       styleClass="bantads-table"
+       >
         <ng-template pTemplate="header">
           <tr>
             <th>CPF</th>
@@ -106,7 +109,8 @@
                     <p-button
                       label="Recusar"
                       styleClass="btn-recusar"
-                      [disabled]="estaProcessando(row.cpf)">
+                      [disabled]="estaProcessando(row.cpf)"
+                      (onClick)="abrirRecusa(row)">
                     </p-button>
                   }
                 </div>
@@ -130,4 +134,13 @@
     [mensagem]="resultado()?.mensagem ?? ''"
     (fechar)="resultado.set(null)"
   />
+
+  <app-modal-rejection
+  [visivel]="recusando() !== null"
+  [motivo]="motivoRecusa()"
+  [carregando]="enviandoRecusa()"
+  (motivoAlterado)="motivoRecusa.set($event)"
+  (confirmar)="confirmarRecusa()"
+  (cancelar)="recusando.set(null)"
+/>
 </div>

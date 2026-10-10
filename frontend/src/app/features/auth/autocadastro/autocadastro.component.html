@@ -48,6 +48,9 @@
               @if (campoComErro('nome', 'required')) {
                 <small class="field-error">Nome completo é obrigatório.</small>
               }
+              @if (campoComErro('nome', 'servidor')) {
+                <small class="field-error">{{ form.get('nome')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-cpf">
@@ -65,6 +68,9 @@
               }
               @if (campoComErro('cpf', 'quantidadeDigitos')) {
                 <small class="field-error">CPF deve possuir 11 dígitos.</small>
+              }
+              @if (campoComErro('cpf', 'servidor')) {
+                <small class="field-error">{{ form.get('cpf')?.getError('servidor') }}</small>
               }
             </div>
 
@@ -86,6 +92,9 @@
               @if (campoComErro('email', 'email')) {
                 <small class="field-error">Informe um e-mail válido.</small>
               }
+              @if (campoComErro('email', 'servidor')) {
+                <small class="field-error">{{ form.get('email')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-telefone">
@@ -103,6 +112,9 @@
               }
               @if (campoComErro('telefone', 'quantidadeDigitosEntre')) {
                 <small class="field-error">Telefone inválido.</small>
+              }
+              @if (campoComErro('telefone', 'servidor')) {
+                <small class="field-error">{{ form.get('telefone')?.getError('servidor') }}</small>
               }
             </div>
 
@@ -127,6 +139,9 @@
               @if (campoComErro('salario', 'min')) {
                 <small class="field-error">Salário deve ser maior que zero.</small>
               }
+              @if (campoComErro('salario', 'servidor')) {
+                <small class="field-error">{{ form.get('salario')?.getError('servidor') }}</small>
+              }
             </div>
           </div>
         </div>
@@ -150,6 +165,9 @@
               @if (campoComErro('endereco.logradouro', 'required')) {
                 <small class="field-error">Logradouro é obrigatório.</small>
               }
+              @if (campoComErro('endereco.logradouro', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.logradouro')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-numero">
@@ -169,6 +187,9 @@
               @if (campoComErro('endereco.numero', 'pattern')) {
                 <small class="field-error">Informe somente números.</small>
               }
+              @if (campoComErro('endereco.numero', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.numero')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-complemento">
@@ -181,6 +202,9 @@
                 fluid
               />
               <small>Opcional</small>
+              @if (campoComErro('endereco.complemento', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.complemento')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-cep">
@@ -199,6 +223,9 @@
               @if (campoComErro('endereco.cep', 'quantidadeDigitos')) {
                 <small class="field-error">CEP deve possuir 8 dígitos.</small>
               }
+              @if (campoComErro('endereco.cep', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.cep')?.getError('servidor') }}</small>
+              }
             </div>
 
             <div class="field field-cidade">
@@ -213,6 +240,9 @@
 
               @if (campoComErro('endereco.cidade', 'required')) {
                 <small class="field-error">Cidade é obrigatória.</small>
+              }
+              @if (campoComErro('endereco.cidade', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.cidade')?.getError('servidor') }}</small>
               }
             </div>
 
@@ -234,6 +264,9 @@
               }
               @if (campoComErro('endereco.uf', 'pattern')) {
                 <small class="field-error">UF inválida.</small>
+              }
+              @if (campoComErro('endereco.uf', 'servidor')) {
+                <small class="field-error">{{ form.get('endereco.uf')?.getError('servidor') }}</small>
               }
             </div>
           </div>

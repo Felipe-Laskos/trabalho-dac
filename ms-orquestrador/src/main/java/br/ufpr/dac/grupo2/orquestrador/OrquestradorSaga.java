@@ -39,6 +39,8 @@ public class OrquestradorSaga {
 
 	private static final Logger log = LoggerFactory.getLogger(OrquestradorSaga.class);
 
+	static final String FALHA_TECNICA = "Não foi possível concluir a operação agora. Tente novamente em alguns instantes.";
+
 	private static final Duration TIMEOUT_PASSO = Duration.ofSeconds(30);
 	private static final String SENHA = "senha";
 	private static final DateTimeFormatter ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -77,8 +79,8 @@ public class OrquestradorSaga {
 
 		Saga saga = sagas.get(cmd.tipo());
 		if (saga == null) {
-			log.warn("sagaId={} tipo={} desconhecido", cmd.sagaId(), cmd.tipo());
-			jobs.falhar(cmd.sagaId(), "Tipo de SAGA desconhecido: " + cmd.tipo());
+			log.error("sagaId={} tipo={} desconhecido", cmd.sagaId(), cmd.tipo());
+			jobs.falhar(cmd.sagaId(), FALHA_TECNICA);
 			return;
 		}
 
@@ -113,7 +115,11 @@ public class OrquestradorSaga {
 		absorver(estado, resposta.payload());
 
 		if (!resposta.sucesso()) {
-			falhar(saga, estado, resposta.erro(), false);
+			if (resposta.erro() == null || resposta.erro().isBlank()) {
+				falharTecnicamente(saga, estado, resposta.tipo() + " respondeu FALHA sem erro", false);
+			} else {
+				falhar(saga, estado, resposta.erro(), false);
+			}
 			return;
 		}
 
@@ -132,7 +138,7 @@ public class OrquestradorSaga {
 
 		EstadoSaga estado = estados.ler(cmd.sagaId());
 		if (estado != null && cmd.tipo() != null && cmd.tipo().equals(estado.getAguardando())) {
-			sinalizarFalha(estado, "falha técnica: " + cmd.tipo() + " foi para a DLQ");
+			sinalizarFalha(estado, cmd.tipo() + " foi para a DLQ");
 		}
 	}
 
@@ -157,7 +163,7 @@ public class OrquestradorSaga {
 			return;
 		}
 
-		falhar(saga, estado, erro, true);
+		falharTecnicamente(saga, estado, erro, true);
 	}
 
 	private void avancar(Saga saga, EstadoSaga estado, int numero) {
@@ -177,7 +183,7 @@ public class OrquestradorSaga {
 			}
 			payloads = passo.local() ? List.of() : passo.payloads(dados);
 		} catch (IllegalStateException e) {
-			falhar(saga, estado, e.getMessage(), false);
+			falharTecnicamente(saga, estado, "passo " + numero + " (" + passo.tipo() + "): " + e.getMessage(), false);
 			return;
 		}
 
@@ -187,7 +193,7 @@ public class OrquestradorSaga {
 			try {
 				passo.acaoLocal().accept(dados);
 			} catch (RuntimeException e) {
-				falhar(saga, estado, "falha no passo " + numero + " (" + passo.tipo() + "): " + e.getMessage(), false);
+				falharTecnicamente(saga, estado, "passo " + numero + " (" + passo.tipo() + "): " + e.getMessage(), false);
 				return;
 			}
 			log.info("sagaId={} passo={} {} (local)", estado.getSagaId(), numero, passo.tipo());
@@ -210,6 +216,11 @@ public class OrquestradorSaga {
 		log.info("sagaId={} passo={} {} -> {}", estado.getSagaId(), numero, passo.tipo(), passo.fila());
 	}
 
+	private void falharTecnicamente(Saga saga, EstadoSaga estado, String detalhe, boolean passoIncerto) {
+		log.error("sagaId={} passo={} falha técnica: {}", estado.getSagaId(), estado.getEtapaAtual(), detalhe);
+		falhar(saga, estado, FALHA_TECNICA, passoIncerto);
+	}
+
 	private void falhar(Saga saga, EstadoSaga estado, String erro, boolean passoIncerto) {
 		List<Integer> desfazer = new ArrayList<>(estado.getPassosExecutados());
 		Collections.reverse(desfazer);
@@ -218,7 +229,7 @@ public class OrquestradorSaga {
 				.filter(numero -> saga.passo(numero).compensavel())
 				.toList()));
 		estado.setStatus(StatusSaga.COMPENSANDO);
-		estado.setErro(erro == null || erro.isBlank() ? "Falha no passo " + estado.getEtapaAtual() : erro);
+		estado.setErro(erro);
 
 		log.warn("sagaId={} FALHA no passo {}: {} — compensando {}", estado.getSagaId(), estado.getEtapaAtual(),
 				estado.getErro(), estado.getCompensacoesPendentes());

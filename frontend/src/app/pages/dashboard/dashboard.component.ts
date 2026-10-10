@@ -11,6 +11,10 @@ import {
 } from '../../shared/components/modal-confirmation/modal-confirmation.component';
 
 import {
+  ModalRejectionComponent
+} from  '../../shared/components/modal-rejection/modal-rejection.component';
+
+import {
   OperationResultComponent,
   DadosResultadoOperacao,
 } from '../../shared/components/operation-result/operation-result.component';
@@ -43,11 +47,16 @@ export interface OperacaoPayload {
     BalanceIndicatorComponent,
     JobProgressComponent,
     AsyncResultComponent,
+    ModalRejectionComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
+  readonly recusando = signal(false);
+  readonly motivoRecusa = signal('');
+  readonly enviandoRecusa = signal(false);
+
   readonly exibirModalConfirmacao = signal(false);
   readonly carregando = signal(false);
   readonly exibirJobProgress = signal(false);
@@ -192,4 +201,37 @@ export class DashboardComponent {
   fecharAsyncResult(): void {
     this.exibirAsyncResult.set(false);
   }
+
+  abrirRejeicao(): void {
+  this.motivoRecusa.set('');
+  this.recusando.set(true);
+}
+
+  fecharRejeicao(): void {
+  if (this.enviandoRecusa()) {
+    return;
+  }
+
+  this.recusando.set(false);
+}
+
+confirmarRejeicao(): void {
+  if (!this.motivoRecusa().trim()) {
+    return;
+  }
+
+  this.enviandoRecusa.set(true);
+
+  setTimeout(() => {
+    this.enviandoRecusa.set(false);
+    this.recusando.set(false);
+
+    this.asyncResultStatus.set('SUCESSO');
+    this.asyncResultMensagem.set('Recusa confirmada com sucesso.');
+    this.exibirAsyncResult.set(true);
+
+    this.motivoRecusa.set('');
+  }, 1000);
+}
+
 }

@@ -77,6 +77,31 @@
       />
     </section>
 
+    <!-- Modal Rejection -->
+  <section class="card-bloco">
+  <div class="bloco-titulo">
+    <span class="step-num">4</span>
+    <h2>Modal de Rejeição</h2>
+  </div>
+
+  <p-button
+    label="Abrir Rejeição"
+    icon="pi pi-times"
+    severity="danger"
+    [outlined]="true"
+    (onClick)="abrirRejeicao()"
+  />
+
+  <app-modal-rejection
+    [visivel]="recusando()"
+    [motivo]="motivoRecusa()"
+    [carregando]="enviandoRecusa()"
+    (motivoAlterado)="motivoRecusa.set($event)"
+    (confirmar)="confirmarRejeicao()"
+    (cancelar)="fecharRejeicao()"
+  />
+  </section>
+
     <!-- Operation Result) -->
     <section class="card-bloco">
       <div class="bloco-titulo">
@@ -191,5 +216,5 @@
   [titulo]="'Transferindo R$ ' + valorControl.value + '...'"
   [subtitulo]="'Não feche esta janela. Assim que a operação registrar, o saldo é reconsultado.'"
 />
-  </div>
+</div>
 </main>
