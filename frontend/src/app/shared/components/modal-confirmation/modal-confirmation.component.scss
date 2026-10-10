@@ -5,20 +5,29 @@
   width: 100%;
 
   .icon-badge {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 50%;
-    background: var(--color-highlight);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1.1rem;
+    color: var(--color-primary);
+  }
+
+  &.icon-badge-danger {
+    background: var(--color-error-background);
 
     i {
-      font-size: 1.1rem;
-      color: var(--color-primary);
+      color: var(--color-error);
     }
   }
+}
 
   .header-texts {
     display: flex;
