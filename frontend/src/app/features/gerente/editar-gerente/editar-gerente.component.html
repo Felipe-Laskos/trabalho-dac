@@ -63,6 +63,7 @@
                   id="nome"
                   pInputText
                   type="text"
+                  maxlength="120"
                   formControlName="nome"
                   autocomplete="name"
                   required
@@ -221,27 +222,28 @@
             {{ iniciaisGerente() }}
           </div>
 
-        <div class="profile-title">
+          <div class="profile-title">
             <h4 class="profile-name">{{ gerente()?.nome }}</h4>
 
-        @if (gerente()?.ativo) {
-            <span class="badge badge-active">ATIVO</span>
-        } @else {
-            <span class="badge badge-inactive">INATIVO</span>
-        }
-        </div>
+            @if (gerente()?.ativo) {
+              <span class="badge badge-active">ATIVO</span>
+            } @else {
+              <span class="badge badge-inactive">INATIVO</span>
+            }
+          </div>
         </div>
 
-        <div class="profile-body">
-          <div class="info-row">
-            <span class="info-label">Clientes atendidos</span>
-            <span class="info-value">{{ quantidadeClientes() }}</span>
-          </div>
-
-          <div class="info-row">
-            <span class="info-label">Login</span>
-            <span class="info-value info-email">{{ gerente()?.email }}</span>
-          </div>
+        <div class="profile-body"> 
+          @if (gerente()?.quantidadeClientes != null) { 
+            <div class="info-row"> 
+              <span class="info-label">Clientes atendidos</span>
+              <span class="info-value">{{ quantidadeClientes() }}</span> 
+            </div> 
+          } 
+          <div class="info-row"> 
+            <span class="info-label">Login</span> 
+            <span class="info-value info-email">{{ gerente()?.email }}</span> 
+          </div> 
         </div>
       </aside>
     </div>

@@ -46,12 +46,7 @@ export class ListaGerentesComponent implements OnInit {
 
     try {
       const resultado = await this.gerenteService.listar();
-      const gerentesOrdenados = [...resultado.gerentes].sort(
-        (a, b) => a.nome.localeCompare(b.nome, 'pt-BR', {
-          sensitivity: 'base',
-        }),
-      );
-  this.gerentes.set(gerentesOrdenados);
+      this.gerentes.set(resultado.gerentes);
     } catch (erro: unknown) {
       this.erro.set(this.obterMensagemErro(erro));
     } finally {

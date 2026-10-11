@@ -4,7 +4,6 @@ import {FormBuilder, ReactiveFormsModule, Validators, type AbstractControl, type
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -51,7 +50,6 @@ export class EditarGerenteComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly gerenteService = inject(GerenteService);
-  private readonly messageService = inject(MessageService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -65,7 +63,7 @@ export class EditarGerenteComponent implements OnInit {
   readonly alteracoesPendentes = signal(false);
 
   readonly quantidadeClientes = computed(
-    () => this.gerente()?.quantidadeClientes ?? 0,
+    () => this.gerente()?.quantidadeClientes ?? null,
   );
 
   readonly iniciaisGerente = computed(() => {
@@ -90,6 +88,7 @@ export class EditarGerenteComponent implements OnInit {
         Validators.required,
         Validators.minLength(3),
         Validators.pattern(/\S/),
+        Validators.maxLength(120),
       ],
     ],
     telefone: ['', [Validators.required, telefoneValido]],
@@ -259,10 +258,10 @@ export class EditarGerenteComponent implements OnInit {
       erro !== null &&
       'error' in erro
     ) {
-      const resposta = erro.error as { mensagem?: string };
+      const resposta = erro.error as { mensagem?: string; message?: string; };
 
-      if (resposta?.mensagem) {
-        return resposta.mensagem;
+      if (resposta?.mensagem || resposta?.message) {
+        return resposta.mensagem ?? resposta.message!;
       }
     }
 
