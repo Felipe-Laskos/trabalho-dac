@@ -181,4 +181,74 @@ class SagaContaIntegracaoTest {
             resultado.resposta().erro());
         assertNull(resultado.evento());
     }
+
+    @Test void transfereLoteComUmEventoPorContaECompensaTudo()
+            throws Exception {
+        String sagaId=UUID.randomUUID().toString();
+        String removido="98574307084";
+        String destino="23862179060";
+        var transferir=new ComandoSaga(sagaId,
+            "transferir-contas-do-gerente","2026-10-06T10:00:00",
+            Map.of("cpfGerente",removido,
+                "cpfsAtivos",List.of(destino)));
+
+        var lote=service.transferirContasDoGerente(
+            transferir,removido,destino);
+
+        assertEquals("SUCESSO",lote.resposta().status());
+        assertEquals(destino,lote.resposta().payload()
+            .get("cpfGerenteDestino"));
+        assertEquals(List.of(
+            Map.of("numero","1291","cpfCliente","12912861012"),
+            Map.of("numero","5887","cpfCliente","58872160006")),
+            lote.resposta().payload().get("contas"));
+        assertEquals(2,lote.eventos().size());
+        assertTrue(lote.eventos().stream().allMatch(e ->
+            e.tipo().equals("GerenteAlterado")
+                && e.payload().get("cpfGerenteAnterior").equals(removido)
+                && e.payload().get("cpfGerente").equals(destino)
+                && e.payload().get("sagaId").equals(sagaId)));
+        assertEquals(9,lote.eventos().get(0).versao());
+        assertEquals(3,lote.eventos().get(1).versao());
+        assertEquals(destino,leitura.replay("1291").getCpfGerente());
+        assertEquals(destino,leitura.replay("5887").getCpfGerente());
+
+        for (var evento:lote.eventos())
+            projecao.projetar(json.writeValueAsString(evento));
+        assertEquals(destino,contas.findById("1291").orElseThrow()
+            .getCpfGerente());
+        assertEquals(destino,contas.findById("5887").orElseThrow()
+            .getCpfGerente());
+
+        var compensar=new ComandoSaga(sagaId,
+            "compensar-transferir-contas","2026-10-06T10:00:01",
+            Map.of("cpfGerente",removido));
+        var compensacao=service.executar(compensar,null);
+
+        assertEquals(2,compensacao.eventos().size());
+        assertEquals(removido,leitura.replay("1291").getCpfGerente());
+        assertEquals(removido,leitura.replay("5887").getCpfGerente());
+        for (var evento:compensacao.eventos())
+            projecao.projetar(json.writeValueAsString(evento));
+        assertEquals(removido,contas.findById("1291").orElseThrow()
+            .getCpfGerente());
+        assertEquals(removido,contas.findById("5887").orElseThrow()
+            .getCpfGerente());
+    }
+
+    @Test void transferenciaSemContasTemSucessoSemEvento() {
+        String sagaId=UUID.randomUUID().toString();
+        var cmd=new ComandoSaga(sagaId,
+            "transferir-contas-do-gerente","2026-10-06T10:00:00",
+            Map.of("cpfGerente","00000000000",
+                "cpfsAtivos",List.of("23862179060")));
+
+        var resultado=service.transferirContasDoGerente(
+            cmd,"00000000000","23862179060");
+
+        assertEquals("SUCESSO",resultado.resposta().status());
+        assertEquals(List.of(),resultado.resposta().payload().get("contas"));
+        assertTrue(resultado.eventos().isEmpty());
+        assertNull(resultado.evento());
+    }
 }

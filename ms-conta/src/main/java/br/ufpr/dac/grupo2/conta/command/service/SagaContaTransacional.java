@@ -1,6 +1,8 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +58,8 @@ public class SagaContaTransacional {
                 case "criar-conta" -> criar(cmd);
                 case "compensar-criar-conta" -> compensar(cmd);
                 case "compensar-atribuir-conta" -> compensarAtribuicao(cmd);
+                case "compensar-transferir-contas" ->
+                        compensarTransferenciaEmLote(cmd);
                 default -> throw new IllegalArgumentException(
                         "Tipo de comando não suportado: " + cmd.tipo());
             };
@@ -65,6 +69,146 @@ public class SagaContaTransacional {
 
         persistirResultado(cmd, novo);
         return novo;
+    }
+
+    @Transactional(transactionManager = "commandTransactionManager")
+    public ResultadoSaga transferirContasDoGerente(ComandoSaga cmd,
+            String gerenteRemovido, String gerenteDestino) {
+        bloquearEventStore();
+
+        ResultadoSaga anterior = resultado(cmd.sagaId(), cmd.tipo());
+        if (anterior != null) {
+            return anterior;
+        }
+        if (resultado(cmd.sagaId(), "compensar-transferir-contas") != null) {
+            ResultadoSaga falha = falha(cmd, "SAGA já compensada");
+            persistirResultado(cmd, falha);
+            return falha;
+        }
+
+        List<Object[]> contas = contasAtuaisDoGerente(gerenteRemovido);
+        List<EventoPublicado> publicados = new ArrayList<>();
+        List<Map<String, Object>> respostaContas = new ArrayList<>();
+        LocalDateTime instante = agora();
+
+        for (Object[] conta : contas) {
+            String numero = conta[0].toString();
+            String cpfCliente = conta[1].toString();
+            int versao = ((Number) conta[2]).intValue() + 1;
+            Evento evento = eventos.saveAndFlush(new Evento(
+                    numero,
+                    "GerenteAlterado",
+                    Map.of(
+                            "cpfGerenteAnterior", gerenteRemovido,
+                            "cpfGerente", gerenteDestino,
+                            "sagaId", cmd.sagaId()),
+                    versao,
+                    instante));
+            publicados.add(EventoPublicado.de(evento));
+            respostaContas.add(Map.of(
+                    "numero", numero,
+                    "cpfCliente", cpfCliente));
+        }
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("cpfGerenteDestino", gerenteDestino);
+        payload.put("contas", respostaContas);
+        ResultadoSaga novo = sucessoLote(cmd, payload, publicados);
+        persistirResultado(cmd, novo);
+        return novo;
+    }
+
+    private ResultadoSaga compensarTransferenciaEmLote(ComandoSaga cmd) {
+        String gerenteRemovido = cpf(cmd.payload(), "cpfGerente");
+        ResultadoSaga transferencia = resultado(
+                cmd.sagaId(), "transferir-contas-do-gerente");
+        if (transferencia == null || transferencia.eventos().isEmpty()) {
+            return sucessoLote(cmd, Map.of("contas", List.of()), List.of());
+        }
+
+        List<ContaACompensar> validadas = new ArrayList<>();
+        for (EventoPublicado transferido : transferencia.eventos()) {
+            String original = texto(transferido.payload(), "cpfGerenteAnterior");
+            if (!gerenteRemovido.equals(original)) {
+                throw new IllegalArgumentException(
+                        "Gerente original não corresponde à transferência da SAGA");
+            }
+            EstadoConta estado = leitura.replay(transferido.objetoId());
+            String destino = texto(transferido.payload(), "cpfGerente");
+            if (!destino.equals(estado.getCpfGerente())) {
+                throw new IllegalArgumentException(
+                        "Conta não pertence mais ao gerente definido pela SAGA");
+            }
+            validadas.add(new ContaACompensar(transferido, estado,
+                    original, destino));
+        }
+
+        List<EventoPublicado> reversoes = new ArrayList<>();
+        List<Map<String, Object>> contas = new ArrayList<>();
+        LocalDateTime instante = agora();
+        for (ContaACompensar validada : validadas) {
+            EventoPublicado transferido = validada.evento();
+            Evento reversao = eventos.saveAndFlush(new Evento(
+                    transferido.objetoId(),
+                    "GerenteAlterado",
+                    Map.of(
+                            "cpfGerenteAnterior", validada.destino(),
+                            "cpfGerente", validada.original(),
+                            "sagaId", cmd.sagaId()),
+                    validada.estado().getVersao() + 1,
+                    instante));
+            reversoes.add(EventoPublicado.de(reversao));
+            Object cpfCliente = transferencia.resposta().payload()
+                    .getOrDefault("contas", List.of()) instanceof List<?> lista
+                    ? lista.stream().filter(Map.class::isInstance)
+                            .map(Map.class::cast)
+                            .filter(item -> transferido.objetoId().equals(item.get("numero")))
+                            .map(item -> item.get("cpfCliente"))
+                            .findFirst().orElse(null)
+                    : null;
+            Map<String, Object> conta = new LinkedHashMap<>();
+            conta.put("numero", transferido.objetoId());
+            if (cpfCliente != null) conta.put("cpfCliente", cpfCliente);
+            contas.add(conta);
+        }
+        return sucessoLote(cmd, Map.of("contas", contas), reversoes);
+    }
+
+    private record ContaACompensar(EventoPublicado evento,
+            EstadoConta estado, String original, String destino) {}
+
+    @SuppressWarnings("unchecked")
+    private List<Object[]> contasAtuaisDoGerente(String cpfGerente) {
+        return entityManager.createNativeQuery("""
+                WITH atuais AS (
+                    SELECT DISTINCT ON (objeto_id)
+                        objeto_id, payload, versao
+                    FROM conta_command.eventos
+                    WHERE tipo IN ('Criado', 'GerenteAlterado')
+                    ORDER BY objeto_id, versao DESC
+                ), criadas AS (
+                    SELECT objeto_id, payload->>'cpfCliente' AS cpf_cliente
+                    FROM conta_command.eventos
+                    WHERE tipo = 'Criado'
+                ), versoes AS (
+                    SELECT objeto_id, MAX(versao) AS versao
+                    FROM conta_command.eventos
+                    GROUP BY objeto_id
+                )
+                SELECT a.objeto_id, c.cpf_cliente, v.versao
+                FROM atuais a
+                JOIN criadas c ON c.objeto_id = a.objeto_id
+                JOIN versoes v ON v.objeto_id = a.objeto_id
+                WHERE a.payload->>'cpfGerente' = :cpfGerente
+                  AND NOT EXISTS (
+                      SELECT 1 FROM conta_command.eventos x
+                      WHERE x.objeto_id = a.objeto_id
+                        AND x.tipo = 'CriacaoCompensada'
+                  )
+                ORDER BY a.objeto_id
+                """)
+                .setParameter("cpfGerente", cpfGerente)
+                .getResultList();
     }
 
     @Transactional(transactionManager = "commandTransactionManager")
@@ -300,6 +444,13 @@ public class SagaContaTransacional {
                 "SUCESSO",
                 null),
                 evento == null ? null : EventoPublicado.de(evento));
+    }
+
+    private ResultadoSaga sucessoLote(ComandoSaga cmd,
+            Map<String, Object> payload, List<EventoPublicado> eventos) {
+        return ResultadoSaga.lote(new ResultadoSaga.Resposta(
+                cmd.sagaId(), cmd.tipo(), agora().toString(), payload,
+                "SUCESSO", null), eventos);
     }
 
     private ResultadoSaga falha(ComandoSaga cmd, String mensagem) {
