@@ -1,16 +1,23 @@
 package br.ufpr.dac.grupo2.gerente.service;
 
+import br.ufpr.dac.grupo2.gerente.dto.request.GerenteRequestDTO;
 import br.ufpr.dac.grupo2.gerente.dto.response.GerenteResponseDTO;
+import br.ufpr.dac.grupo2.gerente.exception.GerenteException;
 import br.ufpr.dac.grupo2.gerente.model.Gerente;
 import br.ufpr.dac.grupo2.gerente.repository.GerenteRepository;
 import br.ufpr.dac.grupo2.gerente.repository.ComandosProcessadosRepository;
+import br.ufpr.dac.grupo2.gerente.messaging.dto.ResultadoSaga;
+import br.ufpr.dac.grupo2.gerente.dto.MensagemSaga;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class GerenteService {
@@ -18,11 +25,13 @@ public class GerenteService {
     private final GerenteRepository gerenteRepository;
     private final ComandosProcessadosRepository comandosProcessadosRepository;
     private final ModelMapper mapper;
+    private final ObjectMapper json;
 
-    public GerenteService(GerenteRepository gerenteRepository, ComandosProcessadosRepository comandosProcessadosRepository, ModelMapper mapper) {
+    public GerenteService(GerenteRepository gerenteRepository, ComandosProcessadosRepository comandosProcessadosRepository, ModelMapper mapper, ObjectMapper json) {
         this.gerenteRepository = gerenteRepository;
         this.comandosProcessadosRepository = comandosProcessadosRepository;
         this.mapper = mapper;
+        this.json = json;
     }
 
     @Transactional(readOnly = true)
@@ -92,5 +101,114 @@ public class GerenteService {
         gerenteRepository.saveAll(gerentes);
 
         return gerentes.size();
+    }
+
+    @Transactional
+    public ResultadoSaga inserirGerente(MensagemSaga cmd) {
+        try {
+            String jsonPayload = json.writeValueAsString(cmd.payload());
+            GerenteRequestDTO request = json.readValue(jsonPayload, GerenteRequestDTO.class);
+
+            if (gerenteRepository.existsById(request.getCpf())) {
+                return registrarFalha(cmd, "CPF já cadastrado");
+            }
+
+            if (gerenteRepository.existsByEmail(request.getEmail())) {
+                return registrarFalha(cmd, "E-mail já cadastrado");
+            }
+
+            Gerente gerente = new Gerente(
+                request.getCpf(),
+                request.getNome(),
+                request.getEmail(),
+                request.getTelefone(),
+                true
+            );
+
+            Gerente salvo = gerenteRepository.save(gerente);
+
+            Map<String, Object> payloadMap = Map.of("cpf", salvo.getCpf());
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao processar inserção: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ResultadoSaga compensarInserirGerente (MensagemSaga cmd, String cpf) {
+        try {
+            if (gerenteRepository.existsById(cpf)) {
+                gerenteRepository.deleteById(cpf);
+            }
+
+            Map<String, Object> payloadMap = Map.of("cpf", cpf);
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao inserir gerente: " + e.getMessage());
+        }
+    }
+
+    public ResultadoSaga registrarFalha(MensagemSaga cmd, String mensagemErro) {
+
+        ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                cmd.sagaId(),
+                cmd.tipo(),
+                LocalDateTime.now().toString(),
+                null,
+                "FALHA",
+                mensagemErro
+        );
+
+        return new ResultadoSaga(resposta);
+    }
+
+    @Transactional(readOnly = true)
+    public List<GerenteResponseDTO> listarAtivos() {
+        return gerenteRepository.findByAtivoTrueOrderByNomeAsc()
+                .stream()
+                .map(this::paraDTO)
+                .toList();
+    }
+
+    @Transactional
+    public GerenteResponseDTO atualizarGerente(String cpf, GerenteRequestDTO request) {
+        Gerente gerente = gerenteRepository.findById(cpf)
+                .orElseThrow(() -> new GerenteException("Gerente com CPF " + cpf + " não encontrado."));
+
+        if (!cpf.equals(request.getCpf())) {
+            throw new GerenteException("O CPF é imutável e não pode ser alterado.");
+        }
+        if (!gerente.getEmail().equals(request.getEmail())) {
+            throw new GerenteException("O e-mail é imutável e não pode ser alterado.");
+        }
+
+        gerente.setNome(request.getNome());
+        gerente.setTelefone(request.getTelefone());
+
+        Gerente atualizado = gerenteRepository.save(gerente);
+
+        return paraDTO(atualizado);
     }
 }
