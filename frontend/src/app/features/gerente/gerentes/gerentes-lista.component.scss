@@ -1,0 +1,61 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  width: 100%;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.role-badge {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 1px;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+  font-weight: var(--font-weight-heading);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.actions-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-xs);
+}
+
+.sem-acoes,
+.state-message {
+  color: var(--color-text-secondary);
+}
+
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+}
+
+.text-right {
+  text-align: right;
+}
