@@ -9,6 +9,8 @@ import br.ufpr.dac.grupo2.gerente.dto.MensagemSaga;
 import br.ufpr.dac.grupo2.gerente.dto.request.GerenteRequestDTO;
 import br.ufpr.dac.grupo2.gerente.messaging.dto.ResultadoSaga;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/gerentes")
@@ -28,6 +32,11 @@ public class GerenteREST {
 
     public GerenteREST(GerenteService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<GerenteResponseDTO>> listar() {
+        return ResponseEntity.ok(service.listarAtivos());
     }
 
     @GetMapping("/{cpf}")

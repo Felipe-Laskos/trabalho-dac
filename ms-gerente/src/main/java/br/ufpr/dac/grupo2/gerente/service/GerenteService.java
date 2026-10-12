@@ -39,6 +39,31 @@ public class GerenteService {
         return gerenteRepository.findById(cpf).map(this::paraDTO);
     }
 
+    @Transactional(readOnly = true)
+    public List<GerenteResponseDTO> listarAtivos() {
+        return gerenteRepository.listarAtivosOrdenadoPorNome().stream()
+                .map(this::paraDTO)
+                .toList();
+    }
+
+    @Transactional
+    public GerenteResponseDTO atualizar(String cpf, GerenteUpdateRequestDTO dados) {
+        Gerente gerente = gerenteRepository.findById(cpf)
+                .orElseThrow(() -> new GerenteNaoEncontradoException("Gerente não encontrado"));
+
+        if (dados.getCpf() != null && !dados.getCpf().equals(gerente.getCpf())) {
+            throw new CampoImutavelException("O CPF não pode ser alterado");
+        }
+        if (dados.getEmail() != null && !dados.getEmail().equals(gerente.getEmail())) {
+            throw new CampoImutavelException("O e-mail é o login e não pode ser alterado");
+        }
+
+        gerente.setNome(dados.getNome());
+        gerente.setTelefone(dados.getTelefone());
+
+        return paraDTO(gerente);
+    }
+
     private GerenteResponseDTO paraDTO(Gerente gerente) {
         GerenteResponseDTO dto = mapper.map(gerente, GerenteResponseDTO.class);
 

@@ -13,6 +13,12 @@ const homeGerente = () =>
 const clientesGerente = () =>
   import('./features/gerente/clientes/clientes-gerente.component').then((m) => m.ClientesGerenteComponent);
 
+const listaGerentes = () =>
+  import('./features/gerente/lista-gerentes/lista-gerentes.component').then((m) => m.ListaGerentesComponent);
+
+const editarGerente = () =>
+  import('./features/gerente/editar-gerente/editar-gerente.component').then((m) => m.EditarGerenteComponent);
+
 const operacao = () =>
   import('./features/cliente/operacao/operacao-page.component').then((m) => m.OperacaoPageComponent);
 
@@ -70,9 +76,9 @@ export const routes: Routes = [
       { path: 'home', loadComponent: homeGerente },
       { path: 'solicitacoes', loadComponent: homeGerente },
       { path: 'clientes', loadComponent: clientesGerente },
-      { path: 'gerentes', loadComponent: emConstrucao },
+      { path: 'gerentes', loadComponent: listaGerentes },
       { path: 'gerentes/novo', loadComponent: emConstrucao },
-      { path: 'gerentes/:cpf/editar', loadComponent: emConstrucao },
+      { path: 'gerentes/:cpf/editar', loadComponent: editarGerente },
       { path: 'relatorio', loadComponent: emConstrucao },
     ],
   },

@@ -47,13 +47,23 @@ public class ContaSagaListener {
         ResultadoSaga resultado = switch (cmd.tipo()) {
             case "gerente-com-menos-clientes" -> escolherGerente(cmd);
             case "conta-a-transferir" -> contaATransferir(cmd);
+            case "transferir-contas-do-gerente" -> transferirContas(cmd);
             default -> executar(cmd);
         };
 
-        if (resultado.evento() != null) {
-            publisher.publicar(SagaMessagePublisher.FILA_EVENTOS, resultado.evento());
-        }
+        resultado.eventos().forEach(evento ->
+                publisher.publicar(SagaMessagePublisher.FILA_EVENTOS, evento));
         publisher.publicar(SagaMessagePublisher.FILA_RESPOSTAS, resultado.resposta());
+    }
+
+    private ResultadoSaga transferirContas(ComandoSaga cmd) {
+        try {
+            String removido = cpfDoPayload(cmd, "cpfGerente");
+            String destino = query.escolher(cpfsDoPayload(cmd, "cpfsAtivos"));
+            return command.transferirContasDoGerente(cmd, removido, destino);
+        } catch (IllegalArgumentException e) {
+            return command.registrarFalha(cmd, e.getMessage());
+        }
     }
 
     private ResultadoSaga executar(ComandoSaga cmd) {

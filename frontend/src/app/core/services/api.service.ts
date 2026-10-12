@@ -36,6 +36,9 @@ export class ApiService {
   }
 
   private url(caminho: string): string {
+    if (/^https?:\/\//i.test(caminho)) {
+      return caminho;
+    }
     return `${this.base}${caminho.startsWith('/') ? caminho : `/${caminho}`}`;
   }
 

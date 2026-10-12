@@ -3,6 +3,9 @@ package br.ufpr.dac.grupo2.gerente.repository;
 import br.ufpr.dac.grupo2.gerente.model.Gerente;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
 
 import java.util.List;
 
