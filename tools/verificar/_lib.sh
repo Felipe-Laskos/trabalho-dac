@@ -37,6 +37,7 @@ declare -A DONO_DA_AREA=(
   [r1-autocadastro]="Nath / Laura (autocadastro)"
   [r2-login]="Felipe / Davi (login/logout)"
   [r3-home-cliente]="Dani / Davi (home do cliente)"
+  [r9-aprovar-cliente]="Felipe (Orquestrador SAGA) / Nath (listeners) / Davi (jobs)"
 )
 
 cor_verde() { echo -e "\e[32m$1\e[0m"; }

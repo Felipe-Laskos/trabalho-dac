@@ -58,7 +58,7 @@ falha é o dono do módulo.
 | `01-topologia.sh` | As 8 filas + 5 DLQs declaradas em `gateway/topologia.js` existem no RabbitMQ (API `:15672/api/queues`), e as filas com DLQ têm `x-dead-letter-exchange`/`x-dead-letter-routing-key` corretos. |
 | `02-seed.sh` | As 6 contagens do seed: `cliente.clientes`=5, `gerente.gerentes`=4, `conta_command.eventos`=22, `conta_query.contas`=5, `conta_query.movimentacoes`=17, `usuarios` (Mongo, `bantads_auth`)=9. |
 | `03-saldos.sh` | Os 5 saldos do seed conferem em três frentes: valor esperado, replay do event store (`conta_command.eventos`) e read model (`conta_query.contas`). |
-| `04-requisitos.sh` | R1 (autocadastro: 201/409/400), R2 (login/logout: token, 401 sem token, 401 após logout) e R3 (home do cliente: saldo e `_links`), batendo na porta pública do Gateway (8000). |
+| `04-requisitos.sh` | R1 (autocadastro: 201/409/400), R2 (login/logout: token, 401 sem token, 401 após logout), R3 (home do cliente: saldo e `_links`) e R9 (aprovar cliente: `POST .../aprovacao` -> 202 + `jobId`, polling de `GET /jobs/{jobId}/status` até `CONCLUIDO` com `resource clientes/{cpf}` — a SAGA completa de ponta a ponta), batendo na porta pública do Gateway (8000). |
 
 ## Pré-requisitos
 
