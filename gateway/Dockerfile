@@ -4,10 +4,12 @@ RUN apk add --no-cache wget
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev
 
-COPY . ./
+COPY --chown=node:node . ./
+
+USER node
 
 EXPOSE 8000
 

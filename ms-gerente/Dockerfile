@@ -10,11 +10,14 @@ RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget && \
+    addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
 
-COPY --from=build /app/target/ms-gerente-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build --chown=app:app /app/target/ms-gerente-0.0.1-SNAPSHOT.jar app.jar
+
+USER app
 
 EXPOSE 8080
 
