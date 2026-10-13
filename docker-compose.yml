@@ -82,7 +82,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       SPRING_MONGODB_URI: mongodb://mongo:27017/bantads_auth
       SPRING_RABBITMQ_HOST: rabbitmq
     depends_on:
@@ -105,7 +105,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_DATA_REDIS_HOST: redis
     depends_on:
@@ -128,7 +128,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       SPRING_RABBITMQ_HOST: rabbitmq
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
@@ -150,7 +150,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=cliente
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
@@ -174,7 +174,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bantads?currentSchema=gerente
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
@@ -196,7 +196,7 @@ services:
     mem_limit: 512m
     environment:
       TZ: America/Sao_Paulo
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC"
       CONTA_COMMAND_DB_URL: jdbc:postgresql://postgres:5432/bantads
       CONTA_COMMAND_DB_USER: postgres
       CONTA_COMMAND_DB_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
