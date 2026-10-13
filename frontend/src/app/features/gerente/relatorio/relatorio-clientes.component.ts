@@ -50,8 +50,8 @@ export class RelatorioClientesComponent {
         return;
       }
 
-      const inline = await this.jobs.resultado<ResultadoRelatorioClientes | RelatorioClienteLinha[]>(fim);
-      this.linhas.set(linhasDoRelatorio(inline));
+      const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
+      this.linhas.set(clientes);
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
@@ -61,11 +61,4 @@ export class RelatorioClientesComponent {
       this.gerando.set(false);
     }
   }
-}
-
-export function linhasDoRelatorio(
-  inline: ResultadoRelatorioClientes | RelatorioClienteLinha[],
-): RelatorioClienteLinha[] {
-  if (Array.isArray(inline)) return inline;
-  return inline.clientes ?? [];
 }

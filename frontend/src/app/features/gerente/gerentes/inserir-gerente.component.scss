@@ -45,17 +45,17 @@
     font-weight: var(--font-weight-heading);
 
     span {
-      color: var(--color-danger, #b42318);
+      color: var(--color-error);
     }
   }
 
   small {
     color: var(--color-text-secondary);
   }
-}
 
-.field-error {
-  color: var(--color-danger, #b42318);
+  .field-error {
+    color: var(--color-error);
+  }
 }
 
 .form-actions {

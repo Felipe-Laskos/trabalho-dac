@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { RelatorioClientesComponent, linhasDoRelatorio } from './relatorio-clientes.component';
+import { RelatorioClientesComponent } from './relatorio-clientes.component';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { JobService } from '../../../core/services/job.service';
 import type { Job } from '../../../core/models/job.model';
@@ -81,9 +81,5 @@ describe('RelatorioClientesComponent', () => {
     expect(cabecalho).toContain('Gerente');
     expect(html.textContent).toContain('Zeca');
     expect(html.textContent?.indexOf('Zeca')).toBeLessThan(html.textContent?.indexOf('Ana') ?? -1);
-  });
-
-  it('aceita a lista solta que o job inline pode devolver', () => {
-    expect(linhasDoRelatorio([ana, ze]).map((linha) => linha.nome)).toEqual(['Ana', 'Zeca']);
   });
 });

@@ -1,11 +1,14 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { expect, vi } from 'vitest';
 
 import { ListaGerentesComponent } from './lista-gerentes.component';
 import { GerenteService } from '../../../core/services/gerente.service';
+import { JobService } from '../../../core/services/job.service';
 import type { Gerente, GerentesList } from '../../../core/models/gerente.model';
+import type { Job } from '../../../core/models/job.model';
 
 describe('ListaGerentesComponent', () => {
   let component: ListaGerentesComponent;
@@ -75,10 +78,22 @@ describe('ListaGerentesComponent', () => {
 
   const gerenteServiceMock = {
     listar: vi.fn<() => Promise<GerentesList>>(),
+    remover: vi.fn(),
   };
+
+  const jobs = { aguardar: vi.fn(), resultado: vi.fn() };
 
   const routerMock = {
     navigate: vi.fn().mockResolvedValue(true),
+  };
+
+  const pendente: Job = {
+    jobId: 'job-r15',
+    status: 'PENDENTE',
+    resultType: null,
+    dominio: 'gerentes',
+    resourceId: null,
+    erro: null,
   };
 
   beforeEach(async () => {
@@ -89,6 +104,7 @@ describe('ListaGerentesComponent', () => {
       imports: [ListaGerentesComponent],
       providers: [
         { provide: GerenteService, useValue: gerenteServiceMock },
+        { provide: JobService, useValue: jobs },
         { provide: Router, useValue: routerMock },
       ],
     }).compileComponents();
@@ -170,5 +186,59 @@ describe('ListaGerentesComponent', () => {
     expect(gerente._links['remocao']?.href).toBe(
       '/gerentes/40501740066',
     );
+  });
+
+  it('403 de auto-remoção não inicia o polling', async () => {
+    gerenteServiceMock.remover.mockRejectedValue(
+      new HttpErrorResponse({
+        status: 403,
+        error: {
+          status: 403,
+          erro: 'Forbidden',
+          mensagem: 'Um gerente não pode remover a si mesmo',
+        },
+      }),
+    );
+
+    const gerente = component.gerentes()[1];
+    component.confirmarRemocao(gerente);
+    await component.confirmarRemocaoGerente();
+
+    expect(jobs.aguardar).not.toHaveBeenCalled();
+    expect(component.resultado()?.mensagem).toBe('Um gerente não pode remover a si mesmo');
+  });
+
+  it('exibe a mensagem inline e recarrega a lista', async () => {
+    gerenteServiceMock.remover.mockResolvedValue(pendente);
+    jobs.aguardar.mockResolvedValue({ ...pendente, status: 'CONCLUIDO', resultType: 'inline' });
+    jobs.resultado.mockResolvedValue({
+      mensagem: 'Gerente removido; 2 contas transferidas para Gadamântio',
+    });
+
+    const gerente = component.gerentes()[1];
+    component.confirmarRemocao(gerente);
+    await component.confirmarRemocaoGerente();
+
+    expect(gerenteServiceMock.remover).toHaveBeenCalledWith('/gerentes/98574307084');
+    expect(component.resultado()?.mensagem).toBe(
+      'Gerente removido; 2 contas transferidas para Gadamântio',
+    );
+    expect(gerenteServiceMock.listar.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('mostra a falha do job do último gerente ativo', async () => {
+    gerenteServiceMock.remover.mockResolvedValue(pendente);
+    jobs.aguardar.mockResolvedValue({
+      ...pendente,
+      status: 'FALHA',
+      erro: 'Não é possível remover o último gerente ativo',
+    });
+
+    const gerente = component.gerentes()[1];
+    component.confirmarRemocao(gerente);
+    await component.confirmarRemocaoGerente();
+
+    expect(jobs.resultado).not.toHaveBeenCalled();
+    expect(component.resultado()?.mensagem).toBe('Não é possível remover o último gerente ativo');
   });
 });

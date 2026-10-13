@@ -22,6 +22,7 @@
         formControlName="cpf"
         mask="999.999.999-99"
         placeholder="111.222.333-44"
+        [autoClear]="false"
         fluid
       />
       @if (campoComErro('cpf', 'required')) {
