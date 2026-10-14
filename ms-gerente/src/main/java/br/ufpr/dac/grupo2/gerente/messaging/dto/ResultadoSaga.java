@@ -1,0 +1,12 @@
+package br.ufpr.dac.grupo2.gerente.messaging.dto;
+import java.util.Map;
+
+public record ResultadoSaga(Resposta resposta) {
+    public record Resposta(
+        String sagaId,
+        String tipo, 
+        String timestamp,
+        Map<String, Object> payload,
+        String status,
+        String erro) {}
+}

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface GerenteRepository extends JpaRepository<Gerente, String> {
+    boolean existsByEmail(String email);
 
     @Query(value = "SELECT * FROM gerente.gerentes WHERE ativo ORDER BY nome COLLATE \"pt-BR-x-icu\"", nativeQuery = true)
     List<Gerente> listarAtivosOrdenadoPorNome();

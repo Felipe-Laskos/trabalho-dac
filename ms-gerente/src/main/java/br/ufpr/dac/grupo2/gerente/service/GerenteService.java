@@ -1,19 +1,28 @@
 package br.ufpr.dac.grupo2.gerente.service;
 
+import br.ufpr.dac.grupo2.gerente.dto.request.GerenteRequestDTO;
 import br.ufpr.dac.grupo2.gerente.dto.request.GerenteUpdateRequestDTO;
 import br.ufpr.dac.grupo2.gerente.dto.response.GerenteResponseDTO;
 import br.ufpr.dac.grupo2.gerente.exception.CampoImutavelException;
 import br.ufpr.dac.grupo2.gerente.exception.GerenteNaoEncontradoException;
+import br.ufpr.dac.grupo2.gerente.model.ComandoProcessado;
+import br.ufpr.dac.grupo2.gerente.model.ComandoProcessadoId;
 import br.ufpr.dac.grupo2.gerente.model.Gerente;
 import br.ufpr.dac.grupo2.gerente.repository.GerenteRepository;
 import br.ufpr.dac.grupo2.gerente.repository.ComandosProcessadosRepository;
+import br.ufpr.dac.grupo2.gerente.messaging.dto.ResultadoSaga;
+import br.ufpr.dac.grupo2.gerente.dto.MensagemSaga;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class GerenteService {
@@ -21,11 +30,13 @@ public class GerenteService {
     private final GerenteRepository gerenteRepository;
     private final ComandosProcessadosRepository comandosProcessadosRepository;
     private final ModelMapper mapper;
+    private final ObjectMapper json;
 
-    public GerenteService(GerenteRepository gerenteRepository, ComandosProcessadosRepository comandosProcessadosRepository, ModelMapper mapper) {
+    public GerenteService(GerenteRepository gerenteRepository, ComandosProcessadosRepository comandosProcessadosRepository, ModelMapper mapper, ObjectMapper json) {
         this.gerenteRepository = gerenteRepository;
         this.comandosProcessadosRepository = comandosProcessadosRepository;
         this.mapper = mapper;
+        this.json = json;
     }
 
     @Transactional(readOnly = true)
@@ -120,5 +131,102 @@ public class GerenteService {
         gerenteRepository.saveAll(gerentes);
 
         return gerentes.size();
+    }
+
+    @Transactional
+    public ResultadoSaga inserirGerente(MensagemSaga cmd) {
+        try {
+            String jsonPayload = json.writeValueAsString(cmd.payload());
+            GerenteRequestDTO request = json.readValue(jsonPayload, GerenteRequestDTO.class);
+
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (comandosProcessadosRepository.existsById(chave)) {
+                return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                        LocalDateTime.now().toString(), Map.of("cpf", request.getCpf()), "SUCESSO", null));
+            }
+
+            if (gerenteRepository.existsById(request.getCpf())) {
+                return registrarFalha(cmd, "CPF já cadastrado");
+            }
+
+            if (gerenteRepository.existsByEmail(request.getEmail())) {
+                return registrarFalha(cmd, "E-mail já cadastrado");
+            }
+
+            Gerente gerente = new Gerente(
+                request.getCpf(),
+                request.getNome(),
+                request.getEmail(),
+                request.getTelefone(),
+                true
+            );
+
+            Gerente salvo = gerenteRepository.save(gerente);
+            comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
+
+            Map<String, Object> payloadMap = Map.of("cpf", salvo.getCpf());
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao processar inserção: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ResultadoSaga compensarInserirGerente (MensagemSaga cmd, String cpf) {
+        try {
+            if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), "inserir-gerente"))) {
+                gerenteRepository.deleteById(cpf);
+            }
+
+            Map<String, Object> payloadMap = Map.of("cpf", cpf);
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao inserir gerente: " + e.getMessage());
+        }
+    }
+
+    public ResultadoSaga registrarFalha(MensagemSaga cmd, String mensagemErro) {
+
+        ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                cmd.sagaId(),
+                cmd.tipo(),
+                LocalDateTime.now().toString(),
+                null,
+                "FALHA",
+                mensagemErro
+        );
+
+        return new ResultadoSaga(resposta);
+    }
+
+    @Transactional(readOnly = true)
+    public ResultadoSaga listarAtivosSaga(MensagemSaga cmd) {
+        Map<String, Object> nomes = new LinkedHashMap<>();
+        gerenteRepository.listarAtivosOrdenadoPorNome().forEach(g -> nomes.put(g.getCpf(), g.getNome()));
+        Map<String, Object> payload = Map.of("cpfsAtivos", List.copyOf(nomes.keySet()), "nomesGerentes", nomes);
+        return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                LocalDateTime.now().toString(), payload, "SUCESSO", null));
     }
 }
