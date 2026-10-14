@@ -1,0 +1,65 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  width: 100%;
+  max-width: 640px;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.voltar {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+  font-weight: var(--font-weight-heading);
+}
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+
+  label {
+    color: var(--color-text);
+    font-weight: var(--font-weight-heading);
+
+    span {
+      color: var(--color-error);
+    }
+  }
+
+  small {
+    color: var(--color-text-secondary);
+  }
+
+  .field-error {
+    color: var(--color-error);
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}

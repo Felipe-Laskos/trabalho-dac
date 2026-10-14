@@ -5,12 +5,20 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 
 import { Gerente } from '../../../core/models/gerente.model';
+import type { ResultadoRemocaoGerente } from '../../../core/models/job.model';
 import { GerenteService } from '../../../core/services/gerente.service';
+import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
+import { mensagemDeErro } from '../../../core/services/erro.util';
 
 import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { MessageComponent } from '../../../shared/components/message/message.component';
 import { ModalConfirmationComponent } from '../../../shared/components/modal-confirmation/modal-confirmation.component';
+import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
+import {
+  AsyncResultComponent,
+  type AsyncResultStatus,
+} from '../../../shared/components/async-result/async-result.component';
 
 @Component({
   selector: 'app-lista-gerentes',
@@ -22,26 +30,32 @@ import { ModalConfirmationComponent } from '../../../shared/components/modal-con
     LoadingComponent,
     MessageComponent,
     ModalConfirmationComponent,
+    JobProgressComponent,
+    AsyncResultComponent,
 ],
   templateUrl: './lista-gerentes.component.html',
   styleUrl: './lista-gerentes.component.scss',
 })
 export class ListaGerentesComponent implements OnInit {
   private readonly gerenteService = inject(GerenteService);
+  private readonly jobs = inject(JobService);
   private readonly router = inject(Router);
-  
 
   readonly gerenteParaRemover = signal<Gerente | null>(null);
   readonly gerentes = signal<Gerente[]>([]);
   readonly carregando = signal(true);
   readonly erro = signal<string | null>(null);
+  readonly removendo = signal(false);
+  readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
 
   ngOnInit(): void {
     this.carregarGerentes();
   }
 
-  async carregarGerentes(): Promise<void> {
-    this.carregando.set(true);
+  async carregarGerentes(silencioso = false): Promise<void> {
+    if (!silencioso) {
+      this.carregando.set(true);
+    }
     this.erro.set(null);
 
     try {
@@ -70,20 +84,40 @@ export class ListaGerentesComponent implements OnInit {
     this.gerenteParaRemover.set(null);
   }
 
-  confirmarRemocaoGerente(): void {
+  confirmarRemocaoGerente(): Promise<void> {
     const gerente = this.gerenteParaRemover();
 
     if (!gerente) {
-      return;
+      return Promise.resolve();
     }
 
-    this.remover(gerente);
+    return this.remover(gerente);
   }
 
-  private remover(_gerente: Gerente): void {
+  private async remover(gerente: Gerente): Promise<void> {
+    const href = gerente._links['remocao']?.href;
     this.gerenteParaRemover.set(null);
+    if (!href || this.removendo()) return;
 
-    // A remoção será implementada quando o DELETE /gerentes/{cpf} estiver disponível.
+    this.removendo.set(true);
+    try {
+      const job = await this.gerenteService.remover(href);
+      const fim = await this.jobs.aguardar(job.jobId);
+      if (fim.status === 'FALHA') {
+        this.resultado.set({ status: 'FALHA', mensagem: mensagemDeErro(fim) });
+        return;
+      }
+      const { mensagem } = await this.jobs.resultado<ResultadoRemocaoGerente>(fim);
+      this.resultado.set({ status: 'SUCESSO', mensagem });
+    } catch (erro) {
+      this.resultado.set({
+        status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
+        mensagem: mensagemDeErro(erro),
+      });
+    } finally {
+      this.removendo.set(false);
+      await this.carregarGerentes(true);
+    }
   }
 
   readonly detalhesRemocao = computed(() => {

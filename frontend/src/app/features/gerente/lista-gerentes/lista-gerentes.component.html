@@ -151,6 +151,7 @@
                     label="Remover"
                     severity="danger"
                     [outlined]="true"
+                    [disabled]="removendo()"
                     (onClick)="confirmarRemocao(gerente)"
                   />
                 }
@@ -164,7 +165,7 @@
     <app-modal-confirmation
     [visivel]="gerenteParaRemover() !== null"
     titulo="Remover gerente"
-    subtitulo="Essa ação removerá o gerente do sistema."
+    subtitulo="As contas deste gerente serão transferidas para o gerente ativo com menos clientes."
     textoConfirmar="Remover"
     textoCancelar="Cancelar"
     icone="pi-trash"
@@ -173,6 +174,15 @@
     [detalhes]="detalhesRemocao()"
     (confirmar)="confirmarRemocaoGerente()"
     (cancelar)="cancelarRemocao()"
+    />
+
+    <app-job-progress [visible]="removendo()" titulo="Removendo gerente…" />
+
+    <app-async-result
+      [visible]="resultado() !== null"
+      [status]="resultado()?.status ?? 'SUCESSO'"
+      [mensagem]="resultado()?.mensagem ?? ''"
+      (fechar)="resultado.set(null)"
     />
   </div>
 </div>

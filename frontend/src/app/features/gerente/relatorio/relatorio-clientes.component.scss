@@ -1,0 +1,48 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  width: 100%;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.role-badge {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 1px;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 28px;
+  font-weight: var(--font-weight-heading);
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.gerando,
+.state-message {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.text-right {
+  text-align: right;
+}

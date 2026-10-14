@@ -19,6 +19,14 @@ const listaGerentes = () =>
 const editarGerente = () =>
   import('./features/gerente/editar-gerente/editar-gerente.component').then((m) => m.EditarGerenteComponent);
 
+const inserirGerente = () =>
+  import('./features/gerente/gerentes/inserir-gerente.component').then((m) => m.InserirGerenteComponent);
+
+const relatorioClientes = () =>
+  import('./features/gerente/relatorio/relatorio-clientes.component').then(
+    (m) => m.RelatorioClientesComponent,
+  );
+
 const operacao = () =>
   import('./features/cliente/operacao/operacao-page.component').then((m) => m.OperacaoPageComponent);
 
@@ -77,9 +85,9 @@ export const routes: Routes = [
       { path: 'solicitacoes', loadComponent: homeGerente },
       { path: 'clientes', loadComponent: clientesGerente },
       { path: 'gerentes', loadComponent: listaGerentes },
-      { path: 'gerentes/novo', loadComponent: emConstrucao },
+      { path: 'gerentes/novo', loadComponent: inserirGerente },
       { path: 'gerentes/:cpf/editar', loadComponent: editarGerente },
-      { path: 'relatorio', loadComponent: emConstrucao },
+      { path: 'relatorio', loadComponent: relatorioClientes },
     ],
   },
 
