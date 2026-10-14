@@ -49,12 +49,30 @@ jobs:
         working-directory: frontend
         run: npx ng test --watch=false
 
+  gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: gateway/package-lock.json
+
+      - name: instala
+        working-directory: gateway
+        run: npm ci
+      - name: node --test
+        working-directory: gateway
+        run: npm test
+
   test-ok:
     if: always()
-    needs: [unit, front]
+    needs: [unit, front, gateway]
     runs-on: ubuntu-latest
     steps:
       - name: portao
         run: |
           [ "${{ needs.unit.result }}" = "success" ] || exit 1
           [ "${{ needs.front.result }}" = "success" ] || exit 1
+          [ "${{ needs.gateway.result }}" = "success" ] || exit 1

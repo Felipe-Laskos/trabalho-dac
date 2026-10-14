@@ -86,7 +86,11 @@ async function subir() {
   app.listen(PORTA, () => console.log(`[gateway] ouvindo na porta ${PORTA}`));
 }
 
-subir().catch((erro) => {
-  console.error(`Gateway: falha na subida: ${erro.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  subir().catch((erro) => {
+    console.error(`Gateway: falha na subida: ${erro.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = app;
