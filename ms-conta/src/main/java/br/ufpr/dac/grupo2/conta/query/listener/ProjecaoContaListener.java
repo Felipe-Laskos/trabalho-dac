@@ -1,4 +1,5 @@
 package br.ufpr.dac.grupo2.conta.query.listener;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
@@ -13,6 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 @Component
 public class ProjecaoContaListener {
     private final ObjectMapper objectMapper;
@@ -26,6 +28,7 @@ public class ProjecaoContaListener {
         this.contaRepository = contaRepository;
         this.movimentacaoRepository = movimentacaoRepository;
     }
+
     @RabbitListener(
             queues = "ms.conta.events",
             concurrency = "1"
@@ -45,24 +48,27 @@ public class ProjecaoContaListener {
                     .ifPresent(contaRepository::delete);
             return;
         }
-        // Tombstone: criação antiga não ressuscita uma conta cancelada.
         if (contaRepository.compensada(evento.objetoId())) return;
-        // barreira 1: movimentação já gravada.
+
+        // barreira 1: movimentação já gravada
         if (movimentacaoRepository.existsByEventoId(evento.id())) {
             return;
         }
+
         ContaQuery conta = contaRepository
                 .findById(evento.objetoId())
                 .orElse(null);
-                 // barreira 2: evento antigo ou repetido.
-        if (conta != null
-                && evento.versao() <= conta.getUltimaVersao()) {
+
+        // barreira 2: evento antigo ou repetido
+        if (conta != null && evento.versao() <= conta.getUltimaVersao()) {
             return;
         }
+
         if (evento.tipo().equals("Criado")) {
             projetarCriacao(evento, conta);
             return;
         }
+
         if (conta == null) {
             throw new EventoForaDeOrdemException(
                     evento.objetoId(),
@@ -70,6 +76,7 @@ public class ProjecaoContaListener {
                     evento.versao()
             );
         }
+
         int proximaVersao = conta.getUltimaVersao() + 1;
         if (evento.versao() != proximaVersao) {
             throw new EventoForaDeOrdemException(
@@ -82,12 +89,14 @@ public class ProjecaoContaListener {
         conta.setUltimaVersao(evento.versao());
         contaRepository.save(conta);
     }
+
     private void projetarCriacao(
             EventoPublicado evento,
             ContaQuery existente) {
         if (existente != null) {
             return;
         }
+
         if (evento.versao() != 1) {
             throw new EventoForaDeOrdemException(
                     evento.objetoId(),
@@ -95,6 +104,7 @@ public class ProjecaoContaListener {
                     evento.versao()
             );
         }
+
         Map<String, Object> payload = evento.payload();
         ContaQuery nova = new ContaQuery(
                 evento.objetoId(),
@@ -106,6 +116,7 @@ public class ProjecaoContaListener {
         );
         contaRepository.save(nova);
     }
+
     private void aplicar(
             EventoPublicado evento,
             ContaQuery conta) {
@@ -160,6 +171,7 @@ public class ProjecaoContaListener {
             );
         }
     }
+
     private Movimentacao criarMovimentacao(
             EventoPublicado evento,
             ContaQuery conta,
