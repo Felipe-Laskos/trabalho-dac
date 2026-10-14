@@ -241,4 +241,22 @@ describe('ListaGerentesComponent', () => {
     expect(jobs.resultado).not.toHaveBeenCalled();
     expect(component.resultado()?.mensagem).toBe('Não é possível remover o último gerente ativo');
   });
+
+  it('recarrega a lista depois da remoção sem trocar a tabela pelo carregando', async () => {
+    gerenteServiceMock.remover.mockResolvedValue(pendente);
+    jobs.aguardar.mockResolvedValue({ ...pendente, status: 'FALHA', erro: 'Falha' });
+    let liberarLista!: (lista: GerentesList) => void;
+    gerenteServiceMock.listar.mockReturnValueOnce(new Promise((resolve) => (liberarLista = resolve)));
+
+    component.confirmarRemocao(component.gerentes()[1]);
+    const remocao = component.confirmarRemocaoGerente();
+    await vi.waitFor(() => expect(gerenteServiceMock.listar).toHaveBeenCalledTimes(2));
+    fixture.detectChanges();
+
+    expect(component.carregando()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.loading-state')).toBeNull();
+
+    liberarLista(respostaMock);
+    await remocao;
+  });
 });

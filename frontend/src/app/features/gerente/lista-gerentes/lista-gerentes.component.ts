@@ -52,8 +52,10 @@ export class ListaGerentesComponent implements OnInit {
     this.carregarGerentes();
   }
 
-  async carregarGerentes(): Promise<void> {
-    this.carregando.set(true);
+  async carregarGerentes(silencioso = false): Promise<void> {
+    if (!silencioso) {
+      this.carregando.set(true);
+    }
     this.erro.set(null);
 
     try {
@@ -114,7 +116,7 @@ export class ListaGerentesComponent implements OnInit {
       });
     } finally {
       this.removendo.set(false);
-      await this.carregarGerentes();
+      await this.carregarGerentes(true);
     }
   }
 
