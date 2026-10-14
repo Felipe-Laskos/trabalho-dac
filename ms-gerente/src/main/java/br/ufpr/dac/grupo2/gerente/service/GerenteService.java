@@ -1,8 +1,12 @@
 package br.ufpr.dac.grupo2.gerente.service;
 
 import br.ufpr.dac.grupo2.gerente.dto.request.GerenteRequestDTO;
+import br.ufpr.dac.grupo2.gerente.dto.request.GerenteUpdateRequestDTO;
 import br.ufpr.dac.grupo2.gerente.dto.response.GerenteResponseDTO;
-import br.ufpr.dac.grupo2.gerente.exception.GerenteException;
+import br.ufpr.dac.grupo2.gerente.exception.CampoImutavelException;
+import br.ufpr.dac.grupo2.gerente.exception.GerenteNaoEncontradoException;
+import br.ufpr.dac.grupo2.gerente.model.ComandoProcessado;
+import br.ufpr.dac.grupo2.gerente.model.ComandoProcessadoId;
 import br.ufpr.dac.grupo2.gerente.model.Gerente;
 import br.ufpr.dac.grupo2.gerente.repository.GerenteRepository;
 import br.ufpr.dac.grupo2.gerente.repository.ComandosProcessadosRepository;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDateTime;
@@ -134,6 +139,12 @@ public class GerenteService {
             String jsonPayload = json.writeValueAsString(cmd.payload());
             GerenteRequestDTO request = json.readValue(jsonPayload, GerenteRequestDTO.class);
 
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (comandosProcessadosRepository.existsById(chave)) {
+                return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                        LocalDateTime.now().toString(), Map.of("cpf", request.getCpf()), "SUCESSO", null));
+            }
+
             if (gerenteRepository.existsById(request.getCpf())) {
                 return registrarFalha(cmd, "CPF já cadastrado");
             }
@@ -151,6 +162,7 @@ public class GerenteService {
             );
 
             Gerente salvo = gerenteRepository.save(gerente);
+            comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
 
             Map<String, Object> payloadMap = Map.of("cpf", salvo.getCpf());
 
@@ -173,7 +185,7 @@ public class GerenteService {
     @Transactional
     public ResultadoSaga compensarInserirGerente (MensagemSaga cmd, String cpf) {
         try {
-            if (gerenteRepository.existsById(cpf)) {
+            if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), "inserir-gerente"))) {
                 gerenteRepository.deleteById(cpf);
             }
 
@@ -210,30 +222,11 @@ public class GerenteService {
     }
 
     @Transactional(readOnly = true)
-    public List<GerenteResponseDTO> listarAtivos() {
-        return gerenteRepository.findByAtivoTrueOrderByNomeAsc()
-                .stream()
-                .map(this::paraDTO)
-                .toList();
-    }
-
-    @Transactional
-    public GerenteResponseDTO atualizarGerente(String cpf, GerenteRequestDTO request) {
-        Gerente gerente = gerenteRepository.findById(cpf)
-                .orElseThrow(() -> new GerenteException("Gerente com CPF " + cpf + " não encontrado."));
-
-        if (!cpf.equals(request.getCpf())) {
-            throw new GerenteException("O CPF é imutável e não pode ser alterado.");
-        }
-        if (!gerente.getEmail().equals(request.getEmail())) {
-            throw new GerenteException("O e-mail é imutável e não pode ser alterado.");
-        }
-
-        gerente.setNome(request.getNome());
-        gerente.setTelefone(request.getTelefone());
-
-        Gerente atualizado = gerenteRepository.save(gerente);
-
-        return paraDTO(atualizado);
+    public ResultadoSaga listarAtivosSaga(MensagemSaga cmd) {
+        Map<String, Object> nomes = new LinkedHashMap<>();
+        gerenteRepository.listarAtivosOrdenadoPorNome().forEach(g -> nomes.put(g.getCpf(), g.getNome()));
+        Map<String, Object> payload = Map.of("cpfsAtivos", List.copyOf(nomes.keySet()), "nomesGerentes", nomes);
+        return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                LocalDateTime.now().toString(), payload, "SUCESSO", null));
     }
 }
