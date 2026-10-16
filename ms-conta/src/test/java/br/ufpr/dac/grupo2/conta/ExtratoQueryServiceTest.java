@@ -48,6 +48,45 @@ class ExtratoQueryServiceTest {
     }
 
     @Test
+    void periodoAntesDaCriacaoDaContaRetornaZeroEListaVazia() {
+        var inicio = LocalDate.of(1999, 12, 1);
+        var fim = LocalDate.of(1999, 12, 31);
+        var e = service.consultar("1291", inicio, fim, CPF, "CLIENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+        verify(movimentos).findByNumeroContaAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraAscIdAsc(
+                "1291", inicio.atStartOfDay(), LocalDate.of(2000, 1, 1).atStartOfDay());
+    }
+
+    @Test
+    void periodoAnteriorAPrimeiraMovimentacaoRetornaZero() {
+        var e = service.consultar("1291", LocalDate.of(2020, 1, 1),
+                LocalDate.of(2020, 1, 19), CPF, "CLIENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+    }
+
+    @Test
+    void periodoDeUmDiaIncluiSomenteEsseDia() {
+        var dia = LocalDate.of(2020, 1, 20);
+        when(movimentos.findByNumeroContaAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraAscIdAsc(
+                "1291", dia.atStartOfDay(), dia.plusDays(1).atStartOfDay()))
+                .thenReturn(List.of(mov("DEPOSITO", "1700.00")));
+        var e = service.consultar("1291", dia, dia, CPF, "CLIENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertEquals(1, e.movimentacoes().size());
+        assertEquals("2020-01-20T12:00:00", e.movimentacoes().get(0).dataHora());
+    }
+
+    @Test
+    void contaSemMovimentacoesRetornaZeroMesmoAposCriacao() {
+        var e = service.consultar("1291", LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 1, 31), CPF, "CLIENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+    }
+
+    @Test
     void usaSaldoAposAnteriorENaoSaldoAtualDaConta() {
         var inicio = LocalDate.of(2020, 1, 16);
         when(movimentos.findFirstByNumeroContaAndDataHoraBeforeOrderByDataHoraDescIdDesc(
