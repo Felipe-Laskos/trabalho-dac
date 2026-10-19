@@ -32,7 +32,7 @@ export function intervaloValido(inicio: DateTime, fim: DateTime): boolean {
   if (!inicio.isValid || !fim.isValid || fim < inicio) {
     return false;
   }
-  return diasEntre(inicio, fim) <= 365;
+  return diasEntre(inicio, fim) <= 364;
 }
 
 export function diasDoPeriodo(inicio: DateTime, fim: DateTime): DateTime[] {

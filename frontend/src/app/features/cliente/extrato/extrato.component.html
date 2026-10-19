@@ -1,0 +1,223 @@
+<div class="page-container">
+  @if (estado() === 'carregando') {
+    <div class="loading-container">
+      <app-loading message="Carregando conta e extrato..." />
+    </div>
+  } @else if (estado() === 'erro' && !conta()) {
+    <div class="state-container">
+      <app-message type="error" [message]="mensagemErro()" />
+      <p-button
+        label="Tentar novamente"
+        icon="pi pi-refresh"
+        severity="secondary"
+        variant="outlined"
+        (onClick)="carregar()"
+      />
+    </div>
+  } @else if (estado() === 'pronto') {
+    <header class="header-section">
+      <div class="header-titles">
+        <span class="breadcrumb">CLIENTE - CONTA {{ conta()?.numero }}</span>
+        <h1 class="page-title">Extrato</h1>
+      </div>
+
+      <form class="filter-form" (ngSubmit)="consultar()">
+        <div class="field">
+          <label for="dataInicio">De</label>
+          <p-datepicker
+            inputId="dataInicio"
+            name="inicio"
+            [ngModel]="inicioSelecionado()"
+            (ngModelChange)="inicioSelecionado.set($event)"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [readonlyInput]="true"
+            [fluid]="true"
+            placeholder="01/01/2020"
+          />
+        </div>
+
+        <div class="field">
+          <label for="dataFim">Até</label>
+          <p-datepicker
+            inputId="dataFim"
+            name="fim"
+            [ngModel]="fimSelecionado()"
+            (ngModelChange)="fimSelecionado.set($event)"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [readonlyInput]="true"
+            [fluid]="true"
+            placeholder="31/01/2020"
+          />
+        </div>
+
+        <div class="button-container">
+          <p-button
+            type="submit"
+            label="Consultar"
+            [loading]="consultando()"
+            [disabled]="consultando()"
+          />
+        </div>
+      </form>
+    </header>
+
+    @if (mensagemValidacao()) {
+      <div class="message-wrapper">
+        <app-message type="error" [message]="mensagemValidacao()" />
+      </div>
+    }
+
+    @if (mensagemErro() && conta()) {
+      <div class="message-wrapper">
+        <app-message type="error" [message]="mensagemErro()" />
+      </div>
+    }
+
+    @if (extrato(); as extratoAtual) {
+      <section class="extrato-card">
+        <div class="extrato-summary">
+          <div class="saldos-container">
+            <div class="summary-item">
+              <span class="summary-label">SALDO DE ABERTURA</span>
+              <span class="summary-value">
+                {{ extratoAtual.saldoAbertura | dinheiro }}
+              </span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-item">
+              <span class="summary-label">
+                SALDO EM {{ fimSelecionado() | date: 'dd/MM/yyyy' }}
+              </span>
+              <span class="summary-value">
+                @if (dias().length > 0) {
+                  {{ dias()[dias().length - 1].saldoConsolidado.toFixed(2) | dinheiro }}
+                } @else {
+                  {{ extratoAtual.saldoAbertura | dinheiro }}
+                }
+              </span>
+            </div>
+          </div>
+
+          <div class="legend-container">
+            <span class="legend-item entrada">
+              <i class="pi pi-arrow-up" aria-hidden="true"></i>
+              entrada
+            </span>
+            <span class="legend-item saida">
+              <i class="pi pi-arrow-down" aria-hidden="true"></i>
+              saída
+            </span>
+          </div>
+        </div>
+
+        @if (consultando()) {
+          <div class="loading-container">
+            <app-loading message="Consultando movimentações..." />
+          </div>
+        } @else {
+          <div class="timeline-wrapper">
+            <div class="extrato-timeline">
+              @for (dia of dias(); track dia.data.toISODate()) {
+                <article class="dia-group">
+                  <header
+                    class="dia-header"
+                    [class.com-movimentacao]="dia.movimentacoes.length > 0"
+                  >
+                    <span class="dia-data">
+                      {{ dia.data.toFormat('dd/MM/yyyy') }}
+                    </span>
+
+                    <span class="dia-semana">
+                      {{ dia.data.setLocale('pt-BR').toFormat('cccc') }}
+                    </span>
+
+                    @if (dia.movimentacoes.length === 0) {
+                      <span class="dia-vazio">sem movimentação</span>
+                    }
+
+                    <div class="dia-saldo">
+                      <span class="saldo-label">saldo do dia</span>
+                      <span class="saldo-valor">
+                        {{ formatarSaldo(dia) | dinheiro }}
+                      </span>
+                    </div>
+                  </header>
+
+                  @if (dia.movimentacoes.length > 0) {
+                    <div class="movimentacoes-list">
+                      @for (m of dia.movimentacoes; track m.dataHora + m.tipo + m.valor) {
+                        <div class="mov-row" [class.entrada]="m.entrada" [class.saida]="!m.entrada">
+                          <span class="mov-hora">
+                            {{ m.dataHora | date: 'HH:mm' }}
+                          </span>
+
+                          <div class="mov-desc">
+                            <i
+                              class="pi"
+                              [class.pi-arrow-up]="m.entrada"
+                              [class.pi-arrow-down]="!m.entrada"
+                              aria-hidden="true"
+                            ></i>
+
+                            <div class="mov-descricao">
+                              <strong>
+                                @switch (m.tipo) {
+                                  @case ('DEPOSITO') {
+                                    Depósito
+                                  }
+                                  @case ('SAQUE') {
+                                    Saque
+                                  }
+                                  @case ('TRANSFERENCIA') {
+                                    Transferência
+                                  }
+                                }
+                              </strong>
+
+                              @if (m.tipo === 'TRANSFERENCIA') {
+                                @if (m.origem; as origem) {
+                                  <span>de {{ origem.nome }}</span>
+                                }
+                                @if (m.destino; as destino) {
+                                  <span>para {{ destino.nome }}</span>
+                                }
+                              }
+                            </div>
+                          </div>
+
+                          <span class="mov-valor">
+                            {{ m.entrada ? '+' : '−' }} {{ m.valor | dinheiro }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </article>
+              } @empty {
+                <div class="timeline-vazia">
+                  <app-message
+                    type="empty"
+                    message="Não há dias disponíveis para exibir neste período."
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <footer class="extrato-footer">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          <p>
+            A lista percorre <strong>todos os {{ dias().length }} dias</strong> do período. A
+            rolagem permite consultar as movimentações e os saldos diários até
+            {{ fimSelecionado() | date: 'dd/MM/yyyy' }}.
+          </p>
+        </footer>
+      </section>
+    }
+  }
+</div>

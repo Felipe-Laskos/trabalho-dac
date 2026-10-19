@@ -11,16 +11,27 @@ const homeGerente = () =>
   import('./features/gerente/home/home-gerente.component').then((m) => m.HomeGerenteComponent);
 
 const clientesGerente = () =>
-  import('./features/gerente/clientes/clientes-gerente.component').then((m) => m.ClientesGerenteComponent);
+  import('./features/gerente/clientes/clientes-gerente.component').then(
+    (m) => m.ClientesGerenteComponent,
+  );
 
 const listaGerentes = () =>
-  import('./features/gerente/lista-gerentes/lista-gerentes.component').then((m) => m.ListaGerentesComponent);
+  import('./features/gerente/lista-gerentes/lista-gerentes.component').then(
+    (m) => m.ListaGerentesComponent,
+  );
 
 const editarGerente = () =>
-  import('./features/gerente/editar-gerente/editar-gerente.component').then((m) => m.EditarGerenteComponent);
+  import('./features/gerente/editar-gerente/editar-gerente.component').then(
+    (m) => m.EditarGerenteComponent,
+  );
 
 const operacao = () =>
-  import('./features/cliente/operacao/operacao-page.component').then((m) => m.OperacaoPageComponent);
+  import('./features/cliente/operacao/operacao-page.component').then(
+    (m) => m.OperacaoPageComponent,
+  );
+
+const extrato = () =>
+  import('./features/cliente/extrato/extrato.component').then((m) => m.ExtratoComponent);
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -63,7 +74,7 @@ export const routes: Routes = [
       { path: 'deposito', loadComponent: operacao, data: { tipo: 'DEPOSITO' } },
       { path: 'saque', loadComponent: operacao, data: { tipo: 'SAQUE' } },
       { path: 'transferencia', loadComponent: operacao, data: { tipo: 'TRANSFERENCIA' } },
-      { path: 'extrato', loadComponent: emConstrucao },
+      { path: 'extrato', loadComponent: extrato },
     ],
   },
 
