@@ -59,14 +59,6 @@ class ExtratoQueryServiceTest {
     }
 
     @Test
-    void periodoAnteriorAPrimeiraMovimentacaoRetornaZero() {
-        var e = service.consultar("1291", LocalDate.of(2020, 1, 1),
-                LocalDate.of(2020, 1, 19), CPF, "CLIENTE");
-        assertEquals("0.00", e.saldoAbertura());
-        assertTrue(e.movimentacoes().isEmpty());
-    }
-
-    @Test
     void periodoDeUmDiaIncluiSomenteEsseDia() {
         var dia = LocalDate.of(2020, 1, 20);
         when(movimentos.findByNumeroContaAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraAscIdAsc(
@@ -76,14 +68,6 @@ class ExtratoQueryServiceTest {
         assertEquals("0.00", e.saldoAbertura());
         assertEquals(1, e.movimentacoes().size());
         assertEquals("2020-01-20T12:00:00", e.movimentacoes().get(0).dataHora());
-    }
-
-    @Test
-    void contaSemMovimentacoesRetornaZeroMesmoAposCriacao() {
-        var e = service.consultar("1291", LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 1, 31), CPF, "CLIENTE");
-        assertEquals("0.00", e.saldoAbertura());
-        assertTrue(e.movimentacoes().isEmpty());
     }
 
     @Test

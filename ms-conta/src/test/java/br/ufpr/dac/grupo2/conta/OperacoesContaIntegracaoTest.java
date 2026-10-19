@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.*;
@@ -22,6 +23,7 @@ import br.ufpr.dac.grupo2.conta.command.service.OperacaoContaService;
 import br.ufpr.dac.grupo2.conta.query.listener.ProjecaoContaListener;
 import br.ufpr.dac.grupo2.conta.query.repository.MovimentacaoRepository;
 import br.ufpr.dac.grupo2.conta.query.service.ContaQueryService;
+import br.ufpr.dac.grupo2.conta.query.service.ExtratoQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -69,6 +71,7 @@ class OperacoesContaIntegracaoTest {
     @Autowired OperacaoContaService operacoes;
     @Autowired EventoRepository eventos;
     @Autowired ContaQueryService query;
+    @Autowired ExtratoQueryService extrato;
     @Autowired ProjecaoContaListener projecao;
     @Autowired MovimentacaoRepository movimentacoes;
     @Autowired WebApplicationContext contexto;
@@ -83,6 +86,39 @@ class OperacoesContaIntegracaoTest {
         seed.executar();
         clearInvocations(rabbit);
         mvc = MockMvcBuilders.webAppContextSetup(contexto).build();
+    }
+
+    @Test
+    void extratoPeriodoQueComecaAntesDaCriacao() {
+        var e = extrato.consultar("7617", LocalDate.of(2024, 12, 15), LocalDate.of(2025, 7, 1), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertEquals(1, e.movimentacoes().size());
+    }
+
+    @Test
+    void extratoPeriodoInteiramenteAnteriorAPrimeiraMovimentacao() {
+        var e = extrato.consultar("1291", LocalDate.of(2019, 12, 1), LocalDate.of(2019, 12, 31), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+    }
+
+    @Test
+    void extratoDeUmDiaSo() {
+        var e = extrato.consultar("1291", LocalDate.of(2020, 1, 20), LocalDate.of(2020, 1, 20), null, "GERENTE");
+        assertEquals("2500.00", e.saldoAbertura());
+        assertEquals(1, e.movimentacoes().size());
+    }
+
+    @Test
+    void extratoDeContaSemNenhumaMovimentacao() throws Exception {
+        projecao.projetar("""
+                {"id":9001,"objetoId":"4242","tipo":"Criado","payload":{"cpfCliente":"11122233396",
+                 "cpfGerente":"98574307084","dataCriacao":"2026-10-01","saldoInicial":"0.00"},
+                 "versao":1,"timestamp":"2026-10-01T09:00:00"}
+                """);
+        var e = extrato.consultar("4242", LocalDate.of(2026, 9, 20), LocalDate.of(2026, 10, 19), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
     }
 
     @Test
