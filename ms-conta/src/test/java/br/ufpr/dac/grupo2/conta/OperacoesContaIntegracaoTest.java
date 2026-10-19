@@ -7,6 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
@@ -18,7 +21,9 @@ import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
 import br.ufpr.dac.grupo2.conta.command.service.ContaLeituraService;
 import br.ufpr.dac.grupo2.conta.command.service.OperacaoContaService;
 import br.ufpr.dac.grupo2.conta.query.listener.ProjecaoContaListener;
+import br.ufpr.dac.grupo2.conta.query.repository.MovimentacaoRepository;
 import br.ufpr.dac.grupo2.conta.query.service.ContaQueryService;
+import br.ufpr.dac.grupo2.conta.query.service.ExtratoQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -66,9 +71,12 @@ class OperacoesContaIntegracaoTest {
     @Autowired OperacaoContaService operacoes;
     @Autowired EventoRepository eventos;
     @Autowired ContaQueryService query;
+    @Autowired ExtratoQueryService extrato;
     @Autowired ProjecaoContaListener projecao;
+    @Autowired MovimentacaoRepository movimentacoes;
     @Autowired WebApplicationContext contexto;
     @Autowired @Qualifier("commandDataSource") DataSource dataSource;
+    @Autowired @Qualifier("queryDataSource") DataSource queryDataSource;
     @MockitoBean RabbitTemplate rabbit;
     @MockitoSpyBean ContaLeituraService leitura;
     private MockMvc mvc;
@@ -81,6 +89,61 @@ class OperacoesContaIntegracaoTest {
     }
 
     @Test
+    void extratoPeriodoQueComecaAntesDaCriacao() {
+        var e = extrato.consultar("7617", LocalDate.of(2024, 12, 15), LocalDate.of(2025, 7, 1), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertEquals(1, e.movimentacoes().size());
+    }
+
+    @Test
+    void extratoPeriodoInteiramenteAnteriorAPrimeiraMovimentacao() {
+        var e = extrato.consultar("1291", LocalDate.of(2019, 12, 1), LocalDate.of(2019, 12, 31), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+    }
+
+    @Test
+    void extratoDeUmDiaSo() {
+        var e = extrato.consultar("1291", LocalDate.of(2020, 1, 20), LocalDate.of(2020, 1, 20), null, "GERENTE");
+        assertEquals("2500.00", e.saldoAbertura());
+        assertEquals(1, e.movimentacoes().size());
+    }
+
+    @Test
+    void extratoDeContaSemNenhumaMovimentacao() throws Exception {
+        projecao.projetar("""
+                {"id":9001,"objetoId":"4242","tipo":"Criado","payload":{"cpfCliente":"11122233396",
+                 "cpfGerente":"98574307084","dataCriacao":"2026-10-01","saldoInicial":"0.00"},
+                 "versao":1,"timestamp":"2026-10-01T09:00:00"}
+                """);
+        var e = extrato.consultar("4242", LocalDate.of(2026, 9, 20), LocalDate.of(2026, 10, 19), null, "GERENTE");
+        assertEquals("0.00", e.saldoAbertura());
+        assertTrue(e.movimentacoes().isEmpty());
+    }
+
+    @Test
+    void ordenaMovimentacoesPorDataHoraEDesempataPorId() {
+        JdbcTemplate jdbc = new JdbcTemplate(queryDataSource);
+        jdbc.execute("""
+                INSERT INTO conta_query.movimentacoes
+                    (id, evento_id, numero_conta, data_hora, tipo, valor, saldo_apos)
+                VALUES
+                    (101, 10001, '1291', '2020-02-01 10:00:00', 'DEPOSITO', 20, 25),
+                    (100, 10000, '1291', '2020-02-01 10:00:00', 'DEPOSITO', 10, 15),
+                    (102, 10002, '1291', '2020-02-01 09:00:00', 'DEPOSITO', 5, 5)
+                """);
+
+        var inicio = LocalDateTime.of(2020, 2, 1, 0, 0);
+        var fimExclusivo = inicio.plusDays(1);
+        var ids = movimentacoes
+                .findByNumeroContaAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraAscIdAsc(
+                        "1291", inicio, fimExclusivo)
+                .stream().map(m -> m.getId()).toList();
+
+        assertEquals(List.of(102L, 100L, 101L), ids);
+    }
+
+    @Test
     void contratosSemSaldoEProjecaoDosEventosPublicados() throws Exception {
         long quantidade = eventos.count();
         mvc.perform(post("/contas/1291/deposito").header("X-User-CPF", CPF)
@@ -90,8 +153,13 @@ class OperacoesContaIntegracaoTest {
         ArgumentCaptor<Object> mensagens = ArgumentCaptor.forClass(Object.class);
         verify(rabbit).convertAndSend(eq("ms.conta.events"), mensagens.capture());
         projecao.projetar((String) mensagens.getValue());
+        JdbcTemplate queryJdbc = new JdbcTemplate(queryDataSource);
+        Integer movimentacoesAntes = queryJdbc.queryForObject(
+                "SELECT count(*) FROM conta_query.movimentacoes", Integer.class);
         projecao.projetar((String) mensagens.getValue()); // Entrega duplicada é idempotente.
         assertEquals("950.00", query.buscarPorNumero("1291").orElseThrow().saldo());
+        assertEquals(movimentacoesAntes, queryJdbc.queryForObject(
+                "SELECT count(*) FROM conta_query.movimentacoes", Integer.class));
         clearInvocations(rabbit);
 
         mvc.perform(post("/contas/1291/transferencia").header("X-User-CPF", CPF)

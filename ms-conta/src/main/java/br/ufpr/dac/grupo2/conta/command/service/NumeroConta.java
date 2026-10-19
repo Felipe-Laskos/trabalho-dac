@@ -20,7 +20,6 @@ public class NumeroConta {
         sorteio = () -> random.nextInt(QUANTIDADE_NUMEROS);
     }
 
-    // Visibilidade de pacote para permitir sorteios determinísticos nos testes.
     NumeroConta(IntSupplier sorteio) {
         this.sorteio = sorteio;
     }

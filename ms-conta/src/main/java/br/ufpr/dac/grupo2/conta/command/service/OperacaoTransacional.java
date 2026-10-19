@@ -122,7 +122,7 @@ public class OperacaoTransacional {
                 request.destino().nome()
         );
 
-        validarPartesEnriquecidas(
+        validarCpfsDosParticipantes(
                 origem,
                 destino,
                 parteOrigem,
@@ -202,7 +202,7 @@ public class OperacaoTransacional {
         }
     }
 
-    private void validarPartesEnriquecidas(
+    private void validarCpfsDosParticipantes(
             EstadoConta origem,
             EstadoConta destino,
             ParteTransferencia parteOrigem,
