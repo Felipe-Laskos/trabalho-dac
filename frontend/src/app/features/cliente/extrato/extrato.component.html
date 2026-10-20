@@ -150,7 +150,7 @@
                       @for (m of dia.movimentacoes; track m.dataHora + m.tipo + m.valor) {
                         <div class="mov-row" [class.entrada]="m.entrada" [class.saida]="!m.entrada">
                           <span class="mov-hora">
-                            {{ m.dataHora | dataHora }}
+                            {{ formatarHora(m.dataHora) }}
                           </span>
 
                           <div class="mov-desc">

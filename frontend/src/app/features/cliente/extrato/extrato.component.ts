@@ -12,10 +12,9 @@ import { ExtratoService } from '../../../core/services/extrato.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { MessageComponent } from '../../../shared/components/message/message.component';
-import { exibirData, intervaloValido, periodoPadrao } from '../../../shared/util/data.util';
+import { doISO, exibirData, intervaloValido, periodoPadrao } from '../../../shared/util/data.util';
 import { montarLinhaDoTempo, type DiaExtrato } from '../../../shared/util/extrato.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
-import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
 
 type EstadoTela = 'carregando' | 'pronto' | 'erro';
 
@@ -32,7 +31,6 @@ const ZONA = 'America/Sao_Paulo';
     LoadingComponent,
     MessageComponent,
     DinheiroPipe,
-    DataHoraPipe,
   ],
   templateUrl: './extrato.component.html',
   styleUrl: './extrato.component.scss',
@@ -61,6 +59,10 @@ export class ExtratoComponent {
 
   protected formatarData(data: string): string {
     return exibirData(data);
+  }
+
+  protected formatarHora(dataHora: string): string {
+    return doISO(dataHora).toFormat('HH:mm');
   }
 
   protected async carregar(): Promise<void> {
