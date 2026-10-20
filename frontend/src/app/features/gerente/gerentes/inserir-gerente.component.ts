@@ -104,7 +104,7 @@ export class InserirGerenteComponent {
     const sucesso = this.resultado()?.status === 'SUCESSO';
     this.resultado.set(null);
     if (sucesso) {
-      void this.router.navigate(['/gerente/gerentes']);
+      void this.router.navigate(['/gerente/gerentes'], { state: { aguardarProjecao: true } });
     }
   }
 

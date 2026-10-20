@@ -49,7 +49,13 @@ export class ListaGerentesComponent implements OnInit {
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
 
   ngOnInit(): void {
-    this.carregarGerentes();
+    const estado = history.state as { aguardarProjecao?: boolean } | null;
+    if (estado?.aguardarProjecao) {
+      history.replaceState({}, '');
+      void this.aguardarContagensEstaveis();
+      return;
+    }
+    void this.carregarGerentes();
   }
 
   async carregarGerentes(silencioso = false): Promise<void> {
@@ -61,8 +67,13 @@ export class ListaGerentesComponent implements OnInit {
     try {
       const resultado = await this.gerenteService.listar();
       this.gerentes.set(resultado.gerentes);
+      if (silencioso) {
+        this.erro.set(null);
+      }
     } catch (erro: unknown) {
-      this.erro.set(this.obterMensagemErro(erro));
+      if (!silencioso) {
+        this.erro.set(this.obterMensagemErro(erro));
+      }
     } finally {
       this.carregando.set(false);
     }
@@ -99,7 +110,13 @@ export class ListaGerentesComponent implements OnInit {
     this.gerenteParaRemover.set(null);
     if (!href || this.removendo()) return;
 
+    const tinhaClientes = (gerente.quantidadeClientes ?? 0) > 0;
+    const contagens = new Map(
+      this.gerentes().map((item) => [item.cpf, item.quantidadeClientes ?? 0]),
+    );
+
     this.removendo.set(true);
+    let concluido = false;
     try {
       const job = await this.gerenteService.remover(href);
       const fim = await this.jobs.aguardar(job.jobId);
@@ -109,6 +126,7 @@ export class ListaGerentesComponent implements OnInit {
       }
       const { mensagem } = await this.jobs.resultado<ResultadoRemocaoGerente>(fim);
       this.resultado.set({ status: 'SUCESSO', mensagem });
+      concluido = true;
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
@@ -116,7 +134,64 @@ export class ListaGerentesComponent implements OnInit {
       });
     } finally {
       this.removendo.set(false);
+      if (concluido) {
+        await this.aguardarListaAposRemocao(gerente.cpf, tinhaClientes, contagens);
+      } else {
+        await this.carregarGerentes(true);
+      }
+    }
+  }
+
+  private async aguardarListaAposRemocao(
+    cpfRemovido: string,
+    tinhaClientes: boolean,
+    contagens: Map<string, number>,
+  ): Promise<void> {
+    const inicio = Date.now();
+    let intervalo = 300;
+
+    while (true) {
       await this.carregarGerentes(true);
+      const lista = this.gerentes();
+      const sumiu = !lista.some((item) => item.cpf === cpfRemovido);
+      const contagemMudou = lista.some((item) => {
+        const antes = contagens.get(item.cpf);
+        return antes !== undefined && (item.quantidadeClientes ?? 0) !== antes;
+      });
+
+      if (sumiu && (!tinhaClientes || contagemMudou)) {
+        return;
+      }
+      if (Date.now() - inicio >= 15_000) {
+        return;
+      }
+
+      await esperar(intervalo);
+      intervalo = Math.min(intervalo * 1.5, 2000);
+    }
+  }
+
+  private async aguardarContagensEstaveis(): Promise<void> {
+    const inicio = Date.now();
+    let intervalo = 300;
+    let anterior: string | null = null;
+
+    while (true) {
+      await this.carregarGerentes(anterior !== null);
+      const atual = this.gerentes()
+        .map((item) => `${item.cpf}:${item.quantidadeClientes ?? 0}`)
+        .join('|');
+
+      if (anterior !== null && anterior === atual) {
+        return;
+      }
+      if (Date.now() - inicio >= 15_000) {
+        return;
+      }
+
+      anterior = atual;
+      await esperar(intervalo);
+      intervalo = Math.min(intervalo * 1.5, 2000);
     }
   }
 
@@ -192,4 +267,8 @@ export class ListaGerentesComponent implements OnInit {
 
   return 'Não foi possível carregar os gerentes. Tente novamente.';
 }
+}
+
+function esperar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
