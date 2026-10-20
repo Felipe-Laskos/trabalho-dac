@@ -89,9 +89,7 @@
             <div class="summary-divider"></div>
 
             <div class="summary-item">
-              <span class="summary-label">
-                SALDO EM {{ fimSelecionado() | date: 'dd/MM/yyyy' }}
-              </span>
+              <span class="summary-label"> SALDO EM {{ formatarData(extratoAtual.dataFim) }} </span>
               <span class="summary-value">
                 @if (dias().length > 0) {
                   {{ dias()[dias().length - 1].saldoConsolidado.toFixed(2) | dinheiro }}
@@ -152,7 +150,7 @@
                       @for (m of dia.movimentacoes; track m.dataHora + m.tipo + m.valor) {
                         <div class="mov-row" [class.entrada]="m.entrada" [class.saida]="!m.entrada">
                           <span class="mov-hora">
-                            {{ m.dataHora | date: 'HH:mm' }}
+                            {{ m.dataHora | dataHora }}
                           </span>
 
                           <div class="mov-desc">
@@ -214,7 +212,7 @@
           <p>
             A lista percorre <strong>todos os {{ dias().length }} dias</strong> do período. A
             rolagem permite consultar as movimentações e os saldos diários até
-            {{ fimSelecionado() | date: 'dd/MM/yyyy' }}.
+            {{ formatarData(extratoAtual.dataFim) }}.
           </p>
         </footer>
       </section>

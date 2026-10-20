@@ -15,6 +15,7 @@ import { MessageComponent } from '../../../shared/components/message/message.com
 import { exibirData, intervaloValido, periodoPadrao } from '../../../shared/util/data.util';
 import { montarLinhaDoTempo, type DiaExtrato } from '../../../shared/util/extrato.util';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
+import { DataHoraPipe } from '../../../shared/pipes/data-hora.pipe';
 
 type EstadoTela = 'carregando' | 'pronto' | 'erro';
 
@@ -31,6 +32,7 @@ const ZONA = 'America/Sao_Paulo';
     LoadingComponent,
     MessageComponent,
     DinheiroPipe,
+    DataHoraPipe,
   ],
   templateUrl: './extrato.component.html',
   styleUrl: './extrato.component.scss',
@@ -79,8 +81,10 @@ export class ExtratoComponent {
 
       const periodo = periodoPadrao();
 
-      this.inicioSelecionado.set(periodo.inicio.toJSDate());
-      this.fimSelecionado.set(periodo.fim.toJSDate());
+      this.inicioSelecionado.set(
+        periodo.inicio.setZone('local', { keepLocalTime: true }).toJSDate(),
+      );
+      this.fimSelecionado.set(periodo.fim.setZone('local', { keepLocalTime: true }).toJSDate());
 
       this.estado.set('pronto');
 
@@ -144,6 +148,6 @@ export class ExtratoComponent {
   }
 
   private converterData(data: Date): DateTime {
-    return DateTime.fromJSDate(data, { zone: ZONA }).startOf('day');
+    return DateTime.fromJSDate(data).setZone(ZONA, { keepLocalTime: true }).startOf('day');
   }
 }
