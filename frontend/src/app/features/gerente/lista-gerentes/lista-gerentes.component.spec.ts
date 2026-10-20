@@ -206,9 +206,21 @@ describe('ListaGerentesComponent', () => {
 
     expect(jobs.aguardar).not.toHaveBeenCalled();
     expect(component.resultado()?.mensagem).toBe('Um gerente não pode remover a si mesmo');
+    expect(gerenteServiceMock.listar).toHaveBeenCalledTimes(2);
   });
 
-  it('exibe a mensagem inline e recarrega a lista', async () => {
+  it('exibe a mensagem inline e espera a projeção da quantidade de clientes', async () => {
+    const atualizada: GerentesList = {
+      ...respostaMock,
+      gerentes: respostaMock.gerentes
+        .filter((gerente) => gerente.cpf !== '98574307084')
+        .map((gerente) =>
+          gerente.cpf === '40501740066' ? { ...gerente, quantidadeClientes: 2 } : gerente,
+        ),
+    };
+    gerenteServiceMock.listar
+      .mockResolvedValueOnce(respostaMock)
+      .mockResolvedValue(atualizada);
     gerenteServiceMock.remover.mockResolvedValue(pendente);
     jobs.aguardar.mockResolvedValue({ ...pendente, status: 'CONCLUIDO', resultType: 'inline' });
     jobs.resultado.mockResolvedValue({
@@ -223,7 +235,9 @@ describe('ListaGerentesComponent', () => {
     expect(component.resultado()?.mensagem).toBe(
       'Gerente removido; 2 contas transferidas para Gadamântio',
     );
-    expect(gerenteServiceMock.listar.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(component.gerentes().some((item) => item.cpf === '98574307084')).toBe(false);
+    expect(component.gerentes().find((item) => item.cpf === '40501740066')?.quantidadeClientes).toBe(2);
+    expect(gerenteServiceMock.listar.mock.calls.length).toBeGreaterThanOrEqual(3);
   });
 
   it('mostra a falha do job do último gerente ativo', async () => {
