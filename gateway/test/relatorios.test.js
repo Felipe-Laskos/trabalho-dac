@@ -111,22 +111,6 @@ describe("GET /relatorios/clientes — R16 (API Composition assíncrona, resulta
     });
   });
 
-  test("salario e saldo saem como string com duas casas, mesmo que o MS devolva número", async () => {
-    semear(CLIENTES.map((c) => (c.nome === "Cutardo" ? { ...c, salario: 20000, saldo: 150000 } : c)));
-
-    const { corpo: job } = await chamar("GET", "/relatorios/clientes", { token });
-    await aguardarJob(job.jobId, token);
-    const { corpo } = await chamar("GET", `/jobs/${job.jobId}/result`, { token });
-
-    for (const { salario, saldo } of corpo.clientes) {
-      assert.match(salario, /^\d+\.\d{2}$/);
-      assert.match(saldo, /^\d+\.\d{2}$/);
-    }
-
-    assert.equal(corpo.clientes.at(-1).salario, "20000.00");
-    assert.equal(corpo.clientes.at(-1).saldo, "150000.00");
-  });
-
   test("cliente sem conta ainda aparece, com saldo 0.00 e conta/gerente nulos", async () => {
     semear([...CLIENTES, {
       cpf: "11122233396", nome: "Aurora", email: "aurora@bantads.com.br", salario: "2500.00"

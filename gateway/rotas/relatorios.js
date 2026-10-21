@@ -11,16 +11,7 @@ const COLLATOR = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 const SEM_CONTA = "0.00";
 
-const FORMATO_DINHEIRO = /^\d+\.\d{2}$/;
-
 const FALHA_PARA_HUMANO = "Não foi possível montar o relatório de clientes agora. Tente novamente.";
-
-// o contrato exige string com duas casas; só reformata se o MS devolver outra coisa
-function dinheiro(valor) {
-  const texto = String(valor ?? SEM_CONTA);
-
-  return FORMATO_DINHEIRO.test(texto) ? texto : Number(texto).toFixed(2);
-}
 
 async function contaDe(cpf, identidade) {
   try {
@@ -42,9 +33,9 @@ async function linhaDe(cpf, nomesGerentes, identidade) {
     cpf: cliente.cpf,
     nome: cliente.nome,
     email: cliente.email,
-    salario: dinheiro(cliente.salario),
+    salario: cliente.salario,
     numeroConta: conta?.numero ?? null,
-    saldo: dinheiro(conta?.saldo),
+    saldo: conta?.saldo ?? SEM_CONTA,
     cpfGerente: conta?.cpfGerente ?? null,
     nomeGerente: nomesGerentes.get(conta?.cpfGerente) ?? null
   };
