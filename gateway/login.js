@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const { cliente: redis } = require("./redis");
 const { TTL_SESSAO } = require("./auth");
+const { TIMEOUT_MS, indisponivel, responderErro } = require("./microsservicos");
 
 const LOGIN_INVALIDO = { auth: false, message: "Login inválido!" };
 
@@ -20,9 +21,11 @@ async function login(req, res) {
   let credencial;
   try {
     const resposta = await axios.post(`${process.env.MS_AUTH_URL}/auth/login`,
-                                      { login: email, senha });
+                                      { login: email, senha }, { timeout: TIMEOUT_MS });
     credencial = resposta.data;
-  } catch {
+  } catch (erro) {
+    if (indisponivel(erro)) return responderErro(erro, res);
+
     return res.status(401).json(LOGIN_INVALIDO);
   }
 
@@ -36,9 +39,11 @@ async function login(req, res) {
 
   let pessoa;
   try {
-    const resposta = await axios.get(`${base}/${recurso}/${credencial.cpf}`);
+    const resposta = await axios.get(`${base}/${recurso}/${credencial.cpf}`, { timeout: TIMEOUT_MS });
     pessoa = resposta.data;
   } catch (erro) {
+    if (indisponivel(erro)) return responderErro(erro, res);
+
     console.error(`[login] ${credencial.tipo} ${credencial.cpf} existe no MS Auth `
                 + `mas nao em ${base}/${recurso}: ${erro.message}`);
     return res.status(500).json({

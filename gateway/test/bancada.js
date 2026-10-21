@@ -113,6 +113,10 @@ class UpstreamFalso {
     this.respostas.set(`${metodo} ${url}`, { status });
   }
 
+  calar(metodo, url, code) {
+    this.respostas.set(`${metodo} ${url}`, { code });
+  }
+
   async atender(metodo, url, corpo) {
     const chave = `${metodo} ${url}`;
     this.chamadas.push({ chave, corpo });
@@ -121,6 +125,10 @@ class UpstreamFalso {
 
     if (!resposta) {
       throw Object.assign(new Error(`sem resposta falsa para ${chave}`), { code: "ECONNREFUSED" });
+    }
+
+    if (resposta.code) {
+      throw Object.assign(new Error(`${resposta.code} em ${chave}`), { code: resposta.code });
     }
 
     if (resposta.status) {

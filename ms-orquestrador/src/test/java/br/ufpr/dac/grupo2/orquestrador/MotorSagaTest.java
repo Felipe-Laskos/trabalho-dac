@@ -301,9 +301,12 @@ class MotorSagaTest {
 	void dlqETimeoutDoMesmoPassoCompensamUmaVezSo() {
 		Bancada b = ateDebitar(quatroPassos());
 		b.estados.envelhecer(SAGA_ID, Duration.ofSeconds(20));
-		b.dlq("debitar");
-		b.dlq("debitar");
-		b.passarTempo(Duration.ofSeconds(15));
+		try (Bancada.Log log = new Bancada.Log()) {
+			b.dlq("debitar");
+			b.dlq("debitar");
+			b.passarTempo(Duration.ofSeconds(15));
+			assertTrue(log.contem("tipo=debitar na DLQ fora do passo corrente, ignorada"));
+		}
 
 		assertEquals(1, Collections.frequency(b.fila.tipos(), "compensar-debitar"));
 		assertEquals(1, Collections.frequency(b.fila.tipos(), "compensar-reservar"));
@@ -311,6 +314,27 @@ class MotorSagaTest {
 
 		b.sucesso("compensar-reservar", Map.of());
 		assertEquals(FALHA_TECNICA, b.jobs.unico().erro());
+	}
+
+	@Test
+	void timeoutEDepoisDlqDoMesmoPassoCompensamUmaVezSo() {
+		Bancada b = ateDebitar(quatroPassos());
+		try (Bancada.Log log = new Bancada.Log()) {
+			b.estourarTempo();
+			b.dlq("debitar");
+			assertTrue(log.contem("timeout de 30 s no passo 3 (debitar)"));
+			assertTrue(log.contem("tipo=debitar na DLQ fora do passo corrente, ignorada"));
+		}
+
+		assertEquals(1, Collections.frequency(b.fila.tipos(), "compensar-debitar"));
+		assertEquals(1, Collections.frequency(b.fila.tipos(), "compensar-reservar"));
+
+		b.sucesso("compensar-reservar", Map.of());
+		b.dlq("debitar");
+
+		assertEquals(1, Collections.frequency(b.fila.tipos(), "compensar-reservar"));
+		assertEquals(FALHA_TECNICA, b.jobs.unico().erro());
+		assertEquals(StatusSaga.COMPENSADA, b.estado().getStatus());
 	}
 
 	@Test

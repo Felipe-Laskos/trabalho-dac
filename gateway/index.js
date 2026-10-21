@@ -11,6 +11,7 @@ const { verifyJWT, limparIdentidade } = require("./auth");
 const { reescreverRespostas } = require("./links");
 const { login, logout } = require("./login");
 const { reboot } = require("./reboot");
+const { indisponivel, responderErro } = require("./microsservicos");
 
 const rotasClientes = require("./rotas/clientes");
 const rotasContas = require("./rotas/contas");
@@ -72,6 +73,8 @@ app.use((erro, _req, res, next) => {
 });
 
 app.use((erro, _req, res, _next) => {
+  if (indisponivel(erro)) return responderErro(erro, res);
+
   console.error(`[gateway] erro nao tratado: ${erro.stack || erro.message}`);
   res.status(500).json({
     status: 500, erro: "Internal Server Error", mensagem: "Erro interno"

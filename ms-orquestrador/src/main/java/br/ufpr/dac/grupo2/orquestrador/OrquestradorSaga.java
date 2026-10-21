@@ -139,7 +139,10 @@ public class OrquestradorSaga {
 		EstadoSaga estado = estados.ler(cmd.sagaId());
 		if (estado != null && cmd.tipo() != null && cmd.tipo().equals(estado.getAguardando())) {
 			sinalizarFalha(estado, cmd.tipo() + " foi para a DLQ");
+			return;
 		}
+
+		log.info("sagaId={} tipo={} na DLQ fora do passo corrente, ignorada", cmd.sagaId(), cmd.tipo());
 	}
 
 	@Scheduled(fixedDelay = 5000)

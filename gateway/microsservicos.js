@@ -1,4 +1,7 @@
 const axios = require("axios");
+const { ClientOfflineError, SocketClosedUnexpectedlyError } = require("redis");
+
+const { BrokerIndisponivel } = require("./rabbit");
 
 const TIMEOUT_MS = 10_000;
 
@@ -9,6 +12,25 @@ const NAO_ENCONTRADO = {
 const ERRO_INTERNO = {
   status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
 };
+
+const INDISPONIVEL = {
+  status: 503, erro: "Service Unavailable",
+  mensagem: "Serviço indisponível no momento. Tente novamente em instantes."
+};
+
+const SEM_RESPOSTA = [
+  "ECONNABORTED", "ETIMEDOUT", "ECONNREFUSED", "ECONNRESET",
+  "ENOTFOUND", "EAI_AGAIN", "EHOSTUNREACH"
+];
+
+function indisponivel(erro) {
+  if (erro.response) return false;
+
+  return SEM_RESPOSTA.includes(erro.code)
+    || erro instanceof ClientOfflineError
+    || erro instanceof SocketClosedUnexpectedlyError
+    || erro instanceof BrokerIndisponivel;
+}
 
 // codifica cada segmento
 function montarUrl(base, ...segmentos) {
@@ -80,9 +102,18 @@ function responderErro(erro, res, repassar = []) {
     });
   }
 
+  if (indisponivel(erro)) {
+    console.error(`[gateway] indisponivel ${erro.code ?? erro.constructor.name}: ${erro.message}`);
+
+    return res.status(503).json(INDISPONIVEL);
+  }
+
   console.error(`[gateway] MS respondeu ${status ?? erro.code}: ${erro.message}`);
 
   return res.status(500).json(ERRO_INTERNO);
 }
 
-module.exports = { montarUrl, identidadeDe, consultar, criar, atualizar, recriarSeed, responderErro };
+module.exports = {
+  TIMEOUT_MS, montarUrl, identidadeDe, consultar, criar, atualizar, recriarSeed,
+  indisponivel, responderErro
+};

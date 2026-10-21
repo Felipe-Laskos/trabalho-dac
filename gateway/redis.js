@@ -1,6 +1,6 @@
 const { createClient } = require('redis');
 
-const cliente = createClient({ url: process.env.REDIS_URL });
+const cliente = createClient({ url: process.env.REDIS_URL, disableOfflineQueue: true });
 
 const TTL_CACHE = 5 * 60;
 

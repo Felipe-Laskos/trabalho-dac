@@ -1,5 +1,7 @@
-const { criarJob } = require("./jobs");
+const { criarJob, falharJob } = require("./jobs");
 const { publicar } = require("./rabbit");
+
+const NAO_PUBLICADA = "Não foi possível iniciar a operação agora. Tente novamente em instantes.";
 
 const dois = (n) => String(n).padStart(2, "0");
 
@@ -13,7 +15,12 @@ function agora() {
 async function iniciarSaga(tipo, dominio, payload) {
   const job = await criarJob(dominio);
 
-  await publicar("saga.cmd", { sagaId: job.jobId, tipo, timestamp: agora(), payload });
+  try {
+    await publicar("saga.cmd", { sagaId: job.jobId, tipo, timestamp: agora(), payload });
+  } catch (erro) {
+    await falharJob(job.jobId, NAO_PUBLICADA).catch(() => {});
+    throw erro;
+  }
 
   return job;
 }
