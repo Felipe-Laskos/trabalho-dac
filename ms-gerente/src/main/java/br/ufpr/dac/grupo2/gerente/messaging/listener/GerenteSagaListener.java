@@ -48,6 +48,8 @@ public class GerenteSagaListener {
             case "inserir-gerente" -> inserirGerente(cmd);
             case "compensar-inserir-gerente" -> compensarInserirGerente(cmd);
             case "listar-ativos" -> command.listarAtivosSaga(cmd);
+            case "inativar-gerente" -> inativarGerente(cmd);
+            case "compensar-inativar-gerente" -> compensarInativarGerente(cmd);
             default -> command.registrarFalha(cmd, "Comando não suportado pelo MS Gerente: " + cmd.tipo());
         };
 
@@ -106,6 +108,23 @@ public class GerenteSagaListener {
                 || cmd.tipo().length() > 80
                 || cmd.payload() == null) {
             throw new IllegalArgumentException("Envelope de SAGA inválido");
+        }
+    }
+
+    private ResultadoSaga inativarGerente(MensagemSaga cmd) {
+        try {
+            return command.inativarGerente(cmd);
+        } catch (Exception e) {
+            return command.registrarFalha(cmd, e.getMessage());
+        }
+    }
+
+    private ResultadoSaga compensarInativarGerente(MensagemSaga cmd) {
+        try {
+            String cpf = extrairCpfDoPayload(cmd);
+            return command.compensarInativarGerente(cmd, cpf);
+        } catch (Exception e) {
+            return command.registrarFalha(cmd, e.getMessage());
         }
     }
 }

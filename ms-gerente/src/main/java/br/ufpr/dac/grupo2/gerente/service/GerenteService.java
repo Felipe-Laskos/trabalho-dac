@@ -16,13 +16,14 @@ import br.ufpr.dac.grupo2.gerente.dto.MensagemSaga;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
-import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class GerenteService {
@@ -228,5 +229,96 @@ public class GerenteService {
         Map<String, Object> payload = Map.of("cpfsAtivos", List.copyOf(nomes.keySet()), "nomesGerentes", nomes);
         return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
                 LocalDateTime.now().toString(), payload, "SUCESSO", null));
+    }
+
+    @Transactional
+    public ResultadoSaga inativarGerente(MensagemSaga cmd) {
+        try {
+            String jsonPayload = json.writeValueAsString(cmd.payload());
+            GerenteRequestDTO request = json.readValue(jsonPayload, GerenteRequestDTO.class);
+
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+
+            if (comandosProcessadosRepository.existsById(chave)) {
+                return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                        LocalDateTime.now().toString(), Map.of("cpf", request.getCpf()), "SUCESSO", null));
+            }
+
+            Gerente gerente = gerenteRepository.findById(request.getCpf())
+                .orElse(null);
+
+            if (gerente == null || !Boolean.TRUE.equals(gerente.getAtivo())) {
+                return registrarFalha(cmd, "Gerente inexistente");
+            }
+
+            if (gerenteRepository.listarAtivosOrdenadoPorNome().size() <= 1) {
+                return registrarFalha(cmd, "Não é possível remover o último gerente ativo");
+            }
+
+            gerente.setAtivo(false);
+
+            gerenteRepository.save(gerente);
+
+            comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
+
+            Map<String, Object> payloadMap = Map.of("cpf", gerente.getCpf());
+
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            return registrarFalha(cmd, "Erro interno ao processar remoção: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ResultadoSaga compensarInativarGerente(MensagemSaga cmd, String cpf) {
+        try {
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), "compensar-inativar-gerente");
+
+            if (comandosProcessadosRepository.existsById(chave)) {
+               Map<String, Object> payloadMap = Map.of("cpf", cpf);
+                ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                        cmd.sagaId(),
+                        cmd.tipo(),
+                        LocalDateTime.now().toString(),
+                        payloadMap,
+                        "SUCESSO",
+                        null
+                );
+                return new ResultadoSaga(resposta);
+            }
+
+            Gerente gerente = gerenteRepository.findById(cpf).orElse(null);
+            if (gerente != null) {
+                gerente.setAtivo(true);
+                gerenteRepository.save(gerente);
+            }
+
+            comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
+
+            Map<String, Object> payloadMap = Map.of("cpf", cpf);
+            ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                    cmd.sagaId(),
+                    cmd.tipo(),
+                    LocalDateTime.now().toString(),
+                    payloadMap,
+                    "SUCESSO",
+                    null
+            );
+            return new ResultadoSaga(resposta);
+
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return registrarFalha(cmd, "Erro interno ao reativar gerente (compensação): " + e.getMessage());
+        }
     }
 }
