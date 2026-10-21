@@ -247,11 +247,11 @@ public class GerenteService {
             Gerente gerente = gerenteRepository.findById(request.getCpf())
                 .orElse(null);
 
-            if (gerente == null) {
-                return registrarFalha(cmd, "Gerente não encontrado");
+            if (gerente == null || !Boolean.TRUE.equals(gerente.getAtivo())) {
+                return registrarFalha(cmd, "Gerente inexistente");
             }
 
-            if (gerenteRepository.count() == 1) {
+            if (gerenteRepository.listarAtivosOrdenadoPorNome().size() <= 1) {
                 return registrarFalha(cmd, "Não é possível remover o último gerente ativo");
             }
 
@@ -275,7 +275,7 @@ public class GerenteService {
             return new ResultadoSaga(resposta);
 
         } catch (Exception e) {
-            return registrarFalha(cmd, "Erro interno ao processar inserção: " + e.getMessage());
+            return registrarFalha(cmd, "Erro interno ao processar remoção: " + e.getMessage());
         }
     }
 

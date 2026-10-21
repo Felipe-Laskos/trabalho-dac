@@ -121,7 +121,7 @@ public class GerenteSagaListener {
 
     private ResultadoSaga compensarInativarGerente(MensagemSaga cmd) {
         try {
-            String cpf = extrairCpfDoPayload(cmd); 
+            String cpf = extrairCpfDoPayload(cmd);
             return command.compensarInativarGerente(cmd, cpf);
         } catch (Exception e) {
             return command.registrarFalha(cmd, e.getMessage());
