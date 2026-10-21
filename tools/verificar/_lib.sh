@@ -34,6 +34,7 @@ declare -A DONO_DA_AREA=(
   [seed-conta]="Dani (MS Conta)"
   [seed-auth]="Felipe (MS Auth)"
   [saldos]="Dani (MS Conta — event store / read model)"
+  [r16-relatorio]="Nathaly (R16, rotas/relatorios.js no Gateway)"
   [r1-autocadastro]="Nath / Laura (autocadastro)"
   [r2-login]="Felipe / Davi (login/logout)"
   [r3-home-cliente]="Dani / Davi (home do cliente)"

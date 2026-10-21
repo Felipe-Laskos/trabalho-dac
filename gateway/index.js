@@ -15,6 +15,7 @@ const { reboot } = require("./reboot");
 const rotasClientes = require("./rotas/clientes");
 const rotasContas = require("./rotas/contas");
 const rotasGerentes = require("./rotas/gerentes");
+const rotasRelatorios = require("./rotas/relatorios");
 const rotasSolicitacoes = require("./rotas/solicitacoes");
 const rotasJobs = require("./jobs");
 
@@ -48,6 +49,8 @@ app.use("/clientes", rotasClientes);
 app.use("/contas", rotasContas);
 
 app.use("/gerentes", rotasGerentes);
+
+app.use("/relatorios", rotasRelatorios);
 
 app.use("/solicitacoes", rotasSolicitacoes.gerente);
 

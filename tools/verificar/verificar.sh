@@ -43,6 +43,7 @@ MODULOS=(
   "02-seed.sh"
   "03-saldos.sh"
   "04-requisitos.sh"
+  "05-relatorio.sh"
 )
 
 STATUS_MODULO=()

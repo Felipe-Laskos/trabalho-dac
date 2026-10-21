@@ -18,7 +18,7 @@ Isso vai:
 1. Chamar `POST /reboot` no Gateway — **toda verificação parte daí**, nada
    depende de estado deixado por uma execução anterior.
 2. Rodar, em ordem, `00-frota.sh`, `01-topologia.sh`, `02-seed.sh`,
-   `03-saldos.sh` e `04-requisitos.sh`.
+   `03-saldos.sh`, `04-requisitos.sh` e `05-relatorio.sh`.
 3. Imprimir um **placar por área**: quantos critérios passaram/falharam em
    cada módulo, e quem é o dono de cada falha.
 
@@ -59,6 +59,7 @@ falha é o dono do módulo.
 | `02-seed.sh` | As 6 contagens do seed: `cliente.clientes`=5, `gerente.gerentes`=4, `conta_command.eventos`=22, `conta_query.contas`=5, `conta_query.movimentacoes`=17, `usuarios` (Mongo, `bantads_auth`)=9. |
 | `03-saldos.sh` | Os 5 saldos do seed conferem em três frentes: valor esperado, replay do event store (`conta_command.eventos`) e read model (`conta_query.contas`). |
 | `04-requisitos.sh` | R1 (autocadastro: 201/409/400), R2 (login/logout: token, 401 sem token, 401 após logout) e R3 (home do cliente: saldo e `_links`), batendo na porta pública do Gateway (8000). |
+| `05-relatorio.sh` | R16 (relatório de clientes): `GET /relatorios/clientes` -> 202 + `Location` do job, polling até `CONCLUIDO` com `resultType: inline`, e `GET /jobs/{id}/result` com os 5 clientes do seed ordenados por nome (pt-BR), exatamente as 8 colunas do contrato e `salario`/`saldo` como string de duas casas. |
 
 ## Pré-requisitos
 
