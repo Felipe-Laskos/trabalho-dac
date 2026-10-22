@@ -7,7 +7,10 @@ import java.util.Map;
 
 import br.ufpr.dac.grupo2.conta.admin.service.SeedService;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
+import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
 import br.ufpr.dac.grupo2.conta.command.service.ContaCommandService;
+import br.ufpr.dac.grupo2.conta.query.repository.MovimentacaoRepository;
+import br.ufpr.dac.grupo2.conta.query.service.ContaQueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,13 +48,22 @@ class ReplayContaTest {
     @Autowired
     private ContaCommandService contaCommandService;
 
+    @Autowired
+    private ContaQueryService contaQueryService;
+
+    @Autowired
+    private EventoRepository eventoRepository;
+
+    @Autowired
+    private MovimentacaoRepository movimentacaoRepository;
+
     @BeforeEach
     void prepararDados() {
         assertEquals(5L, seedService.executar());
     }
 
     @Test
-    void deveReproduzirOsCincoSaldosDoReadModel() {
+    void deveReproduzirOsCincoSaldosDoReadModelAposTresSeeds() {
         Map<String, String> saldosEsperados = Map.of(
                 "1291", "800.00",
                 "0950", "10000.00",
@@ -60,16 +72,18 @@ class ReplayContaTest {
                 "7617", "1500.00"
         );
 
-        saldosEsperados.forEach((numero, esperado) -> {
-            EstadoConta estado = contaCommandService.replay(numero);
+        for (int tentativa = 1; tentativa <= 3; tentativa++) {
+            assertEquals(5L, seedService.executar());
+            assertEquals(22L, eventoRepository.count());
+            assertEquals(17L, movimentacaoRepository.count());
 
-            assertEquals(
-                    0,
-                    estado.getSaldo().compareTo(
-                            new BigDecimal(esperado)
-                    ),
-                    "Saldo divergente para a conta " + numero
-            );
-        });
+            saldosEsperados.forEach((numero, esperado) -> {
+                EstadoConta estado = contaCommandService.replay(numero);
+                assertEquals(0, estado.getSaldo().compareTo(new BigDecimal(esperado)),
+                        "Replay divergente para a conta " + numero);
+                assertEquals(esperado, contaQueryService.buscarPorNumero(numero)
+                        .orElseThrow().saldo(), "Read model divergente para a conta " + numero);
+            });
+        }
     }
 }

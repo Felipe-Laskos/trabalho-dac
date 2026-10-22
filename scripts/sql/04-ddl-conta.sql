@@ -1,3 +1,4 @@
+-- 04: cria o event store e o read model; executar antes dos seeds 05 a 07.
 CREATE SCHEMA IF NOT EXISTS conta_command;
 CREATE SCHEMA IF NOT EXISTS conta_query;
 CREATE TABLE IF NOT EXISTS conta_command.eventos (

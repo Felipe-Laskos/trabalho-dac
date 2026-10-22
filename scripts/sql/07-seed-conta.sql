@@ -1,3 +1,4 @@
+-- 07: carrega 5 contas, 22 eventos e 17 movimentacoes; executar apos 06-seed-gerente.sql.
 -- =============================================================
 -- TABELA DE CONFERÊNCIA DO REPLAY
 -- =============================================================
