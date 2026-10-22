@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.math.BigDecimal;
@@ -232,6 +233,9 @@ class OperacoesContaIntegracaoTest {
 
     @Test
     void saquesConcorrentesRefazemReplayERevalidamSaldoAposConflito() throws Exception {
+        // O seed inicia em 800.00; a retirada inicial prepara os 150.00 do cenario.
+        operacoes.sacar("1291", "650.00", CPF);
+        clearInvocations(rabbit);
         CyclicBarrier barreira = new CyclicBarrier(2);
         AtomicInteger replays = new AtomicInteger();
         doAnswer(chamada -> {
@@ -241,25 +245,44 @@ class OperacoesContaIntegracaoTest {
         }).when(leitura).replay("1291");
         long quantidade = eventos.count();
         try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            Callable<Boolean> sacar = () -> {
-                try {
-                    operacoes.sacar("1291", "600.00", CPF);
-                    return true;
-                } catch (EventoInvalidoException e) {
-                    assertEquals("Saldo insuficiente", e.getMessage());
-                    return false;
-                }
-            };
-            Future<Boolean> primeiro = executor.submit(sacar);
-            Future<Boolean> segundo = executor.submit(sacar);
-            assertNotEquals(primeiro.get(20, TimeUnit.SECONDS), segundo.get(20, TimeUnit.SECONDS));
+            Callable<Integer> sacar = () -> mvc.perform(post("/contas/1291/saque")
+                            .header("X-User-CPF", CPF)
+                            .contentType("application/json")
+                            .content("{\"valor\":\"100.00\"}"))
+                    .andReturn().getResponse().getStatus();
+            Future<Integer> primeiro = executor.submit(sacar);
+            Future<Integer> segundo = executor.submit(sacar);
+            assertEquals(java.util.Set.of(201, 422), java.util.Set.of(
+                    primeiro.get(20, TimeUnit.SECONDS),
+                    segundo.get(20, TimeUnit.SECONDS)));
         }
         assertEquals(3, replays.get());
         assertEquals(quantidade + 1, eventos.count());
-        assertEquals(0, leitura.replay("1291").getSaldo().compareTo(new BigDecimal("200.00")));
+        assertEquals(0, leitura.replay("1291").getSaldo().compareTo(new BigDecimal("50.00")));
         // O read model continua antigo: não participou da validação.
         assertEquals("800.00", query.buscarPorNumero("1291").orElseThrow().saldo());
         verify(rabbit).convertAndSend(eq("ms.conta.events"), any(Object.class));
+    }
+
+    @Test
+    void respostasMonetariasTêmDuasCasas() throws Exception {
+        mvc.perform(get("/contas/1291"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saldo").value("800.00"));
+        mvc.perform(get("/admin/replay/1291"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saldo").value("800.00"));
+        mvc.perform(post("/contas/1291/deposito")
+                        .header("X-User-CPF", CPF)
+                        .contentType("application/json")
+                        .content("{\"valor\":\"1\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.valor").value("1.00"));
+        mvc.perform(post("/admin/eventos")
+                        .contentType("application/json")
+                        .content("{\"objetoId\":\"1291\",\"tipo\":\"Depósito\",\"payload\":{\"valor\":\"1\"}}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.payload.valor").value("1.00"));
     }
 
     private br.ufpr.dac.grupo2.conta.command.dto.TransferenciaRequest request() {

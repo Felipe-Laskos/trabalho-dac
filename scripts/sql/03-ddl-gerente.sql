@@ -1,4 +1,4 @@
---- SCHEMA GERENTE
+-- 03: cria as tabelas do schema gerente; executar apos 02-ddl-cliente.sql.
 
 CREATE TABLE IF NOT EXISTS gerente.gerentes (
     cpf VARCHAR(11) PRIMARY KEY,
