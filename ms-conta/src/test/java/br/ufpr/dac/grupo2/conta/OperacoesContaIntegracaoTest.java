@@ -252,9 +252,9 @@ class OperacoesContaIntegracaoTest {
                     .andReturn().getResponse().getStatus();
             Future<Integer> primeiro = executor.submit(sacar);
             Future<Integer> segundo = executor.submit(sacar);
-            assertEquals(java.util.Set.of(201, 422), java.util.Set.of(
-                    primeiro.get(20, TimeUnit.SECONDS),
-                    segundo.get(20, TimeUnit.SECONDS)));
+            int a = primeiro.get(20, TimeUnit.SECONDS);
+            int b = segundo.get(20, TimeUnit.SECONDS);
+            assertEquals(List.of(201, 422), List.of(Math.min(a, b), Math.max(a, b)));
         }
         assertEquals(3, replays.get());
         assertEquals(quantidade + 1, eventos.count());
