@@ -397,7 +397,6 @@ public class SagaContaTransacional {
     }
 
     private void bloquearEventStore() {
-        // Serializa a escolha de número, a criação e a deduplicação do comando.
         entityManager.createNativeQuery(
                 "LOCK TABLE conta_command.eventos IN SHARE ROW EXCLUSIVE MODE")
                 .executeUpdate();

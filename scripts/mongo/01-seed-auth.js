@@ -25,5 +25,6 @@ bantads.usuarios.insertMany([
 ]);
 
 bantads.usuarios.createIndex({ login: 1 }, { unique: true, name: 'uk_usuarios_login' });
+bantads.usuarios.createIndex({ cpf: 1 }, { unique: true, name: 'uk_usuarios_cpf' });
 
 print('[seed-auth] usuarios: ' + bantads.usuarios.countDocuments());

@@ -1,3 +1,4 @@
+-- 05: carrega os cinco clientes do seed; executar apos os DDL 01 a 04.
 INSERT INTO cliente.clientes (cpf, nome, email, telefone, salario, logradouro, numero, complemento, cep, cidade, uf) VALUES
 ('12912861012', 'Catharyna', 'cli1@bantads.com.br', '41999999999', 10000.00, 'Rua das Flores', '123', 'Apto 101', '80000000', 'Curitiba', 'PR'),
 ('09506382000', 'Cleuddônio', 'cli2@bantads.com.br', '41998999999', 20000.00, 'Avenida Brasil', '456', 'Sala 202', '80000001', 'Curitiba', 'PR'),
