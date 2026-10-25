@@ -100,6 +100,7 @@ class MotorSagaTest {
 		assertEquals("testes", job.dominio());
 		assertEquals("42", job.resourceId());
 		assertEquals(List.of("cache:teste:42"), b.cache.invalidadas);
+		assertEquals(List.of("cache:teste:42"), job.cacheJaInvalidado());
 		assertEquals(StatusSaga.CONCLUIDA, b.estado().getStatus());
 		assertNull(b.estado().getAguardando());
 	}
@@ -230,6 +231,7 @@ class MotorSagaTest {
 		assertEquals("Saldo insuficiente", job.erro());
 		assertEquals(StatusSaga.COMPENSADA, b.estado().getStatus());
 		assertEquals(List.of("cache:teste:42"), b.cache.invalidadas);
+		assertEquals(List.of("cache:teste:42"), job.cacheJaInvalidado());
 	}
 
 	@Test
