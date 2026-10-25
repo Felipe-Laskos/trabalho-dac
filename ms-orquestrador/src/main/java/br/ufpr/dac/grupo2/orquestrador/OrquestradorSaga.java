@@ -286,11 +286,11 @@ public class OrquestradorSaga {
 		estado.encerrar(StatusSaga.CONCLUIDA);
 		estados.salvar(estado);
 		senhas.descartar(estado.getSagaId());
+		cache.invalidar(saga.cacheInvalidado(dados));
 
 		saga.resultadoInline(dados).ifPresentOrElse(
 				resultado -> jobs.concluirInline(estado.getSagaId(), resultado),
 				() -> jobs.concluir(estado.getSagaId(), saga.dominio(), saga.recurso(dados)));
-		cache.invalidar(saga.cacheInvalidado(dados));
 		log.info("sagaId={} tipo={} CONCLUIDA", estado.getSagaId(), estado.getTipo());
 	}
 
@@ -309,8 +309,8 @@ public class OrquestradorSaga {
 			}
 		});
 
-		jobs.falhar(estado.getSagaId(), estado.getErro());
 		cache.invalidar(saga.cacheInvalidado(dados));
+		jobs.falhar(estado.getSagaId(), estado.getErro());
 		log.warn("sagaId={} tipo={} COMPENSADA: {}", estado.getSagaId(), estado.getTipo(), estado.getErro());
 	}
 
