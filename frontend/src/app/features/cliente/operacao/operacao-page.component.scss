@@ -2,14 +2,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg, 1.5rem);
-  max-width: 560px;
+  max-width: 960px;
   width: 100%;
 }
 
 .page-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs, 0.25rem);
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md, 1rem);
+}
+
+.subtitulo {
+  margin: var(--spacing-xs, 0.25rem) 0 0;
+  color: var(--color-text-secondary);
 }
 
 .role-badge {
@@ -41,9 +47,85 @@ h1 {
   gap: var(--spacing-sm, 0.75rem);
 }
 
+.operacao-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--spacing-lg, 1.5rem);
+  align-items: start;
+}
+
 .operacao-form {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md, 1rem);
-  margin-top: var(--spacing-lg, 1.5rem);
+}
+
+.disponivel {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.conta-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--spacing-lg, 1.5rem);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  border-radius: var(--border-radius-lg, 12px);
+}
+
+.conta-rotulo {
+  color: var(--color-primary-light, #8bb4b5);
+  font-size: 11px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.conta-numero {
+  margin-bottom: var(--spacing-md, 1rem);
+  font-family: monospace;
+  font-size: 22px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 2px;
+}
+
+.saldo-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.conta-saldo {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.conta-lateral.atualizando .conta-saldo {
+  opacity: 0.65;
+}
+
+.conta-nota {
+  margin: var(--spacing-md, 1rem) 0 0;
+  padding-top: var(--spacing-sm, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--color-primary-light, #8bb4b5);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (max-width: 800px) {
+  .operacao-grid,
+  .page-header {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
 }

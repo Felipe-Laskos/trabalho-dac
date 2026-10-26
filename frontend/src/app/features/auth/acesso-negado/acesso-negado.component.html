@@ -1,5 +1,23 @@
 <section class="caixa">
+  <div class="icone" aria-hidden="true">
+    <i class="pi pi-shield"></i>
+  </div>
+  <p class="codigo">403</p>
   <h1>Acesso negado</h1>
-  <p>Esta área não corresponde ao seu perfil. Volte para a tela inicial da sua conta.</p>
-  <p-button label="Ir para o início" [routerLink]="inicio" />
+  @if (entrouComoCliente) {
+    <p>Esta área é do perfil Gerente, e você entrou como Cliente ({{ nome }}).</p>
+  } @else {
+    <p>Esta área é do perfil Cliente, e você entrou como Gerente ({{ nome }}).</p>
+  }
+
+  <div class="acoes">
+    <p-button
+      label="Sair e entrar com outra conta"
+      icon="pi pi-sign-out"
+      severity="danger"
+      (onClick)="sair()" />
+    <a [routerLink]="inicio" class="secundario">Ir para o meu início</a>
+  </div>
+
+  <p class="nota">O link pode ter sido aberto de outra sessão. Nada foi alterado.</p>
 </section>

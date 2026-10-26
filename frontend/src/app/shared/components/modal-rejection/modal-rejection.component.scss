@@ -20,7 +20,7 @@
 
     i {
       font-size: 1.1rem;
-      color: var(--color-primary);
+      color: var(--color-error);
     }
   }
 
@@ -47,16 +47,49 @@
   }
 }
 
+.details-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: var(--color-background);
+  border-radius: var(--border-radius);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  span {
+    color: var(--color-text-secondary);
+  }
+
+  strong {
+    font-weight: var(--font-weight-heading);
+  }
+
+  & + & {
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+  }
+}
+
 .reason-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 16px;
 
   label {
     font-size: 0.875rem;
     color: var(--color-text);
     font-weight: 600;
+
+    span {
+      color: var(--color-error);
+    }
   }
 
   textarea {
@@ -66,16 +99,39 @@
     max-height: 120px;
     resize: none;
 
+    &.vazio {
+      border-color: var(--color-error);
+    }
+
     &:focus {
       outline: none;
-      box-shadow:none;
-      border-color: var(--color-border);
+      box-shadow: none;
     }
   }
 }
 
+.reason-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+  }
+
+  .aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--color-error);
+  }
+}
+
 .character-counter {
-  align-self: flex-end;
+  flex: 0 0 auto;
   font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
@@ -86,4 +142,17 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+}
+
+:host ::ng-deep .btn-recusar-modal.p-button {
+  min-width: 6.5rem;
+  border-radius: 8px;
+}
+
+:host ::ng-deep .btn-recusar-modal.p-button:disabled,
+:host ::ng-deep .btn-recusar-modal.p-button.p-disabled {
+  opacity: 1;
+  background: #d5dee3;
+  border-color: #d5dee3;
+  color: #f7fbfc;
 }

@@ -75,11 +75,18 @@
   font-weight: var(--font-weight-heading);
 }
 
-.logout-button {
-  color: var(--color-secondary) !important;
+:host ::ng-deep .logout-button.p-button {
+  --p-button-text-primary-color: #ffffff;
+  --p-button-text-primary-hover-color: #ffffff;
+  color: #ffffff !important;
+
+  .p-button-label,
+  .p-button-icon {
+    color: #ffffff !important;
+  }
 
   &:hover {
-    background: var(--color-secondary-dark) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
   }
 }
 

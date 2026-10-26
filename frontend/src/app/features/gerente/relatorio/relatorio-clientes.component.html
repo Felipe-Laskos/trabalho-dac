@@ -3,22 +3,28 @@
     <div class="header-titles">
       <span class="role-badge">GERENTE</span>
       <h1 class="page-title">Relatório de clientes</h1>
+      <p class="page-subtitle">
+        Todos os clientes com conta e gerente, em ordem do nome. Gerado sob demanda.
+      </p>
     </div>
 
-    <p-button
-      label="Gerar relatório"
-      icon="pi pi-chart-bar"
-      [loading]="gerando()"
-      [disabled]="gerando()"
-      (onClick)="gerar()"
-    />
+    @if (linhas()) {
+      <p-button
+        label="Gerar de novo"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="gerando()"
+        [disabled]="gerando()"
+        (onClick)="gerar()"
+      />
+    }
   </div>
 
-  @if (gerando()) {
-    <p class="gerando">Gerando relatório…</p>
-  }
-
   @if (linhas(); as linhas) {
+    <p class="gerado">Gerado às {{ geradoEm() }} · ordenado por nome do cliente</p>
+    <p class="contagem">{{ linhas.length }} {{ linhas.length === 1 ? 'cliente' : 'clientes' }}</p>
+
     @if (linhas.length === 0) {
       <div class="state-message">Nenhum cliente no relatório.</div>
     } @else {
@@ -26,8 +32,8 @@
         <p-table [value]="linhas" styleClass="bantads-table">
           <ng-template pTemplate="header">
             <tr>
-              <th>CPF</th>
               <th>Nome</th>
+              <th>CPF</th>
               <th>E-mail</th>
               <th class="text-right">Salário</th>
               <th>Conta</th>
@@ -38,8 +44,8 @@
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
-              <td>{{ row.cpf | cpf }}</td>
               <td>{{ row.nome }}</td>
+              <td>{{ row.cpf | cpf }}</td>
               <td>{{ row.email }}</td>
               <td class="text-right">{{ row.salario | dinheiro }}</td>
               <td>{{ row.numeroConta }}</td>
@@ -52,7 +58,18 @@
       </div>
     }
   } @else if (!gerando()) {
-    <p class="state-message">Clique em "Gerar relatório" para listar todos os clientes, com conta, saldo e gerente.</p>
+    <div class="empty-card">
+      <i class="pi pi-chart-bar" aria-hidden="true"></i>
+      <strong>Nenhum relatório gerado ainda</strong>
+      <p>A lista vem pronta, ordenada por nome, sem busca nem paginação.</p>
+      <p-button
+        label="Gerar relatório"
+        icon="pi pi-chart-bar"
+        [loading]="gerando()"
+        [disabled]="gerando()"
+        (onClick)="gerar()"
+      />
+    </div>
   }
 
   <app-job-progress [visible]="gerando()" titulo="Gerando relatório…" />

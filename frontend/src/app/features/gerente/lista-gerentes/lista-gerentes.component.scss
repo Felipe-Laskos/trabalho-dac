@@ -270,6 +270,17 @@
   font-weight: var(--font-weight-heading);
 }
 
+.voce {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--color-highlight);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 0.4px;
+}
+
 .user-name {
   display: block;
   flex: 1;

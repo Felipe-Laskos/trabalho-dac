@@ -4,13 +4,13 @@
   [closable]="!carregando()"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '90vw', maxWidth: '440px' }"
+  [style]="{ width: '90vw', maxWidth: '520px' }"
   (onHide)="aoCancelar()"
 >
   <ng-template #header>
     <div class="dialog-header">
       <div class="icon-badge">
-        <i class="pi pi-times"></i>
+        <i class="pi pi-exclamation-circle"></i>
       </div>
 
       <div class="header-texts">
@@ -20,22 +20,48 @@
     </div>
   </ng-template>
 
+  @if (cpf() || salario()) {
+    <div class="details-box">
+      @if (cpf()) {
+        <div class="detail-row">
+          <span>CPF</span>
+          <strong>{{ cpf() | cpf }}</strong>
+        </div>
+      }
+      @if (salario()) {
+        <div class="detail-row">
+          <span>Salário</span>
+          <strong>{{ salario() | dinheiro }}</strong>
+        </div>
+      }
+    </div>
+  }
+
   <div class="reason-content">
-    <label for="motivo-rejeicao">Motivo da recusa</label>
+    <label for="motivo-rejeicao">Motivo da recusa <span>*</span></label>
 
     <textarea
       pTextarea
       id="motivo-rejeicao"
       rows="5"
       maxlength="255"
+      [class.vazio]="motivoVazio()"
       [value]="motivo()"
       placeholder="Informe o motivo da recusa..."
       [disabled]="carregando()"
       (input)="aoAlterarMotivo($event)"
     ></textarea>
 
-    <div class="character-counter">
-      {{ motivo().length }}/255 
+    <div class="reason-footer">
+      @if (motivoVazio()) {
+        <p class="aviso">
+          <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+          O motivo é obrigatório — ele vai no e-mail para o cliente.
+        </p>
+      } @else {
+        <p>Vai no e-mail para o cliente e fica visível na tabela.</p>
+      }
+      <span class="character-counter">{{ motivo().length }}/255</span>
     </div>
   </div>
 
@@ -44,15 +70,17 @@
       <p-button
         label="Voltar"
         severity="secondary"
+        [outlined]="true"
         [disabled]="carregando()"
         (onClick)="aoCancelar()"
       />
 
       <p-button
         label="Recusar"
-        severity="danger"
+        styleClass="btn-recusar-modal"
+        [severity]="motivoVazio() ? 'secondary' : 'danger'"
         [loading]="carregando()"
-        [disabled]="motivo().trim().length === 0"
+        [disabled]="motivoVazio()"
         (onClick)="aoConfirmar()"
       />
     </div>

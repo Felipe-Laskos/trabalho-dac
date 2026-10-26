@@ -32,6 +32,41 @@
   font-weight: var(--font-weight-heading);
 }
 
+.page-subtitle,
+.gerado,
+.contagem {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.contagem {
+  font-weight: var(--font-weight-heading);
+  color: var(--color-text);
+}
+
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+
+  i {
+    font-size: 1.5rem;
+    color: var(--color-primary);
+  }
+
+  p {
+    margin: 0 0 var(--spacing-sm);
+    max-width: 28rem;
+    color: var(--color-text-secondary);
+  }
+}
+
 .table-wrapper {
   width: 100%;
   overflow-x: auto;

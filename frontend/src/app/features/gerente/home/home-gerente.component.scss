@@ -55,6 +55,40 @@
   }
 }
 
+.aprovando-faixa {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: calc(var(--spacing-md) * -1);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+
+  i {
+    color: var(--color-primary);
+    font-size: 1.1rem;
+  }
+
+  strong {
+    display: block;
+    color: var(--color-text);
+  }
+
+  p {
+    margin: 2px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+  }
+}
+
+.aprovando-tempo {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .filters-container {
   display: flex;
   gap: var(--spacing-sm);

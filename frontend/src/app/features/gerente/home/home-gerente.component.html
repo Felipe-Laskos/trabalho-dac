@@ -6,10 +6,11 @@
       <h1 class="page-title">Solicitações de abertura</h1>
     </div>
     
-    <p-button 
-      label="Atualizar" 
-      icon="pi pi-refresh" 
+    <p-button
+      label="Atualizar"
+      icon="pi pi-refresh"
       severity="secondary"
+      [outlined]="true"
       [disabled]="carregando()"
       (onClick)="atualizarLista()">
     </p-button>
@@ -29,6 +30,17 @@
       Não aprovadas · {{ totais().naoAprovadas }}
     </button>
   </div>
+
+  @if (aprovando()) {
+    <div class="aprovando-faixa" role="status">
+      <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+      <div>
+        <strong>Aprovando {{ nomeAprovando() }}...</strong>
+        <p>Criando a conta, gerando a senha e disparando o e-mail. A linha atualiza sozinha quando terminar.</p>
+      </div>
+      <span class="aprovando-tempo">{{ segundosAprovando() }}s</span>
+    </div>
+  }
 
   <div class="table-wrapper">
     @if (erro()) {
@@ -100,6 +112,7 @@
                   @if (temRel(row._links, 'aprovacao')) {
                     <p-button
                       label="Aprovar"
+                      size="small"
                       styleClass="btn-aprovar"
                       [disabled]="estaProcessando(row.cpf)"
                       (onClick)="aprovar(row)">
@@ -108,6 +121,9 @@
                   @if (temRel(row._links, 'rejeicao')) {
                     <p-button
                       label="Recusar"
+                      size="small"
+                      severity="danger"
+                      [outlined]="true"
                       styleClass="btn-recusar"
                       [disabled]="estaProcessando(row.cpf)"
                       (onClick)="abrirRecusa(row)">
@@ -123,11 +139,6 @@
       </p-table>
     }
   </div>
-  <app-job-progress
-    [visible]="aprovando() !== null"
-    titulo="Aprovando cliente…"
-  />
-
   <app-async-result
     [visible]="resultado() !== null"
     [status]="resultado()?.status ?? 'SUCESSO'"
@@ -137,6 +148,9 @@
 
   <app-modal-rejection
   [visivel]="recusando() !== null"
+  [titulo]="'Recusar ' + (recusando()?.nome ?? '') + '?'"
+  [cpf]="recusando()?.cpf ?? null"
+  [salario]="recusando()?.salario ?? null"
   [motivo]="motivoRecusa()"
   [carregando]="enviandoRecusa()"
   (motivoAlterado)="motivoRecusa.set($event)"

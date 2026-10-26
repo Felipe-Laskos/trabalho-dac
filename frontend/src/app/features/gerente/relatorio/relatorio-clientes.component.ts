@@ -33,6 +33,7 @@ export class RelatorioClientesComponent {
 
   readonly gerando = signal(false);
   readonly linhas = signal<RelatorioClienteLinha[] | null>(null);
+  readonly geradoEm = signal<string | null>(null);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
 
   async gerar(): Promise<void> {
@@ -52,6 +53,9 @@ export class RelatorioClientesComponent {
 
       const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
       this.linhas.set(clientes);
+      this.geradoEm.set(
+        new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      );
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',

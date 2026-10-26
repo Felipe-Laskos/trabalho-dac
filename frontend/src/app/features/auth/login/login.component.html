@@ -18,7 +18,7 @@
     <div class="benefits">
       <div class="benefit">
         <i class="pi pi-check"></i>
-        <span> Conta completa e fácil de usar</span>
+        <span> Extrato dia a dia, com saldo consolidado</span>
       </div>
 
       <div class="benefit">
@@ -40,13 +40,29 @@
         <p> Use o e-mail e a senha da sua conta BANTADS. </p>
       </div>
 
-    <div class="login-error">
-    @if (hasLoginError()) {
-    <app-message
-      type="error"
-      [message]="mensagemErro()"/>
-    } 
-    </div>
+    @if (sessaoEncerrada()) {
+      <div class="sessao-aviso" role="status">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <div>
+          <strong>Sua sessão terminou</strong>
+          <p>Entre novamente para continuar. Acontece quando a sessão expira ou o acesso é encerrado por um gerente.</p>
+        </div>
+      </div>
+    }
+
+    @if (hasLoginError() && credencialInvalida()) {
+      <div class="erro-credencial" role="alert">
+        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+        <div>
+          <strong>Login inválido</strong>
+          <p>{{ mensagemErro() }}</p>
+        </div>
+      </div>
+    } @else if (hasLoginError()) {
+      <div class="login-error">
+        <app-message type="error" [message]="mensagemErro()" />
+      </div>
+    }
 
       <div class="login-fields">
         <div class="field">

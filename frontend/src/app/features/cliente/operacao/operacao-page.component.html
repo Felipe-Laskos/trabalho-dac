@@ -1,7 +1,15 @@
 <div class="operacao-page">
   <div class="page-header">
-    <span class="role-badge">CLIENTE</span>
-    <h1>{{ textos.titulo }}</h1>
+    <div>
+      <span class="role-badge">
+        Cliente
+        @if (conta(); as contaAtual) {
+          · conta {{ contaAtual.numero }}
+        }
+      </span>
+      <h1>{{ textos.titulo }}</h1>
+      <p class="subtitulo">{{ textos.subtitulo }}</p>
+    </div>
     <a routerLink="/cliente/home" class="voltar">Voltar ao início</a>
   </div>
 
@@ -25,37 +33,66 @@
       <app-message type="empty" [message]="avisoTimeout()" />
     }
 
-    <p-card styleClass="operacao-card">
-      <app-balance-indicator
-        [saldo]="contaAtual.saldo"
-        [atualizando]="atualizandoSaldo()"
-        mensagemAtualizando="Atualizando saldo" />
+    <div class="operacao-grid">
+      <p-card styleClass="operacao-card">
+        <form class="operacao-form" [formGroup]="form">
+          @if (ehTransferencia) {
+            <app-account-number-input
+              label="Conta destino"
+              inputId="conta-destino"
+              placeholder="0950"
+              formControlName="contaDestino" />
+          }
 
-      <form class="operacao-form" [formGroup]="form">
-        @if (ehTransferencia) {
-          <app-account-number-input
-            label="Conta destino"
-            inputId="conta-destino"
-            placeholder="0950"
-            formControlName="contaDestino" />
-        }
+          <app-money-input
+            label="Valor"
+            inputId="valor-operacao"
+            formControlName="valor" />
 
-        <app-money-input
-          label="Valor"
-          inputId="valor-operacao"
-          formControlName="valor" />
+          <p class="disponivel">Disponível hoje: {{ contaAtual.saldo | dinheiro }}</p>
 
-        <p-button
-          [label]="textos.acao"
-          [disabled]="processando() || atualizandoSaldo()"
-          [loading]="processando()"
-          (onClick)="pedirConfirmacao()" />
-      </form>
-    </p-card>
+          <div class="form-actions">
+            <p-button
+              label="Cancelar"
+              severity="secondary"
+              variant="outlined"
+              routerLink="/cliente/home"
+              [disabled]="processando() || atualizandoSaldo()" />
+            <p-button
+              [label]="textos.acao"
+              [disabled]="processando() || atualizandoSaldo()"
+              [loading]="processando()"
+              (onClick)="pedirConfirmacao()" />
+          </div>
+        </form>
+      </p-card>
+
+      <aside class="conta-lateral" [class.atualizando]="saldoEmAtualizacao()">
+        <span class="conta-rotulo">Conta corrente</span>
+        <span class="conta-numero">{{ contaAtual.numero }}</span>
+        <span class="conta-rotulo saldo-rotulo">
+          @if (saldoEmAtualizacao()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i>
+            Atualizando saldo…
+          } @else {
+            Saldo disponível
+          }
+        </span>
+        <strong class="conta-saldo">{{ contaAtual.saldo | dinheiro }}</strong>
+        <p class="conta-nota">
+          Depois de operar, o saldo é reconsultado até mudar — nunca somado aqui na tela.
+        </p>
+      </aside>
+    </div>
   }
 
+  <app-job-progress
+    [visible]="processando()"
+    [titulo]="tituloProcessando()"
+    subtitulo="Não feche esta janela. Assim que a operação registrar, o saldo é reconsultado." />
+
   <app-modal-confirmation
-    [visivel]="modalAberto()"
+    [visivel]="modalAberto() && !processando()"
     [titulo]="'Confirmar ' + textos.titulo.toLowerCase() + '?'"
     [textoConfirmar]="textos.confirmar"
     [carregando]="processando()"

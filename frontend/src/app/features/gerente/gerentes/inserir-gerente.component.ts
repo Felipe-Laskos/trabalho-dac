@@ -10,6 +10,7 @@ import {
 import { Button } from 'primeng/button';
 import { InputMask } from 'primeng/inputmask';
 import { InputText } from 'primeng/inputtext';
+import { Password } from 'primeng/password';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { GerenteService } from '../../../core/services/gerente.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
@@ -30,6 +31,7 @@ import {
     Button,
     InputMask,
     InputText,
+    Password,
     JobProgressComponent,
     AsyncResultComponent,
   ],
