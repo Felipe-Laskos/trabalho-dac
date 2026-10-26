@@ -12,11 +12,15 @@ export function paraAPI(data: DateTime): string {
 }
 
 export function exibirDataHora(iso: string): string {
-  return doISO(iso).toFormat('dd/MM/yyyy HH:mm');
+  const data = doISO(iso);
+
+  return data.isValid ? data.toFormat('dd/MM/yyyy HH:mm') : '\u2014';
 }
 
 export function exibirData(iso: string): string {
-  return doISO(iso).toFormat('dd/MM/yyyy');
+  const data = doISO(iso);
+
+  return data.isValid ? data.toFormat('dd/MM/yyyy') : '\u2014';
 }
 
 export function periodoPadrao(): { inicio: DateTime; fim: DateTime } {

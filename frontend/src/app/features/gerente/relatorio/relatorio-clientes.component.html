@@ -3,48 +3,65 @@
     <div class="header-titles">
       <span class="role-badge">GERENTE</span>
       <h1 class="page-title">Relatório de clientes</h1>
+      <p class="page-subtitle">Todos os clientes com conta e gerente, em ordem de nome. Gerado sob demanda.</p>
     </div>
 
     <p-button
-      label="Gerar relatório"
-      icon="pi pi-chart-bar"
+      severity="secondary"
+      label="Gerar de novo"
+      icon="pi pi-sync"
       [loading]="gerando()"
       [disabled]="gerando()"
       (onClick)="gerar()"
+      styleClass="btn-gerar"
     />
   </div>
 
   @if (gerando()) {
-    <p class="gerando">Gerando relatório…</p>
   }
 
   @if (linhas(); as linhas) {
     @if (linhas.length === 0) {
-      <div class="state-message">Nenhum cliente no relatório.</div>
+      <div class="empty-state">
+        <i class="pi pi-folder-open state-icon"></i>
+        <h3 class="state-title">Nenhum cliente no relatório</h3>
+        <p class="state-subtitle">A busca não retornou nenhum resultado válido.</p>
+      </div>
     } @else {
       <div class="table-wrapper">
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <i class="pi pi-check text-success"></i>
+            <span class="font-label">Gerado às {{ geradoEm() | date:'HH:mm' }}</span>
+            <span class="text-muted">&middot; ordenado por nome do cliente</span>
+          </div>
+          <div class="toolbar-right">
+            <span class="font-text">{{ linhas.length }} clientes</span>
+          </div>
+        </div>
+
         <p-table [value]="linhas" styleClass="bantads-table">
           <ng-template pTemplate="header">
             <tr>
+              <th>Nome <span class="sort-indicator">^</span></th>
               <th>CPF</th>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th class="text-right">Salário</th>
-              <th>Conta</th>
-              <th class="text-right">Saldo</th>
-              <th>CPF do gerente</th>
-              <th>Gerente</th>
+              <th>E-MAIL</th>
+              <th class="text-right">SALÁRIO</th>
+              <th>CONTA</th>
+              <th class="text-right">SALDO</th>
+              <th>CPF DO GERENTE</th>
+              <th>GERENTE</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
-              <td>{{ row.cpf | cpf }}</td>
-              <td>{{ row.nome }}</td>
-              <td>{{ row.email }}</td>
+              <td class="font-label">{{ row.nome }}</td>
+              <td class="text-cpf">{{ row.cpf | cpf }}</td>
+              <td class="text-muted">{{ row.email }}</td>
               <td class="text-right">{{ row.salario | dinheiro }}</td>
-              <td>{{ row.numeroConta }}</td>
-              <td class="text-right">{{ row.saldo | dinheiro }}</td>
-              <td>{{ row.cpfGerente | cpf }}</td>
+              <td class="text-conta">{{ row.numeroConta }}</td>
+              <td class="text-right font-label">{{ row.saldo | dinheiro }}</td>
+              <td class="text-cpf">{{ row.cpfGerente | cpf }}</td>
               <td>{{ row.nomeGerente }}</td>
             </tr>
           </ng-template>
@@ -52,7 +69,11 @@
       </div>
     }
   } @else if (!gerando()) {
-    <p class="state-message">Clique em "Gerar relatório" para listar todos os clientes, com conta, saldo e gerente.</p>
+    <div class="empty-state">
+      <i class="pi pi-file state-icon"></i>
+      <h3 class="state-title">Nenhum relatório gerado</h3>
+      <p class="state-subtitle">Utilize o botão superior para buscar a listagem completa de clientes.</p>
+    </div>
   }
 
   <app-job-progress [visible]="gerando()" titulo="Gerando relatório…" />

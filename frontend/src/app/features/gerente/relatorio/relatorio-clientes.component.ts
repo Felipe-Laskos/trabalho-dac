@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Button } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { RelatorioService } from '../../../core/services/relatorio.service';
@@ -21,11 +22,13 @@ import {
     TableModule,
     CpfPipe,
     DinheiroPipe,
+    DatePipe,
     JobProgressComponent,
     AsyncResultComponent,
   ],
   templateUrl: './relatorio-clientes.component.html',
   styleUrl: './relatorio-clientes.component.scss',
+  encapsulation: ViewEncapsulation.None 
 })
 export class RelatorioClientesComponent {
   private readonly relatorios = inject(RelatorioService);
@@ -33,6 +36,7 @@ export class RelatorioClientesComponent {
 
   readonly gerando = signal(false);
   readonly linhas = signal<RelatorioClienteLinha[] | null>(null);
+  readonly geradoEm = signal<Date | null>(null);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
 
   async gerar(): Promise<void> {
@@ -52,6 +56,7 @@ export class RelatorioClientesComponent {
 
       const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
       this.linhas.set(clientes);
+      this.geradoEm.set(new Date());
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
