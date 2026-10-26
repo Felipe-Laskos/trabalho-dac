@@ -4,6 +4,9 @@ import br.ufpr.dac.grupo2.cliente.dto.ClienteResumoDTO;
 import br.ufpr.dac.grupo2.cliente.dto.EnderecoDTO;
 import br.ufpr.dac.grupo2.cliente.dto.response.ClienteResponseDTO;
 import br.ufpr.dac.grupo2.cliente.model.Cliente;
+import br.ufpr.dac.grupo2.cliente.model.ComandoProcessado;
+import br.ufpr.dac.grupo2.cliente.model.ComandoProcessadoId;
+import br.ufpr.dac.grupo2.cliente.model.Solicitacao;
 import br.ufpr.dac.grupo2.cliente.repository.ClienteRepository;
 import br.ufpr.dac.grupo2.cliente.repository.SolicitacaoRepository;
 import br.ufpr.dac.grupo2.cliente.repository.ComandosProcessadosRepository;
@@ -11,8 +14,11 @@ import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.dto.ResultadoSaga;
 
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,6 +29,11 @@ import java.time.LocalDateTime;
 
 @Service
 public class ClienteService {
+
+    private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
+
+    private static final String APROVAR = "aprovar-solicitacao";
+    private static final String CRIAR = "criar-cliente";
 
     private final ClienteRepository clienteRepository;
     private final SolicitacaoRepository solicitacaoRepository;
@@ -216,6 +227,131 @@ public class ClienteService {
         } catch (Exception e) {
             return registrarFalha(cmd, "Erro interno ao buscar clientes: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public ResultadoSaga aprovarSolicitacao(MensagemSaga cmd, String cpf) {
+        try {
+            Solicitacao solicitacao = solicitacaoRepository.findById(cpf).orElse(null);
+            if (solicitacao == null) {
+                return registrarFalha(cmd, "Solicitação não encontrada");
+            }
+
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (!comandosProcessadosRepository.existsById(chave)) {
+                if (!"PENDENTE".equals(solicitacao.getStatus())) {
+                    return registrarFalha(cmd, "Esta solicitação já foi processada");
+                }
+
+                solicitacao.setStatus("APROVADA");
+                solicitacao.setMotivo(null);
+                solicitacao.setDataHoraProcessamento(LocalDateTime.now());
+                solicitacaoRepository.saveAndFlush(solicitacao);
+                comandosProcessadosRepository.saveAndFlush(new ComandoProcessado(chave, LocalDateTime.now()));
+            }
+
+            return sucesso(cmd, Map.of("nome", solicitacao.getNome(), "email", solicitacao.getEmail()));
+
+        } catch (RuntimeException e) {
+            return falhaInterna(cmd, cpf, e);
+        }
+    }
+
+    @Transactional
+    public ResultadoSaga compensarAprovarSolicitacao(MensagemSaga cmd, String cpf) {
+        try {
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (!comandosProcessadosRepository.existsById(chave)) {
+                if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), APROVAR))) {
+                    solicitacaoRepository.findById(cpf).ifPresent(s -> devolver(s, cmd.texto("motivoRecusa")));
+                }
+                comandosProcessadosRepository.saveAndFlush(new ComandoProcessado(chave, LocalDateTime.now()));
+            }
+
+            return sucesso(cmd, Map.of("cpf", cpf));
+
+        } catch (RuntimeException e) {
+            return falhaInterna(cmd, cpf, e);
+        }
+    }
+
+    private void devolver(Solicitacao solicitacao, String motivoRecusa) {
+        if (motivoRecusa != null && !motivoRecusa.isBlank()) {
+            solicitacao.setStatus("NAO_APROVADA");
+            solicitacao.setMotivo(motivoRecusa);
+            solicitacao.setDataHoraProcessamento(LocalDateTime.now());
+        } else {
+            solicitacao.setStatus("PENDENTE");
+            solicitacao.setMotivo(null);
+            solicitacao.setDataHoraProcessamento(null);
+        }
+        solicitacaoRepository.saveAndFlush(solicitacao);
+    }
+
+    @Transactional
+    public ResultadoSaga criarCliente(MensagemSaga cmd, String cpf) {
+        try {
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (comandosProcessadosRepository.existsById(chave)) {
+                return sucesso(cmd, Map.of());
+            }
+
+            Solicitacao s = solicitacaoRepository.findById(cpf).orElse(null);
+            if (s == null) {
+                return registrarFalha(cmd, "Solicitação não encontrada");
+            }
+            if (clienteRepository.existsById(cpf)) {
+                return registrarFalha(cmd, "CPF já cadastrado");
+            }
+            if (clienteRepository.existsByEmail(s.getEmail())) {
+                return recusar(cmd, "E-mail já cadastrado");
+            }
+
+            clienteRepository.saveAndFlush(new Cliente(s.getCpf(), s.getNome(), s.getEmail(), s.getTelefone(),
+                    s.getSalario(), s.getLogradouro(), s.getNumero(), s.getComplemento(), s.getCep(),
+                    s.getCidade(), s.getUf()));
+            comandosProcessadosRepository.saveAndFlush(new ComandoProcessado(chave, LocalDateTime.now()));
+
+            return sucesso(cmd, Map.of());
+
+        } catch (RuntimeException e) {
+            return falhaInterna(cmd, cpf, e);
+        }
+    }
+
+    @Transactional
+    public ResultadoSaga compensarCriarCliente(MensagemSaga cmd, String cpf) {
+        try {
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
+            if (!comandosProcessadosRepository.existsById(chave)) {
+                if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), CRIAR))) {
+                    clienteRepository.deleteById(cpf);
+                    clienteRepository.flush();
+                }
+                comandosProcessadosRepository.saveAndFlush(new ComandoProcessado(chave, LocalDateTime.now()));
+            }
+
+            return sucesso(cmd, Map.of("cpf", cpf));
+
+        } catch (RuntimeException e) {
+            return falhaInterna(cmd, cpf, e);
+        }
+    }
+
+    private ResultadoSaga falhaInterna(MensagemSaga cmd, String cpf, RuntimeException e) {
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        log.error("sagaId={} tipo={} cpf={} falhou", cmd.sagaId(), cmd.tipo(), cpf, e);
+        return registrarFalha(cmd, "Erro interno no MS Cliente ao processar " + cmd.tipo());
+    }
+
+    private ResultadoSaga recusar(MensagemSaga cmd, String motivo) {
+        return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                LocalDateTime.now().toString(), Map.of("motivoRecusa", motivo), "FALHA", motivo));
+    }
+
+    private ResultadoSaga sucesso(MensagemSaga cmd, Map<String, Object> payload) {
+        return new ResultadoSaga(new ResultadoSaga.Resposta(cmd.sagaId(), cmd.tipo(),
+                LocalDateTime.now().toString(), payload, "SUCESSO", null));
     }
 
     public ResultadoSaga registrarFalha(MensagemSaga cmd, String mensagemErro) {
