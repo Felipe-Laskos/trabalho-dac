@@ -3,6 +3,7 @@ package br.ufpr.dac.grupo2.cliente.messaging.listener;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import br.ufpr.dac.grupo2.cliente.dto.MensagemSaga;
 import br.ufpr.dac.grupo2.cliente.messaging.config.SagaRabbitConfig;
@@ -48,10 +49,22 @@ public class ClienteSagaListener {
 
         ResultadoSaga resultado = switch (cmd.tipo()) {
             case "obter-clientes-por-cpf" -> clientePorCpf(cmd);
+            case "aprovar-solicitacao" -> comCpf(cmd, command::aprovarSolicitacao);
+            case "compensar-aprovar-solicitacao" -> comCpf(cmd, command::compensarAprovarSolicitacao);
+            case "criar-cliente" -> comCpf(cmd, command::criarCliente);
+            case "compensar-criar-cliente" -> comCpf(cmd, command::compensarCriarCliente);
             default -> command.registrarFalha(cmd, "Comando não suportado pelo MS Cliente: " + cmd.tipo());
         };
 
         publisher.publicar(SagaMessagePublisher.FILA_RESPOSTAS, resultado.resposta());
+    }
+
+    private ResultadoSaga comCpf(MensagemSaga cmd, BiFunction<MensagemSaga, String, ResultadoSaga> acao) {
+        String cpf = cmd.texto("cpf");
+        if (cpf == null || !cpf.matches("[0-9]{11}")) {
+            return command.registrarFalha(cmd, "Payload deve conter um CPF válido no campo 'cpf'");
+        }
+        return acao.apply(cmd, cpf);
     }
 
     private ResultadoSaga clientePorCpf(MensagemSaga cmd) {

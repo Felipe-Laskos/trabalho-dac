@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../../core/services/api.service';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
@@ -17,8 +17,6 @@ import { MessageComponent } from '../../../shared/components/message/message.com
 import { ModalRejectionComponent } from '../../../shared/components/modal-rejection/modal-rejection.component';
 
 import { AsyncResultComponent, AsyncResultStatus } from '../../../shared/components/async-result/async-result.component';
-import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
-
 import type { Solicitacao, StatusSolicitacao } from '../../../core/models/solicitacao.model';
 import { caminhoDoHref, temRel } from '../../../shared/util/hateoas.util';
 
@@ -38,13 +36,12 @@ type Filtro = 'TODAS' | StatusSolicitacao;
     LoadingComponent,
     MessageComponent,
     AsyncResultComponent,
-    JobProgressComponent,
     ModalRejectionComponent
   ],
   templateUrl: './home-gerente.component.html',
   styleUrls: ['./home-gerente.component.scss'],
 })
-export class HomeGerenteComponent implements OnInit {
+export class HomeGerenteComponent implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly jobService = inject(JobService);
   private readonly solicitacaoService = inject(SolicitacaoService);
@@ -52,6 +49,13 @@ export class HomeGerenteComponent implements OnInit {
   private readonly solicitacoesProcessando = signal<ReadonlySet<string>>(new Set());
 
   readonly aprovando = signal<string | null>(null);
+  readonly segundosAprovando = signal(0);
+  private cronometro: ReturnType<typeof setInterval> | null = null;
+
+  readonly nomeAprovando = computed(() => {
+    const cpf = this.aprovando();
+    return this.solicitacoes().find((item) => item.cpf === cpf)?.nome ?? '';
+  });
 
   readonly resultado = signal<{
     status: AsyncResultStatus;
@@ -117,6 +121,7 @@ export class HomeGerenteComponent implements OnInit {
     this.resultado.set(null);
     this.marcarProcessando(solicitacao.cpf, true);
     this.aprovando.set(solicitacao.cpf);
+    this.iniciarCronometro();
 
     try {
       const job = await this.api.post<Job>(caminhoDoHref(href));
@@ -141,9 +146,29 @@ export class HomeGerenteComponent implements OnInit {
         mensagem: mensagemDeErro(erro),
       });
     } finally {
+      this.pararCronometro();
       this.marcarProcessando(solicitacao.cpf, false);
       this.aprovando.set(null);
       await this.carregarLista(true);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.pararCronometro();
+  }
+
+  private iniciarCronometro(): void {
+    this.pararCronometro();
+    this.segundosAprovando.set(0);
+    this.cronometro = setInterval(() => {
+      this.segundosAprovando.update((segundos) => segundos + 1);
+    }, 1000);
+  }
+
+  private pararCronometro(): void {
+    if (this.cronometro) {
+      clearInterval(this.cronometro);
+      this.cronometro = null;
     }
   }
 

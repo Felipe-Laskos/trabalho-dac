@@ -1,95 +1,153 @@
 <div class="page-container">
   <div class="header-section">
     <div class="header-titles">
-      <a class="voltar" routerLink="/gerente/gerentes">Gerentes</a>
-      <h1 class="page-title">Inserir gerente</h1>
+      <p class="trilha">
+        <a routerLink="/gerente/gerentes">Gerentes</a>
+        <i class="pi pi-angle-right" aria-hidden="true"></i>
+        <span>Novo</span>
+      </p>
+      <h1 class="page-title">Novo gerente</h1>
+      <p class="page-subtitle">
+        A senha é definida aqui. O cadastro roda em segundo plano e a tela avisa quando terminar.
+      </p>
     </div>
+    <a class="voltar" routerLink="/gerente/gerentes">
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      Voltar para gerentes
+    </a>
   </div>
 
-  <form class="form-card" [formGroup]="form" (ngSubmit)="enviar()">
-    <div class="field">
-      <label for="nome">Nome completo <span>*</span></label>
-      <input pInputText id="nome" formControlName="nome" autocomplete="name" fluid />
-      @if (campoComErro('nome', 'required')) {
-        <small class="field-error">Nome completo é obrigatório.</small>
-      }
-    </div>
+  <div class="layout">
+    <form class="form-card" [formGroup]="form" (ngSubmit)="enviar()">
+      <div class="duas-colunas">
+        <div class="field">
+          <label for="cpf">CPF <span>*</span></label>
+          <p-inputmask
+            id="cpf"
+            formControlName="cpf"
+            mask="999.999.999-99"
+            placeholder="111.222.333-44"
+            [autoClear]="false"
+            fluid
+          />
+          <small>Só o formato é validado, sem dígito verificador.</small>
+          @if (campoComErro('cpf', 'required')) {
+            <small class="field-error">CPF é obrigatório.</small>
+          }
+          @if (campoComErro('cpf', 'quantidadeDigitos')) {
+            <small class="field-error">CPF deve possuir 11 dígitos.</small>
+          }
+        </div>
 
-    <div class="field">
-      <label for="cpf">CPF <span>*</span></label>
-      <p-inputmask
-        id="cpf"
-        formControlName="cpf"
-        mask="999.999.999-99"
-        placeholder="111.222.333-44"
-        [autoClear]="false"
-        fluid
-      />
-      @if (campoComErro('cpf', 'required')) {
-        <small class="field-error">CPF é obrigatório.</small>
-      }
-      @if (campoComErro('cpf', 'quantidadeDigitos')) {
-        <small class="field-error">CPF deve possuir 11 dígitos.</small>
-      }
-    </div>
+        <div class="field">
+          <label for="nome">Nome <span>*</span></label>
+          <input pInputText id="nome" formControlName="nome" autocomplete="name" fluid />
+          <small>Como aparece na listagem e no relatório.</small>
+          @if (campoComErro('nome', 'required')) {
+            <small class="field-error">Nome é obrigatório.</small>
+          }
+        </div>
+      </div>
 
-    <div class="field">
-      <label for="email">E-mail <span>*</span></label>
-      <input pInputText id="email" type="email" formControlName="email" autocomplete="off" fluid />
-      <small>Este será o login do gerente.</small>
-      @if (campoComErro('email', 'required')) {
-        <small class="field-error">E-mail é obrigatório.</small>
-      }
-      @if (campoComErro('email', 'email')) {
-        <small class="field-error">Informe um e-mail válido.</small>
-      }
-    </div>
+      <div class="duas-colunas contato">
+        <div class="field">
+          <label for="email">E-mail <span>*</span></label>
+          <input pInputText id="email" type="email" formControlName="email" autocomplete="off" fluid />
+          <small>Vira o login. Se já existir, a falha chega pelo job, depois do envio.</small>
+          @if (campoComErro('email', 'required')) {
+            <small class="field-error">E-mail é obrigatório.</small>
+          }
+          @if (campoComErro('email', 'email')) {
+            <small class="field-error">Informe um e-mail válido.</small>
+          }
+        </div>
 
-    <div class="field">
-      <label for="telefone">Telefone <span>*</span></label>
-      <p-inputmask
-        id="telefone"
-        formControlName="telefone"
-        mask="(99) 99999-9999"
-        placeholder="(41) 99999-0000"
-        fluid
-      />
-      @if (campoComErro('telefone', 'required')) {
-        <small class="field-error">Telefone é obrigatório.</small>
-      }
-      @if (campoComErro('telefone', 'quantidadeDigitosEntre')) {
-        <small class="field-error">Telefone inválido.</small>
-      }
-    </div>
+        <div class="field">
+          <label for="telefone">Telefone <span>*</span></label>
+          <p-inputmask
+            id="telefone"
+            formControlName="telefone"
+            mask="(99) 99999-9999"
+            placeholder="(43) 99999-9995"
+            fluid
+          />
+          @if (campoComErro('telefone', 'required')) {
+            <small class="field-error">Telefone é obrigatório.</small>
+          }
+          @if (campoComErro('telefone', 'quantidadeDigitosEntre')) {
+            <small class="field-error">Telefone inválido.</small>
+          }
+        </div>
+      </div>
 
-    <div class="field">
-      <label for="senha">Senha <span>*</span></label>
-      <input
-        pInputText
-        id="senha"
-        type="password"
-        formControlName="senha"
-        autocomplete="new-password"
-        fluid
-      />
-      <small>A senha é definida aqui e não é enviada por e-mail.</small>
-      @if (campoComErro('senha', 'required')) {
-        <small class="field-error">Senha é obrigatória.</small>
-      }
-    </div>
+      <div class="field field-senha">
+        <label for="senha">Senha <span>*</span></label>
+        <p-password
+          inputId="senha"
+          formControlName="senha"
+          [feedback]="false"
+          [toggleMask]="true"
+          autocomplete="new-password"
+          fluid
+        />
+        <small>Informada aqui, não é enviada por e-mail.</small>
+        @if (campoComErro('senha', 'required')) {
+          <small class="field-error">Senha é obrigatória.</small>
+        }
+      </div>
 
-    <div class="form-actions">
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        variant="outlined"
-        routerLink="/gerente/gerentes"
-        [disabled]="enviando()"
-      />
-      <p-button type="submit" label="Cadastrar gerente" [loading]="enviando()" [disabled]="enviando()" />
-    </div>
-  </form>
+      <div class="form-actions">
+        @if (tentouEnviar() && form.invalid) {
+          <span class="obrigatorios erro">Corrija os campos destacados</span>
+        } @else {
+          <span class="obrigatorios">Todos os campos são obrigatórios.</span>
+        }
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          variant="outlined"
+          routerLink="/gerente/gerentes"
+          [disabled]="enviando()"
+        />
+        <p-button
+          type="submit"
+          label="Cadastrar gerente"
+          icon="pi pi-user-plus"
+          [loading]="enviando()"
+          [disabled]="enviando()"
+        />
+      </div>
+    </form>
+
+    <aside class="passos">
+      <h2>O que acontece ao cadastrar</h2>
+      <ol>
+        <li>
+          <span class="numero">1</span>
+          <div>
+            <strong>Cria o gerente</strong>
+            <span>MS Gerente grava os dados.</span>
+          </div>
+        </li>
+        <li>
+          <span class="numero">2</span>
+          <div>
+            <strong>Cria o login</strong>
+            <span>MS Auth grava o e-mail único.</span>
+          </div>
+        </li>
+        <li>
+          <span class="numero">3</span>
+          <div>
+            <strong>Redistribui contas</strong>
+            <span>Recolhe 1 conta do gerente com mais contas, se ele tiver mais de uma, e o cliente é avisado por e-mail.</span>
+          </div>
+        </li>
+      </ol>
+      <p>O envio volta 202 na hora; o resto acontece em segundo plano.</p>
+    </aside>
+  </div>
 
   <app-job-progress [visible]="enviando()" titulo="Cadastrando gerente…" />
 

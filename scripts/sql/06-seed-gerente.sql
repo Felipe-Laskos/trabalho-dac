@@ -1,3 +1,4 @@
+-- 06: carrega os quatro gerentes do seed; executar apos 05-seed-cliente.sql.
 INSERT INTO gerente.gerentes (cpf, nome, email, telefone, ativo) VALUES 
 ('98574307084', 'Geniéve', 'ger1@bantads.com.br', '41999999999', TRUE), 
 ('64065268052', 'Godophredo', 'ger2@bantads.com.br', '41998999999', TRUE), 

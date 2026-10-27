@@ -1,4 +1,4 @@
---- SCHEMA CLIENTE
+-- 02: cria as tabelas do schema cliente; executar apos 01-schemas.sql.
 
 CREATE TABLE IF NOT EXISTS cliente.clientes (
     cpf VARCHAR(11) PRIMARY KEY,

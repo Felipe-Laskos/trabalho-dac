@@ -1,7 +1,7 @@
 package br.ufpr.dac.grupo2.conta.admin.controller;
 
 import br.ufpr.dac.grupo2.conta.admin.dto.AppendEventoRequest;
-import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
+import br.ufpr.dac.grupo2.conta.admin.dto.ReplayContaDTO;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.service.ContaCommandService;
 import br.ufpr.dac.grupo2.conta.command.service.ReprojecaoService;
@@ -45,14 +45,14 @@ public class AdminEventoController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(EventoPublicado.de(evento));
+                .body(EventoPublicado.deParaApi(evento));
     }
 
     @GetMapping("/replay/{numero}")
-    public ResponseEntity<EstadoConta> replay(
+    public ResponseEntity<ReplayContaDTO> replay(
             @PathVariable String numero) {
         return ResponseEntity.ok(
-                contaCommandService.replay(numero)
+                ReplayContaDTO.de(contaCommandService.replay(numero))
         );
     }
 

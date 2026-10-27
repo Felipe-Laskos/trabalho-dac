@@ -1,12 +1,15 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { Button } from 'primeng/button';
 import { Textarea } from 'primeng/textarea';
+import type { Dinheiro } from '../../../core/models/dinheiro';
+import { CpfPipe } from '../../pipes/cpf.pipe';
+import { DinheiroPipe } from '../../pipes/dinheiro.pipe';
 
 @Component({
   selector: 'app-modal-rejection',
   standalone: true,
-  imports: [Dialog, Button, Textarea],
+  imports: [Dialog, Button, Textarea, CpfPipe, DinheiroPipe],
   templateUrl: './modal-rejection.component.html',
   styleUrl: './modal-rejection.component.scss',
 })
@@ -15,10 +18,14 @@ export class ModalRejectionComponent {
   readonly visivel = input<boolean>(false);
   readonly titulo = input<string>('Recusar solicitação');
   readonly subtitulo = input<string>(
-    'Informe o motivo da recusa para o cliente.'
+    'A recusa é imediata (200). A solicitação passa a Não aprovada e os botões somem da linha.',
   );
+  readonly cpf = input<string | null>(null);
+  readonly salario = input<Dinheiro | null>(null);
   readonly motivo = input<string>('');
   readonly carregando = input<boolean>(false);
+
+  protected readonly motivoVazio = computed(() => this.motivo().trim().length === 0);
 
   readonly confirmar = output<void>();
   readonly cancelar = output<void>();

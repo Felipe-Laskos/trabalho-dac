@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 
 import { Gerente } from '../../../core/models/gerente.model';
 import type { ResultadoRemocaoGerente } from '../../../core/models/job.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { GerenteService } from '../../../core/services/gerente.service';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
@@ -37,6 +38,7 @@ import {
   styleUrl: './lista-gerentes.component.scss',
 })
 export class ListaGerentesComponent implements OnInit {
+  private readonly auth = inject(AuthService);
   private readonly gerenteService = inject(GerenteService);
   private readonly jobs = inject(JobService);
   private readonly router = inject(Router);
@@ -47,6 +49,10 @@ export class ListaGerentesComponent implements OnInit {
   readonly erro = signal<string | null>(null);
   readonly removendo = signal(false);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
+
+  protected ehGerenteLogado(cpf: string): boolean {
+    return this.auth.usuario()?.cpf === cpf;
+  }
 
   ngOnInit(): void {
     const estado = history.state as { aguardarProjecao?: boolean } | null;

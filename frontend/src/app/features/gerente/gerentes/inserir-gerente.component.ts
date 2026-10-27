@@ -10,6 +10,7 @@ import {
 import { Button } from 'primeng/button';
 import { InputMask } from 'primeng/inputmask';
 import { InputText } from 'primeng/inputtext';
+import { Password } from 'primeng/password';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { GerenteService } from '../../../core/services/gerente.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
@@ -30,6 +31,7 @@ import {
     Button,
     InputMask,
     InputText,
+    Password,
     JobProgressComponent,
     AsyncResultComponent,
   ],
@@ -43,6 +45,7 @@ export class InserirGerenteComponent {
   private readonly router = inject(Router);
 
   protected readonly enviando = signal(false);
+  readonly tentouEnviar = signal(false);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(
     null,
   );
@@ -63,7 +66,9 @@ export class InserirGerenteComponent {
   async enviar(): Promise<void> {
     if (this.enviando()) return;
 
+    this.tentouEnviar.set(true);
     this.form.markAllAsTouched();
+    Object.values(this.form.controls).forEach((controle) => controle.markAsDirty());
     this.resultado.set(null);
     if (this.form.invalid) return;
 

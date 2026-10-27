@@ -36,8 +36,8 @@ final class Bancada {
 
 	final ObjectMapper json = JsonMapper.builder().build();
 	final Estados estados = new Estados(json);
-	final Jobs jobs = new Jobs();
 	final Cache cache = new Cache();
+	final Jobs jobs = new Jobs(cache);
 	final Fila fila = new Fila(json);
 	final SenhasEmTransito senhas = new SenhasEmTransito();
 	final OrquestradorSaga orquestrador;
@@ -131,28 +131,30 @@ final class Bancada {
 	static final class Jobs extends JobRepository {
 
 		record Desfecho(String jobId, String status, String dominio, String resourceId,
-				Map<String, Object> resultado, String erro) {
+				Map<String, Object> resultado, String erro, List<String> cacheJaInvalidado) {
 		}
 
 		final List<Desfecho> desfechos = new ArrayList<>();
+		private final Cache cache;
 
-		Jobs() {
+		Jobs(Cache cache) {
 			super(null, null);
+			this.cache = cache;
 		}
 
 		@Override
 		public void concluir(String jobId, String dominio, String resourceId) {
-			desfechos.add(new Desfecho(jobId, "CONCLUIDO", dominio, resourceId, null, null));
+			desfechos.add(new Desfecho(jobId, "CONCLUIDO", dominio, resourceId, null, null, List.copyOf(cache.invalidadas)));
 		}
 
 		@Override
 		public void concluirInline(String jobId, Map<String, Object> resultado) {
-			desfechos.add(new Desfecho(jobId, "CONCLUIDO", null, null, resultado, null));
+			desfechos.add(new Desfecho(jobId, "CONCLUIDO", null, null, resultado, null, List.copyOf(cache.invalidadas)));
 		}
 
 		@Override
 		public void falhar(String jobId, String erro) {
-			desfechos.add(new Desfecho(jobId, "FALHA", null, null, null, erro));
+			desfechos.add(new Desfecho(jobId, "FALHA", null, null, null, erro, List.copyOf(cache.invalidadas)));
 		}
 
 		Desfecho unico() {

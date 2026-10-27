@@ -1,5 +1,7 @@
 package br.ufpr.dac.grupo2.conta.command.dto;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -23,7 +25,7 @@ public record OperacaoRealizada(
                 evento.getObjetoId(),
                 tipoResposta,
                 evento.getTimestamp(),
-                valor,
+                new BigDecimal(valor).setScale(2, RoundingMode.HALF_UP).toPlainString(),
                 destino,
                 Map.of(
                         "conta", Map.of(

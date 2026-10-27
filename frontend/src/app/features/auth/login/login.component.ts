@@ -28,6 +28,8 @@ export class LoginComponent {
   private readonly rota = inject(ActivatedRoute);
 
   protected readonly hasLoginError = signal(false);
+  protected readonly credencialInvalida = signal(false);
+  protected readonly sessaoEncerrada = signal(false);
   protected readonly isLoading = signal(false);
   protected readonly emailValue = signal('');
   protected readonly passwordValue = signal('');
@@ -37,8 +39,7 @@ export class LoginComponent {
 
   constructor() {
     if (this.rota.snapshot.queryParamMap.get('expirou')) {
-      this.hasLoginError.set(true);
-      this.mensagemErro.set('Sua sessão expirou. Entre novamente.');
+      this.sessaoEncerrada.set(true);
     }
   }
 
@@ -68,10 +69,15 @@ export class LoginComponent {
 
   esconderErro(): void {
     this.hasLoginError.set(false);
+    this.credencialInvalida.set(false);
   }
 
   private falhou(mensagem: string): void {
+    const credencial = /login inválido/i.test(mensagem);
     this.hasLoginError.set(true);
-    this.mensagemErro.set(mensagem);
+    this.credencialInvalida.set(credencial);
+    this.mensagemErro.set(
+      credencial ? 'Confira o e-mail e a senha e tente de novo.' : mensagem,
+    );
   }
 }

@@ -15,7 +15,7 @@ services:
       - ./scripts/sql:/docker-entrypoint-initdb.d:ro
     networks: [bantads]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bantads"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d bantads"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +32,7 @@ services:
       - ./scripts/mongo:/docker-entrypoint-initdb.d:ro
     networks: [bantads]
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ["CMD", "mongosh", "--quiet", "--host", "mongo", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -96,7 +96,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   ms-orquestrador:
     build:
@@ -119,7 +119,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   ms-email:
     build:
@@ -141,7 +141,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   ms-cliente:
     build:
@@ -165,7 +165,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   ms-gerente:
     build:
@@ -181,13 +181,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks: [bantads]
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8080/health || wget -qO- http://127.0.0.1:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   ms-conta:
     build:
@@ -214,7 +216,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   # Gateway
 
