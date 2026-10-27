@@ -28,4 +28,6 @@ public interface ClienteRepository extends JpaRepository<Cliente, String> {
     List<Cliente> buscarOrdenado(@Param("busca") String busca);
 
     List<Cliente> findByCpfIn(Collection<String> cpfs);
+
+    boolean existsByEmail(String email);
 }
