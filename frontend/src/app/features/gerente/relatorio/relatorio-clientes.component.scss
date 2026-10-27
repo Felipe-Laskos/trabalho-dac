@@ -92,9 +92,9 @@
     }
   }
 
-  table.bantads-table,
+    table.bantads-table,
   .bantads-table {
-    .p-datatable-thead > tr > th {
+    th {
       background: var(--color-background);
       color: var(--color-text-secondary);
       font-size: 11px;
@@ -113,7 +113,7 @@
         border: none;
         background: var(--color-surface);
       }
-      
+
       &:nth-child(even) > td {
         background: var(--color-background);
       }

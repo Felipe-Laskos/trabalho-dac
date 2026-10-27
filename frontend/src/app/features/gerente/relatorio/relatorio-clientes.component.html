@@ -7,9 +7,9 @@
     </div>
 
     <p-button
-      severity="secondary"
-      label="Gerar de novo"
-      icon="pi pi-sync"
+      [severity]="linhas() ? 'secondary' : 'primary'"
+      [label]="linhas() ? 'Gerar de novo' : 'Gerar relatório'"
+      [icon]="linhas() ? 'pi pi-sync' : 'pi pi-chart-bar'"
       [loading]="gerando()"
       [disabled]="gerando()"
       (onClick)="gerar()"
@@ -25,14 +25,14 @@
       <div class="empty-state">
         <i class="pi pi-folder-open state-icon"></i>
         <h3 class="state-title">Nenhum cliente no relatório</h3>
-        <p class="state-subtitle">A busca não retornou nenhum resultado válido.</p>
+        <p class="state-subtitle">Ainda não há clientes com conta no banco.</p>
       </div>
     } @else {
       <div class="table-wrapper">
         <div class="table-toolbar">
           <div class="toolbar-left">
             <i class="pi pi-check text-success"></i>
-            <span class="font-label">Gerado às {{ geradoEm() | date:'HH:mm' }}</span>
+            <span class="font-label">Gerado às {{ geradoEm() }}</span>
             <span class="text-muted">&middot; ordenado por nome do cliente</span>
           </div>
           <div class="toolbar-right">
@@ -55,12 +55,12 @@
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
-              <td class="font-label">{{ row.nome }}</td>
+              <td class="font-text">{{ row.nome }}</td>
               <td class="text-cpf">{{ row.cpf | cpf }}</td>
               <td class="text-muted">{{ row.email }}</td>
               <td class="text-right">{{ row.salario | dinheiro }}</td>
               <td class="text-conta">{{ row.numeroConta }}</td>
-              <td class="text-right font-label">{{ row.saldo | dinheiro }}</td>
+              <td class="text-right font-text">{{ row.saldo | dinheiro }}</td>
               <td class="text-cpf">{{ row.cpfGerente | cpf }}</td>
               <td>{{ row.nomeGerente }}</td>
             </tr>
