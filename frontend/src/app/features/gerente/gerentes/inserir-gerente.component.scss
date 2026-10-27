@@ -145,6 +145,10 @@
   font-size: 13px;
 }
 
+.obrigatorios.erro {
+  color: var(--color-error);
+}
+
 @media (max-width: 800px) {
   .layout {
     flex-direction: column;

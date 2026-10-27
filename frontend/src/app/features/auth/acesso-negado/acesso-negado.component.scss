@@ -1,6 +1,13 @@
+:host {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--spacing-lg);
+}
+
 .caixa {
   max-width: 32rem;
-  margin: var(--spacing-xl) auto;
+  margin: 0 auto;
   padding: var(--spacing-xl);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -18,6 +25,10 @@
   background: #fde8e8;
   color: var(--color-error);
   font-size: 1.5rem;
+}
+
+.icone .pi {
+  font-size: 1.75rem;
 }
 
 .codigo {
@@ -44,12 +55,6 @@ p {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-md);
-}
-
-.secundario {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-heading);
 }
 
 .nota {

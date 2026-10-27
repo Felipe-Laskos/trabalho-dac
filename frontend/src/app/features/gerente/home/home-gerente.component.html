@@ -114,7 +114,7 @@
                       label="Aprovar"
                       size="small"
                       styleClass="btn-aprovar"
-                      [disabled]="estaProcessando(row.cpf)"
+                      [disabled]="estaProcessando(row.cpf) || aprovando() !== null"
                       (onClick)="aprovar(row)">
                     </p-button>
                   }

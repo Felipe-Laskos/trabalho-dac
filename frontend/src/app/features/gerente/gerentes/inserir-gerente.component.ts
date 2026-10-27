@@ -45,6 +45,7 @@ export class InserirGerenteComponent {
   private readonly router = inject(Router);
 
   protected readonly enviando = signal(false);
+  readonly tentouEnviar = signal(false);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(
     null,
   );
@@ -65,7 +66,9 @@ export class InserirGerenteComponent {
   async enviar(): Promise<void> {
     if (this.enviando()) return;
 
+    this.tentouEnviar.set(true);
     this.form.markAllAsTouched();
+    Object.values(this.form.controls).forEach((controle) => controle.markAsDirty());
     this.resultado.set(null);
     if (this.form.invalid) return;
 

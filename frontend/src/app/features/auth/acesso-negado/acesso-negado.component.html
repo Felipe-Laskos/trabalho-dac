@@ -14,9 +14,10 @@
     <p-button
       label="Sair e entrar com outra conta"
       icon="pi pi-sign-out"
-      severity="danger"
+      severity="secondary"
+      [outlined]="true"
       (onClick)="sair()" />
-    <a [routerLink]="inicio" class="secundario">Ir para o meu início</a>
+    <p-button label="Ir para o meu início" icon="pi pi-home" [routerLink]="inicio" />
   </div>
 
   <p class="nota">O link pode ter sido aberto de outra sessão. Nada foi alterado.</p>

@@ -130,34 +130,6 @@
   letter-spacing: 1px;
 }
 
-.manager-card {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--spacing-md);
-  background: var(--color-background);
-  border-radius: var(--border-radius);
-}
-
-.manager-label {
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: var(--font-weight-label);
-  letter-spacing: 1px;
-}
-
-.manager-name {
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: var(--font-weight-label);
-}
-
-.manager-email {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-}
-
 .app-menu {
   width: 100%;
 }

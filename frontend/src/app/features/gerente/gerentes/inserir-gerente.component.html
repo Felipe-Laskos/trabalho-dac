@@ -97,7 +97,11 @@
       </div>
 
       <div class="form-actions">
-        <span class="obrigatorios">Todos os campos são obrigatórios.</span>
+        @if (tentouEnviar() && form.invalid) {
+          <span class="obrigatorios erro">Corrija os campos destacados</span>
+        } @else {
+          <span class="obrigatorios">Todos os campos são obrigatórios.</span>
+        }
         <p-button
           type="button"
           label="Cancelar"

@@ -255,6 +255,19 @@
   background: var(--color-border);
 }
 
+:host ::ng-deep .btn-abrir-conta.p-button {
+  --p-button-outlined-primary-color: var(--color-primary);
+  --p-button-outlined-primary-border-color: var(--color-primary);
+  --p-button-outlined-primary-hover-background: #e7eef0;
+  --p-button-outlined-primary-active-background: #d5e2e5;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+:host ::ng-deep .btn-abrir-conta.p-button .p-button-label {
+  color: var(--color-primary);
+}
+
 .account-info {
   margin: var(--spacing-md) 0 0;
 

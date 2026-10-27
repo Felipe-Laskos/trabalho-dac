@@ -49,7 +49,11 @@
             inputId="valor-operacao"
             formControlName="valor" />
 
-          <p class="disponivel">Disponível hoje: {{ contaAtual.saldo | dinheiro }}</p>
+          @if (tipo === 'DEPOSITO') {
+            <p class="disponivel">Entra na sua conta, a {{ contaAtual.numero }}. Depósito só na própria conta.</p>
+          } @else {
+            <p class="disponivel">{{ ehTransferencia ? 'Disponível hoje' : 'Disponível para saque' }}: {{ contaAtual.saldo | dinheiro }}</p>
+          }
 
           <div class="form-actions">
             <p-button

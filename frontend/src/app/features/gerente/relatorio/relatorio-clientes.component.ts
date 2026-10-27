@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { DateTime } from 'luxon';
 import { Button } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { RelatorioService } from '../../../core/services/relatorio.service';
@@ -53,9 +54,7 @@ export class RelatorioClientesComponent {
 
       const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
       this.linhas.set(clientes);
-      this.geradoEm.set(
-        new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      );
+      this.geradoEm.set(DateTime.now().setZone('America/Sao_Paulo').toFormat('HH:mm'));
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
