@@ -14,7 +14,9 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { MessageComponent } from '../../../shared/components/message/message.component';
 import { MoneyInputComponent } from '../../../shared/components/money-input/money-input.component';
 import { AccountNumberInputComponent } from '../../../shared/components/account-number-input/account-number-input.component';
-import { BalanceIndicatorComponent } from '../../../shared/components/balance-indicator/balance-indicator.component';
+import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
+import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
+import { formatarBRL } from '../../../shared/util/dinheiro.util';
 import {
   ModalConfirmationComponent,
   type DetalheOperacao,
@@ -26,21 +28,30 @@ import {
 
 type EstadoTela = 'carregando' | 'ok' | 'erro';
 
-const ROTULOS: Record<TipoOperacao, { titulo: string; acao: string; confirmar: string }> = {
+const ROTULOS: Record<
+  TipoOperacao,
+  { titulo: string; acao: string; confirmar: string; subtitulo: string; gerundio: string }
+> = {
   DEPOSITO: {
     titulo: 'Depósito',
-    acao: 'Depositar',
+    acao: 'Continuar',
     confirmar: 'Confirmar depósito',
+    subtitulo: 'Coloque dinheiro na sua conta. O valor entra assim que você confirmar.',
+    gerundio: 'Depositando',
   },
   SAQUE: {
     titulo: 'Saque',
-    acao: 'Sacar',
+    acao: 'Continuar',
     confirmar: 'Confirmar saque',
+    subtitulo: 'Retire dinheiro da sua conta, até o saldo disponível.',
+    gerundio: 'Sacando',
   },
   TRANSFERENCIA: {
     titulo: 'Transferência',
-    acao: 'Transferir',
+    acao: 'Continuar',
     confirmar: 'Confirmar transferência',
+    subtitulo: 'Envie para outra conta do BANTADS.',
+    gerundio: 'Transferindo',
   },
 };
 
@@ -56,7 +67,8 @@ const ROTULOS: Record<TipoOperacao, { titulo: string; acao: string; confirmar: s
     MessageComponent,
     MoneyInputComponent,
     AccountNumberInputComponent,
-    BalanceIndicatorComponent,
+    DinheiroPipe,
+    JobProgressComponent,
     ModalConfirmationComponent,
     OperationResultComponent,
   ],
@@ -88,6 +100,16 @@ export class OperacaoPageComponent {
   readonly form = new FormGroup({
     valor: new FormControl<Dinheiro | null>(null),
     contaDestino: new FormControl(''),
+  });
+
+  protected readonly saldoEmAtualizacao = computed(
+    () => this.processando() || this.atualizandoSaldo(),
+  );
+
+  protected readonly tituloProcessando = computed(() => {
+    const valor = this.valorParaConfirmar();
+    const quantia = valor ? ` ${formatarBRL(valor)}` : '';
+    return `${this.textos.gerundio}${quantia}…`;
   });
 
   protected readonly detalhesModal = computed<DetalheOperacao[]>(() => {

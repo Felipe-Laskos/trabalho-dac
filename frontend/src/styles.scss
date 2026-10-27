@@ -69,3 +69,9 @@ body {
   padding: 0;
 }
 
+.app-header .logout-button.p-button,
+.app-header .logout-button.p-button .p-button-label,
+.app-header .logout-button.p-button .p-button-icon {
+  color: #ffffff !important;
+}
+

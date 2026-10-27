@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { DateTime } from 'luxon';
 import { Button } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { RelatorioService } from '../../../core/services/relatorio.service';
@@ -33,6 +34,7 @@ export class RelatorioClientesComponent {
 
   readonly gerando = signal(false);
   readonly linhas = signal<RelatorioClienteLinha[] | null>(null);
+  readonly geradoEm = signal<string | null>(null);
   readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
 
   async gerar(): Promise<void> {
@@ -52,6 +54,7 @@ export class RelatorioClientesComponent {
 
       const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
       this.linhas.set(clientes);
+      this.geradoEm.set(DateTime.now().setZone('America/Sao_Paulo').toFormat('HH:mm'));
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',

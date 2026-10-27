@@ -1,3 +1,48 @@
+.sessao-aviso {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: #fff6e8;
+  border: 1px solid #f3d7a1;
+  border-radius: var(--border-radius);
+  color: #8a5a12;
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.erro-credencial {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: #fdecec;
+  border-radius: var(--border-radius);
+  color: #b42318;
+
+  i {
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
 .login-error {
   margin-bottom: var(--spacing-lg);
 }
@@ -208,6 +253,19 @@
   height: 1px;
 
   background: var(--color-border);
+}
+
+:host ::ng-deep .btn-abrir-conta.p-button {
+  --p-button-outlined-primary-color: var(--color-primary);
+  --p-button-outlined-primary-border-color: var(--color-primary);
+  --p-button-outlined-primary-hover-background: #e7eef0;
+  --p-button-outlined-primary-active-background: #d5e2e5;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+:host ::ng-deep .btn-abrir-conta.p-button .p-button-label {
+  color: var(--color-primary);
 }
 
 .account-info {

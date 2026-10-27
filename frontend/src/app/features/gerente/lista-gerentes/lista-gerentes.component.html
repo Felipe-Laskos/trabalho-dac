@@ -107,6 +107,9 @@
               >
                 {{ gerente.nome }}
               </span>
+              @if (ehGerenteLogado(gerente.cpf)) {
+                <span class="voce">VOCÊ</span>
+              }
             </div>
           </td>
 

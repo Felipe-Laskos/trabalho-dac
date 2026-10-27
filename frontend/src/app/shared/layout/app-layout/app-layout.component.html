@@ -42,20 +42,12 @@
   <div class="app-body">
     <aside class="app-sidebar">
       <div class="sidebar-title">
-        {{ perfil() === 'CLIENTE' ? 'MINHA CONTA' : 'MENU' }}
+        {{ perfil() === 'CLIENTE' ? 'MINHA CONTA' : 'GESTÃO' }}
       </div>
       <p-menu
         [model]="menuItems()"
         styleClass="app-menu">
       </p-menu>
-
-      @if (perfil() === 'CLIENTE') {
-        <div class="manager-card">
-          <span class="manager-label">SEU GERENTE</span>
-          <strong class="manager-name">Geniéve</strong>
-          <span class="manager-email">ger1@bantads.com.br</span>
-        </div>
-      }
     </aside>
 
     <main class="app-content">
