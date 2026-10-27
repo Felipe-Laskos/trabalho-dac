@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RelatorioClientesComponent } from './relatorio-clientes.component';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { JobService } from '../../../core/services/job.service';
-import type { Job } from '../../../core/models/job.model';
-import type { RelatorioClienteLinha } from '../../../core/models/job.model';
+import type {
+  Job,
+  RelatorioClienteLinha,
+} from '../../../core/models/job.model';
 
 const pendente: Job = {
   jobId: 'job-r16',
@@ -37,10 +39,18 @@ describe('RelatorioClientesComponent', () => {
   let component: RelatorioClientesComponent;
   let fixture: ComponentFixture<RelatorioClientesComponent>;
 
-  const relatorios = { gerarClientes: vi.fn() };
-  const jobs = { aguardar: vi.fn(), resultado: vi.fn() };
+  const relatorios = {
+    gerarClientes: vi.fn(),
+  };
+
+  const jobs = {
+    aguardar: vi.fn(),
+    resultado: vi.fn(),
+  };
 
   beforeEach(async () => {
+    vi.resetAllMocks();
+
     await TestBed.configureTestingModule({
       imports: [RelatorioClientesComponent],
       providers: [
@@ -60,26 +70,44 @@ describe('RelatorioClientesComponent', () => {
 
   it('mantém a ordem do servidor e as 8 colunas', async () => {
     relatorios.gerarClientes.mockResolvedValue(pendente);
-    jobs.aguardar.mockResolvedValue({ ...pendente, status: 'CONCLUIDO', resultType: 'inline' });
+    jobs.aguardar.mockResolvedValue({
+      ...pendente,
+      status: 'CONCLUIDO',
+      resultType: 'inline',
+    });
     jobs.resultado.mockResolvedValue({ clientes: [ze, ana] });
 
     await component.gerar();
     fixture.detectChanges();
 
-    const linhas = component.linhas() ?? [];
-    expect(linhas.map((linha) => linha.nome)).toEqual(['Zeca', 'Ana']);
+    expect(component.linhas()?.map((linha) => linha.nome)).toEqual([
+      'Zeca',
+      'Ana',
+    ]);
 
     const html = fixture.nativeElement as HTMLElement;
-    const cabecalho = html.querySelector('thead')?.textContent ?? '';
-    expect(cabecalho).toContain('CPF');
-    expect(cabecalho).toContain('Nome');
-    expect(cabecalho).toContain('E-mail');
-    expect(cabecalho).toContain('Salário');
-    expect(cabecalho).toContain('Conta');
-    expect(cabecalho).toContain('Saldo');
-    expect(cabecalho).toContain('CPF do gerente');
-    expect(cabecalho).toContain('Gerente');
-    expect(html.textContent).toContain('Zeca');
-    expect(html.textContent?.indexOf('Zeca')).toBeLessThan(html.textContent?.indexOf('Ana') ?? -1);
+    const cabecalhos = Array.from(
+      html.querySelectorAll('thead th'),
+      (th) => th.textContent?.replace('^', '').trim() ?? '',
+    );
+
+    expect(cabecalhos).toHaveLength(8);
+    expect(cabecalhos).toEqual([
+      'Nome',
+      'CPF',
+      'E-MAIL',
+      'SALÁRIO',
+      'CONTA',
+      'SALDO',
+      'CPF DO GERENTE',
+      'GERENTE',
+    ]);
+
+    const nomes = Array.from(
+      html.querySelectorAll('tbody tr td:first-child'),
+      (td) => td.textContent?.trim() ?? '',
+    );
+
+    expect(nomes).toEqual(['Zeca', 'Ana']);
   });
 });

@@ -5,7 +5,10 @@ import { TableModule } from 'primeng/table';
 import { RelatorioService } from '../../../core/services/relatorio.service';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
-import type { RelatorioClienteLinha, ResultadoRelatorioClientes } from '../../../core/models/job.model';
+import type {
+  RelatorioClienteLinha,
+  ResultadoRelatorioClientes,
+} from '../../../core/models/job.model';
 import { CpfPipe } from '../../../shared/pipes/cpf.pipe';
 import { DinheiroPipe } from '../../../shared/pipes/dinheiro.pipe';
 import { JobProgressComponent } from '../../../shared/components/job-progress/job-progress.component';
@@ -34,8 +37,11 @@ export class RelatorioClientesComponent {
 
   readonly gerando = signal(false);
   readonly linhas = signal<RelatorioClienteLinha[] | null>(null);
-  readonly geradoEm = signal<string | null>(null);
-  readonly resultado = signal<{ status: AsyncResultStatus; mensagem: string } | null>(null);
+  readonly geradoEm = signal('');
+  readonly resultado = signal<{
+    status: AsyncResultStatus;
+    mensagem: string;
+  } | null>(null);
 
   async gerar(): Promise<void> {
     if (this.gerando()) return;
@@ -48,13 +54,24 @@ export class RelatorioClientesComponent {
       const fim = await this.jobs.aguardar(job.jobId);
 
       if (fim.status === 'FALHA') {
-        this.resultado.set({ status: 'FALHA', mensagem: mensagemDeErro(fim) });
+        this.resultado.set({
+          status: 'FALHA',
+          mensagem: mensagemDeErro(fim),
+        });
         return;
       }
 
-      const { clientes } = await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
+      const { clientes } =
+        await this.jobs.resultado<ResultadoRelatorioClientes>(fim);
+
       this.linhas.set(clientes);
-      this.geradoEm.set(DateTime.now().setZone('America/Sao_Paulo').toFormat('HH:mm'));
+
+      this.geradoEm.set(
+        DateTime.now()
+          .setZone('America/Sao_Paulo')
+          .setLocale('pt-BR')
+          .toFormat('HH:mm'),
+      );
     } catch (erro) {
       this.resultado.set({
         status: erro instanceof TempoEsgotadoError ? 'TIMEOUT' : 'FALHA',
