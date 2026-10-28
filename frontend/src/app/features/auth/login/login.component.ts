@@ -74,6 +74,7 @@ export class LoginComponent {
 
   private falhou(mensagem: string): void {
     const credencial = /login inválido/i.test(mensagem);
+    this.sessaoEncerrada.set(false);
     this.hasLoginError.set(true);
     this.credencialInvalida.set(credencial);
     this.mensagemErro.set(

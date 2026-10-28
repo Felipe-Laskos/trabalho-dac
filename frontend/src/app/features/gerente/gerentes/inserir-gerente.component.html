@@ -53,7 +53,7 @@
         <div class="field">
           <label for="email">E-mail <span>*</span></label>
           <input pInputText id="email" type="email" formControlName="email" autocomplete="off" fluid />
-          <small>Vira o login. Se já existir, a falha chega pelo job, depois do envio.</small>
+          <small>Vira o login. Se já estiver em uso, o cadastro falha depois do envio.</small>
           @if (campoComErro('email', 'required')) {
             <small class="field-error">E-mail é obrigatório.</small>
           }
@@ -127,14 +127,14 @@
           <span class="numero">1</span>
           <div>
             <strong>Cria o gerente</strong>
-            <span>MS Gerente grava os dados.</span>
+            <span>Os dados do gerente são salvos.</span>
           </div>
         </li>
         <li>
           <span class="numero">2</span>
           <div>
             <strong>Cria o login</strong>
-            <span>MS Auth grava o e-mail único.</span>
+            <span>O e-mail vira o login de acesso, que não pode se repetir.</span>
           </div>
         </li>
         <li>
@@ -145,7 +145,7 @@
           </div>
         </li>
       </ol>
-      <p>O envio volta 202 na hora; o resto acontece em segundo plano.</p>
+      <p>O pedido é aceito na hora e os três passos acontecem em segundo plano.</p>
     </aside>
   </div>
 
