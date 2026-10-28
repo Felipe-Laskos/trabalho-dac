@@ -87,12 +87,18 @@ fi
 STATUS=$(chamar GET "/jobs/$JOB_ID/result" "x-access-token: $TOKEN")
 RESULTADO="$(corpo_recebido)"
 
+# O 04-requisitos.sh aprova um cliente de teste (R9) antes deste módulo, então a
+# lista pode ter mais que os 5 do seed: o que se confere é que os 5 estão lá,
+# uma vez cada, na ordem pt-BR entre si (a ordenação completa é coberta pelos
+# testes do Gateway, que comparam com collation de verdade)
 NOMES_OBTIDOS="$(jq_seguro "$RESULTADO" -c '[.clientes[]?.nome]' 2>/dev/null)"
-if [ "$STATUS" = "200" ] && [ "$NOMES_OBTIDOS" = "$NOMES_ESPERADOS" ]; then
-  verificar_ok "r16-relatorio" "GET /jobs/{id}/result -> 5 clientes do seed, ordenados por nome (pt-BR)"
+SEED_NA_ORDEM="$(jq_seguro "$RESULTADO" -c --argjson seed "$NOMES_ESPERADOS" \
+  '[.clientes[]?.nome | select(. as $n | $seed | index($n))]' 2>/dev/null)"
+if [ "$STATUS" = "200" ] && [ "$SEED_NA_ORDEM" = "$NOMES_ESPERADOS" ]; then
+  verificar_ok "r16-relatorio" "GET /jobs/{id}/result -> os 5 clientes do seed, uma vez cada, ordenados por nome (pt-BR)"
 else
-  verificar_fail "r16-relatorio" "lista do relatório (nomes, em ordem)" \
-    "200 e $NOMES_ESPERADOS" "HTTP $STATUS e ${NOMES_OBTIDOS:-<sem clientes>}"
+  verificar_fail "r16-relatorio" "clientes do seed no relatório (presença e ordem)" \
+    "200 e $NOMES_ESPERADOS (nesta ordem)" "HTTP $STATUS e ${NOMES_OBTIDOS:-<sem clientes>}"
 fi
 
 COLUNAS_OBTIDAS="$(jq_seguro "$RESULTADO" -c '[.clientes[]? | keys | sort] | unique' 2>/dev/null)"
