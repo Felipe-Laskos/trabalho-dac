@@ -3,7 +3,7 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-md);
-  background: #fff6e8;
+  background: var(--color-warning-background);
   border: 1px solid #f3d7a1;
   border-radius: var(--border-radius);
   color: #8a5a12;
@@ -24,7 +24,7 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
   padding: var(--spacing-md);
-  background: #fdecec;
+  background: var(--color-error-background);
   border-radius: var(--border-radius);
   color: #b42318;
 
@@ -258,8 +258,8 @@
 :host ::ng-deep .btn-abrir-conta.p-button {
   --p-button-outlined-primary-color: var(--color-primary);
   --p-button-outlined-primary-border-color: var(--color-primary);
-  --p-button-outlined-primary-hover-background: #e7eef0;
-  --p-button-outlined-primary-active-background: #d5e2e5;
+  --p-button-outlined-primary-hover-background: var(--color-highlight);
+  --p-button-outlined-primary-active-background: var(--color-highlight-focus);
   color: var(--color-primary);
   border-color: var(--color-primary);
 }

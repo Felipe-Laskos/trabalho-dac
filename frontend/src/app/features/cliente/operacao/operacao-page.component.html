@@ -84,7 +84,7 @@
         </span>
         <strong class="conta-saldo">{{ contaAtual.saldo | dinheiro }}</strong>
         <p class="conta-nota">
-          Depois de operar, o saldo é reconsultado até mudar — nunca somado aqui na tela.
+          Depois de cada operação, o saldo mostrado é o que o banco confirmou.
         </p>
       </aside>
     </div>
@@ -101,6 +101,8 @@
     [textoConfirmar]="textos.confirmar"
     [carregando]="processando()"
     [detalhes]="detalhesModal()"
+    [icone]="tipo === 'DEPOSITO' ? 'pi pi-arrow-down' : tipo === 'SAQUE' ? 'pi pi-arrow-up' : 'pi pi-arrow-right-arrow-left'"
+    [varianteIcone]="tipo === 'SAQUE' ? 'danger' : 'primary'"
     (confirmar)="confirmar()"
     (cancelar)="fecharModal()" />
 

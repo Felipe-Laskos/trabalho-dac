@@ -18,7 +18,7 @@ export class ModalRejectionComponent {
   readonly visivel = input<boolean>(false);
   readonly titulo = input<string>('Recusar solicitação');
   readonly subtitulo = input<string>(
-    'A recusa é imediata (200). A solicitação passa a Não aprovada e os botões somem da linha.',
+    'A recusa é imediata. A solicitação passa a Não aprovada e os botões somem da linha.',
   );
   readonly cpf = input<string | null>(null);
   readonly salario = input<Dinheiro | null>(null);
