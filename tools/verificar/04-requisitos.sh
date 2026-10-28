@@ -1,7 +1,8 @@
 #!/bin/bash
 # ==============================================================================
-# 04. Requisitos já entregues — R1 (autocadastro), R2 (login/logout) e
-# R3 (home do cliente), batendo na porta pública do Gateway (8000).
+# 04. Requisitos já entregues — R1 (autocadastro), R2 (login/logout),
+# R3 (home do cliente) e R9 (aprovar cliente, SAGA + ciclo de job 202),
+# batendo na porta pública do Gateway (8000).
 # Como todo o resto da bateria, assume que um POST /reboot acabou de rodar.
 # ==============================================================================
 set -uo pipefail
@@ -9,7 +10,7 @@ set -uo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_lib.sh"
 precisa_de curl jq
 
-echo "=== 04. Validando Requisitos Funcionais (R1, R2, R3) ==="
+echo "=== 04. Validando Requisitos Funcionais (R1, R2, R3, R9) ==="
 
 CT_TMP="$(mktemp -d -t bantads-req.XXXXXX)"
 trap 'rm -rf "$CT_TMP"' EXIT
@@ -139,6 +140,58 @@ else
     verificar_fail "r3-home-cliente" "GET /clientes/{cpf}/conta" \
       "200, saldo=\"800.00\", _links presente" \
       "HTTP $STATUS, saldo=$SALDO, _links=$TEM_LINKS"
+  fi
+fi
+
+# ------------------------------------------------------------------ R9 ---
+# Reaproveita a solicitação criada e deixada PENDENTE pelo bloco R1 acima.
+GERENTE_LOGIN='{"email":"ger1@bantads.com.br","senha":"tads"}'
+STATUS=$(chamar POST /login "$GERENTE_LOGIN")
+TOKEN_GERENTE="$(jq_seguro "$(corpo_recebido)" -r '.token // empty')"
+
+if [ -z "$TOKEN_GERENTE" ]; then
+  verificar_fail "r9-aprovar-cliente" "login do gerente para testar R9" \
+    "token válido" "sem token (login do gerente falhou)"
+else
+  STATUS=$(chamar POST "/solicitacoes/$CPF_TESTE/aprovacao" "" "x-access-token: $TOKEN_GERENTE")
+  JOB_ID="$(jq_seguro "$(corpo_recebido)" -r '.jobId // empty')"
+
+  if [ "$STATUS" != "202" ] || [ -z "$JOB_ID" ]; then
+    verificar_fail "r9-aprovar-cliente" "POST /solicitacoes/{cpf}/aprovacao" \
+      "202 com jobId" "HTTP $STATUS, jobId=${JOB_ID:-<ausente>}"
+  else
+    verificar_ok "r9-aprovar-cliente" "POST /solicitacoes/{cpf}/aprovacao -> 202, jobId presente"
+
+    # a SAGA tem 6 passos síncronos (timeout de 30s cada no caso incomum de
+    # travar); no caminho feliz conclui em poucos segundos — 30s de polling
+    # dá folga de sobra sem deixar a bateria travada se algo realmente falhar
+    JOB_STATUS="PENDENTE"
+    for _ in $(seq 1 20); do
+      STATUS=$(chamar GET "/jobs/$JOB_ID/status" "" "x-access-token: $TOKEN_GERENTE")
+      JOB_STATUS="$(jq_seguro "$(corpo_recebido)" -r '.status // empty')"
+      { [ "$JOB_STATUS" = "CONCLUIDO" ] || [ "$JOB_STATUS" = "FALHA" ]; } && break
+      sleep 1.5
+    done
+
+    BODY_JOB="$(corpo_recebido)"
+    RESULT_TYPE="$(jq_seguro "$BODY_JOB" -r '.resultType // empty')"
+    DOMINIO="$(jq_seguro "$BODY_JOB" -r '.dominio // empty')"
+    RESOURCE_ID="$(jq_seguro "$BODY_JOB" -r '.resourceId // empty')"
+
+    if [ "$JOB_STATUS" = "CONCLUIDO" ] && [ "$RESULT_TYPE" = "resource" ] \
+      && [ "$DOMINIO" = "clientes" ] && [ "$RESOURCE_ID" = "$CPF_TESTE" ]; then
+      verificar_ok "r9-aprovar-cliente" \
+        "polling do job -> CONCLUIDO, resource clientes/$CPF_TESTE (SAGA R9 completa, 6 passos)"
+    else
+      verificar_fail "r9-aprovar-cliente" "job da SAGA R9 após polling (até 30s)" \
+        "status=CONCLUIDO, resultType=resource, dominio=clientes, resourceId=$CPF_TESTE" \
+        "status=$JOB_STATUS, resultType=$RESULT_TYPE, dominio=$DOMINIO, resourceId=$RESOURCE_ID"
+    fi
+
+    # Passo 7 (e-mail da senha) é fire-and-forget: a SAGA conclui mesmo que o
+    # envio falhe (ex.: sem credencial real de Gmail no ambiente). Esta
+    # bateria não lê caixa de e-mail — ver tools/roteiro-falhas.md para a
+    # evidência de e-mail chegando de verdade.
   fi
 fi
 
