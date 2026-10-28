@@ -7,14 +7,15 @@ material direto da defesa. Cada cenário traz o estado dos bancos **antes**,
 
 | Cenário | SAGA | O que prova | Quem / quando |
 |---|---|---|---|
-| R9-A | Aprovar cliente | Gmail fora do ar: a SAGA conclui, o e-mail só não sai, e a senha não vaza no log | Nathaly, 27/10 |
+| R9-A | Aprovar cliente | Gmail fora do ar (credencial recusada e rede fora): a SAGA conclui, o e-mail só não sai, e a senha não vaza no log | Nathaly, 27/10 |
 | R9-B | Aprovar cliente | MS Conta fora antes do passo 6: compensação em ordem inversa `[5, 4, 1]`, e-mail de "não efetuada", e o passo incerto desfeito sem deixar conta órfã | Nathaly, 27/10 |
+| R9-C | Aprovar cliente | Gmail de verdade: os e-mails da senha e de "não efetuada" saem, e a senha loga sem aparecer em log | Felipe, 27/10 |
 | R13-1 | Inserir gerente | MS Conta fora no passo 3: compensação `[2, 1]` | Nathaly, 20/10 |
 | R13-2 | Inserir gerente | Timeout de passo com três compensações `[4, 2, 1]`, devolvendo a conta reatribuída | Nathaly, 20/10 |
 | R15 | Remover gerente | Logout forçado com duas sessões e recusa do último gerente ativo | Felipe, 20/10 |
 
-Ainda falta um item, que depende de credencial: **o e-mail chegando de
-verdade na caixa e a senha logando** (ver "Ainda pendente", no fim).
+Ainda falta um item: **o print da caixa de entrada** com os e-mails do
+cenário C (ver "Ainda pendente", no fim).
 
 ## R9 — Cenário A: Gmail fora do ar não trava a SAGA (27/10)
 
@@ -83,6 +84,52 @@ job fica `CONCLUIDO` mesmo assim, e o cliente, o usuário e a conta existem
 no "DEPOIS". A conta foi para `40501740066` (Gadamântio), o gerente com 0
 clientes no seed — a regra do passo 3. E a senha gerada no passo 5 não
 aparece em nenhuma linha do log do `ms-email`.
+
+### Com a rede fora (27/10)
+
+Credencial vazia faz o Gmail responder e recusar na hora. Com a rede fora o
+SMTP não responde, e quem segura o `ms-email` é o `connectiontimeout` de 5 s
+do `application.properties`. Para simular, um `ms-email` avulso na rede da
+frota, com o SMTP apontando para um endereço que não responde:
+
+```bash
+docker compose stop ms-email
+docker run -d --name ms-email-sem-rede --network trabalho-dac_bantads \
+  -e TZ=America/Sao_Paulo -e SPRING_RABBITMQ_HOST=rabbitmq -e SPRING_MAIL_HOST=10.255.255.1 \
+  -e GMAIL_USER=teste@gmail.com -e GMAIL_APP_PASSWORD=x bantads/ms-email
+# aprovar um cliente; depois:
+docker rm -f ms-email-sem-rede && docker compose start ms-email
+```
+
+Saída:
+
+```
+{"status":"ok","clientes":5,"gerentes":4,"contas":5}
+### POST /solicitacoes (23:11:24)
+{"cpf":"77700077788","status":"PENDENTE"}
+### docker compose stop ms-email (23:11:26)
+### ms-email-sem-rede no ar, com o SMTP em 10.255.255.1, que não responde (23:11:32)
+### POST /solicitacoes/77700077788/aprovacao (23:11:32)
+{"jobId":"7c2d738b-1478-40ae-991c-79be9f3abf20","status":"PENDENTE"}
+### job (23:11:32): {"status":"CONCLUIDO","resultType":"resource","dominio":"clientes","resourceId":"77700077788","erro":null}
+
+### log do ms-orquestrador
+2026-10-27T23:11:32.436-03:00 INFO sagaId=7c2d738b-1478-40ae-991c-79be9f3abf20 passo=7 email.senha-nova -> ms.email.cmd x1 (fire-and-forget)
+2026-10-27T23:11:32.441-03:00 INFO sagaId=7c2d738b-1478-40ae-991c-79be9f3abf20 tipo=aprovar-cliente CONCLUIDA
+
+### log do ms-email-sem-rede
+2026-10-27T23:11:37.543-03:00 ERROR sagaId=7c2d738b-1478-40ae-991c-79be9f3abf20 tipo=email.senha-nova resultado=FALHA causa=Mail server connection failed. Failed messages: org.eclipse.angus.mail.util.MailConnectException: Couldn't connect to host, port: 10.255.255.1, 587
+
+### DEPOIS
+solicitacao: APROVADA
+cliente.clientes com esse cpf: 1
+conta_query.contas desse cliente: 0160 gerente=40501740066
+```
+
+**Como ler:** a SAGA fecha `CONCLUIDA` às `23:11:32.441`, meio segundo depois
+da aprovação. O `ms-email` tenta o SMTP, espera os 5 s e desiste às
+`23:11:37.543` (`Couldn't connect to host`). Cliente e conta existem no
+"DEPOIS", e o e-mail apenas não sai.
 
 ## R9 — Cenário B: MS Conta fora antes do passo 6, compensação em ordem inversa (27/10)
 
@@ -216,15 +263,61 @@ TOK=$(curl -s -X POST localhost:8000/login -H 'content-type: application/json' \
   -d '{"email":"ger1@bantads.com.br","senha":"tads"}' | jq -r .token)
 # crie uma solicitação PENDENTE (POST /solicitacoes) e então:
 docker pause trabalho-dac-ms-auth-1
-curl -s -X POST localhost:8000/solicitacoes/<cpf>/aprovacao -H "x-access-token: $TOK"
-docker compose logs -f ms-orquestrador | grep -m1 "passo=4 criar-cliente SUCESSO"
+J=$(curl -s -X POST localhost:8000/solicitacoes/<cpf>/aprovacao -H "x-access-token: $TOK" | jq -r .jobId)
+until docker compose logs ms-orquestrador | grep -q "$J.*passo=4 criar-cliente SUCESSO"; do sleep 0.2; done
 docker pause trabalho-dac-ms-conta-1 && docker unpause trabalho-dac-ms-auth-1
-# ~35 s depois: GET /jobs/<jobId>/status -> FALHA; então:
+# ~35 s depois: GET /jobs/$J/status -> FALHA; então:
 docker unpause trabalho-dac-ms-conta-1
 ```
 
 Atenção à ordem: pausar o MS Auth **antes** do login faz o login falhar
 (ele passa pelo MS Auth), e nenhuma SAGA chega a começar.
+
+A espera do passo 4 procura a linha **desta** SAGA, pelo `jobId`. Um
+`docker compose logs -f | grep -m1` casaria a linha de uma SAGA anterior e só
+devolveria o controle no timeout do passo 5, com o MS Auth ainda pausado: a
+SAGA compensaria `[4, 1]` e o passo 6 nunca rodaria. Conferido em 27/10, às
+23:09, com a receita acima: timeout no passo 6, `compensando [5, 4, 1]`, a
+conta `6131` com `v1 Criado` e `v2 CriacaoCompensada`, e o e-mail de "não
+efetuada" enviado (cenário C).
+
+## R9, Cenário C: com o Gmail de verdade (27/10)
+
+O mesmo R9 do cenário A, agora com `GMAIL_USER` e `GMAIL_APP_PASSWORD`
+preenchidos no `.env`. O cliente foi cadastrado com o e-mail da própria conta
+da equipe, com um sufixo (`+r9`) que o Gmail entrega na mesma caixa. O
+`ms-email` ficou parado só durante a aprovação, para ler a senha no payload de
+`ms.email.cmd` pela API do console (`ackmode: ack_requeue_true`, a mensagem
+volta para a fila) e testar o login com ela. Ao religar, ele consome a
+mensagem e envia. O endereço da conta aparece mascarado.
+
+```
+{"status":"ok","clientes":5,"gerentes":4,"contas":5}
+### POST /solicitacoes (23:08:38), e-mail do cliente = a caixa da equipe com +r9
+{"cpf":"77700055566","status":"PENDENTE"}
+### docker compose stop ms-email (23:08:39), para ler a senha na fila antes do envio
+### job (23:08:41): {"status":"CONCLUIDO","resultType":"resource","dominio":"clientes","resourceId":"77700055566"}
+### senha lida no payload de ms.email.cmd: 8 caracteres (valor fora deste registro)
+### docker compose start ms-email (23:08:43)
+### log do ms-email
+2026-10-27T23:08:50.348-03:00 INFO sagaId=218ff0e9-ffde-4c2e-9175-d35b2caf1456 tipo=email.senha-nova para=<GMAIL_USER+r9> resultado=ENVIADO
+### POST /login do cliente novo com a senha gerada: HTTP 200
+### a senha aparece em algum log da frota? 0 linha(s)
+```
+
+E o e-mail de "não efetuada", na rodada do cenário B feita com a receita
+corrigida e a mesma credencial (o resto da saída é igual à do cenário B):
+
+```
+### log do ms-email
+2026-10-27T23:10:10.553-03:00 INFO sagaId=b2195cbb-781e-4236-acd6-fd98a14abe94 tipo=email.solicitacao-nao-efetuada para=<GMAIL_USER+r9b> resultado=ENVIADO
+```
+
+**Como ler:** `resultado=ENVIADO` é o Gmail aceitando a mensagem no SMTP. A
+senha gerada no passo 5 abre a sessão do cliente novo (`POST /login` → 200) e
+não aparece em nenhuma linha de log dos 12 contêineres. A procura foi pelo
+valor exato da senha, não pela palavra "senha". Falta só o print da caixa de
+entrada com os dois e-mails (ver "Ainda pendente").
 
 ## R13 — Cenário 1: derrubar o MS Conta no meio da SAGA (20/10)
 
@@ -421,10 +514,9 @@ docker compose exec -T postgres psql -U postgres -d bantads -c \
 docker compose exec -T mongo mongosh --quiet bantads_auth --eval 'db.usuarios.countDocuments()'
 ```
 
-**Limpeza depois de um cenário:** o comando que ficou sem consumidor continua
-na fila — antes de religar o serviço parado, esvazie-a
-(`curl -u guest:guest -X DELETE http://localhost:15672/api/queues/%2f/ms.conta.cmd/contents`,
-ou `ms.cliente.cmd`), senão o serviço processa a mensagem velha ao voltar.
+**Depois de um cenário:** não precisa esvaziar a fila. Ao religar o serviço, ele processa o comando
+atrasado, a resposta chega fora do passo corrente e o Orquestrador ignora (`resposta fora do passo
+corrente, ignorada` no log).
 
 ## R15 com os listeners reais — logout forçado e último gerente ativo (S10)
 
@@ -500,12 +592,10 @@ sagaId=894e1b49-… tipo=remover-gerente CONCLUIDA
 
 ## Ainda pendente
 
-- **E-mail real chegando e a senha logando:** precisa de `GMAIL_USER` e
-  `GMAIL_APP_PASSWORD` de verdade no `.env`. Os cenários R9-A e R9-B já
-  provam tudo o que não depende de caixa de entrada (SAGA conclui sem o
-  e-mail, compensação, e-mail de "não efetuada" publicado). Com a
-  credencial: aprovar um cliente, conferir que o e-mail chega com a senha, e
-  que `POST /login` com ela devolve 200.
+- **Print da caixa de entrada:** o cenário C prova que o Gmail aceitou os
+  dois e-mails (`resultado=ENVIADO`) e que a senha gerada loga. Falta o print
+  dos dois na caixa da equipe (destinos `+r9` e `+r9b`, 27/10 às 23:08 e às
+  23:10), que é a parte da evidência que só se tira com a caixa aberta.
 
 ## Histórico
 
