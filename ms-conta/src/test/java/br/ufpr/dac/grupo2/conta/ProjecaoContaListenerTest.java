@@ -1,5 +1,6 @@
 package br.ufpr.dac.grupo2.conta;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,7 +10,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import br.ufpr.dac.grupo2.conta.messaging.dto.EventoPublicado;
+import br.ufpr.dac.grupo2.conta.query.exception.EventoForaDeOrdemException;
 import br.ufpr.dac.grupo2.conta.query.listener.ProjecaoContaListener;
 import br.ufpr.dac.grupo2.conta.query.model.ContaQuery;
 import br.ufpr.dac.grupo2.conta.query.model.Movimentacao;
@@ -77,5 +80,47 @@ class ProjecaoContaListenerTest {
         verify(movimentacaoRepository, never())
                 .save(any(Movimentacao.class));
                        verify(contaRepository, never()).save(any());
+    }
+
+    @Test
+    void rejeitaEventoOperacionalAntesDaCriacaoDaConta() throws Exception {
+        ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+        ProjecaoContaListener listener = new ProjecaoContaListener(
+                mapper, contaRepository, movimentacaoRepository);
+        EventoPublicado evento = new EventoPublicado(24L, "1291", "Saque",
+                Map.of("valor", "10.00"), 2, LocalDateTime.of(2020, 1, 1, 12, 0));
+        when(contaRepository.findById("1291")).thenReturn(Optional.empty());
+
+        EventoForaDeOrdemException erro = assertThrows(
+                EventoForaDeOrdemException.class,
+                () -> listener.projetar(mapper.writeValueAsString(evento)));
+
+        assertEquals("Evento fora de ordem para a conta 1291: esperada versão 1, recebida 2",
+                erro.getMessage());
+        verify(contaRepository, never()).save(any(ContaQuery.class));
+        verify(movimentacaoRepository, never()).save(any(Movimentacao.class));
+    }
+
+    @Test
+    void rejeitaLacunaDeVersaoSemAlterarSaldoOuVersao() throws Exception {
+        ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
+        ProjecaoContaListener listener = new ProjecaoContaListener(
+                mapper, contaRepository, movimentacaoRepository);
+        ContaQuery conta = new ContaQuery("1291", "12912861012", "98574307084",
+                LocalDate.of(2000, 1, 1), new BigDecimal("100.00"), 1);
+        EventoPublicado evento = new EventoPublicado(25L, "1291", "Saque",
+                Map.of("valor", "10.00"), 3, LocalDateTime.of(2020, 1, 1, 12, 0));
+        when(contaRepository.findById("1291")).thenReturn(Optional.of(conta));
+
+        EventoForaDeOrdemException erro = assertThrows(
+                EventoForaDeOrdemException.class,
+                () -> listener.projetar(mapper.writeValueAsString(evento)));
+
+        assertEquals("Evento fora de ordem para a conta 1291: esperada versão 2, recebida 3",
+                erro.getMessage());
+        assertEquals(new BigDecimal("100.00"), conta.getSaldo());
+        assertEquals(1, conta.getUltimaVersao());
+        verify(contaRepository, never()).save(any(ContaQuery.class));
+        verify(movimentacaoRepository, never()).save(any(Movimentacao.class));
     }
 }
