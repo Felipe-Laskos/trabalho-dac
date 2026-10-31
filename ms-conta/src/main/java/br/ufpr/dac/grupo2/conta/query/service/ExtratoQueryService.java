@@ -36,6 +36,7 @@ public class ExtratoQueryService {
             readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public ExtratoDTO consultar(String numero, LocalDate inicio, LocalDate fim,
             String cpf, String tipo) {
+                
         var conta = contas.findById(numero)
                 .orElseThrow(() -> new ContaNaoEncontradaException(numero));
         if (!("GERENTE".equals(tipo)
@@ -44,7 +45,6 @@ public class ExtratoQueryService {
         }
 
         LocalDate finalPeriodo = fim == null ? LocalDate.now(clock) : fim;
-        // Reserva um dia para calcular o limite superior exclusivo com segurança
         if (finalPeriodo.equals(LocalDate.MAX)
                 || (inicio == null && finalPeriodo.isBefore(LocalDate.MIN.plusDays(29)))) {
             throw new EventoInvalidoException("Data fora do intervalo suportado");
@@ -59,13 +59,16 @@ public class ExtratoQueryService {
 
         var limiteInicial = inicialPeriodo.atStartOfDay();
         var limiteFinal = finalPeriodo.plusDays(1).atStartOfDay();
+        
         BigDecimal abertura = movimentos
                 .findFirstByNumeroContaAndDataHoraBeforeOrderByDataHoraDescIdDesc(numero, limiteInicial)
                 .map(Movimentacao::getSaldoApos).orElse(BigDecimal.ZERO);
+        
         var itens = movimentos
                 .findByNumeroContaAndDataHoraGreaterThanEqualAndDataHoraLessThanOrderByDataHoraAscIdAsc(
                         numero, limiteInicial, limiteFinal)
                 .stream().map(this::item).toList();
+
         String base = "/contas/" + numero;
         var links = new LinkedHashMap<String, Link>();
         links.put("self", new Link(base + "/extrato?inicio=" + inicialPeriodo + "&fim=" + finalPeriodo));
