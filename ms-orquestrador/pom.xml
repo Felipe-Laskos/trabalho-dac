@@ -12,7 +12,7 @@
 	<artifactId>ms-orquestrador</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ms-orquestrador</name>
-	<description>Orquestrador das SAGAs do BANTADS (hospeda o MS Email — decisão A3)</description>
+	<description>Orquestrador das SAGAs do BANTADS</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>

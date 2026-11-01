@@ -117,9 +117,9 @@ class UpstreamFalso {
     this.respostas.set(`${metodo} ${url}`, { code });
   }
 
-  async atender(metodo, url, corpo) {
+  async atender(metodo, url, corpo, headers = {}) {
     const chave = `${metodo} ${url}`;
-    this.chamadas.push({ chave, corpo });
+    this.chamadas.push({ chave, corpo, headers });
 
     const resposta = this.respostas.get(chave);
 
@@ -148,9 +148,9 @@ for (const comando of ["get", "setEx", "exists", "expire", "del", "type", "sAdd"
   mock.method(cliente, comando, redis[comando].bind(redis));
 }
 
-mock.method(axios, "get", (url) => upstream.atender("GET", url));
-mock.method(axios, "post", (url, corpo) => upstream.atender("POST", url, corpo));
-mock.method(axios, "put", (url, corpo) => upstream.atender("PUT", url, corpo));
+mock.method(axios, "get", (url, config) => upstream.atender("GET", url, undefined, config?.headers));
+mock.method(axios, "post", (url, corpo, config) => upstream.atender("POST", url, corpo, config?.headers));
+mock.method(axios, "put", (url, corpo, config) => upstream.atender("PUT", url, corpo, config?.headers));
 
 mock.method(rabbit, "publicar", async (fila, mensagem) => {
   publicadas.push({ fila, mensagem });
@@ -177,8 +177,8 @@ function zerar() {
   publicadas.length = 0;
 }
 
-async function chamar(metodo, caminho, { token, corpo } = {}) {
-  const headers = {};
+async function chamar(metodo, caminho, { token, corpo, headers: extras } = {}) {
+  const headers = { ...extras };
   if (token) headers["x-access-token"] = token;
   if (corpo !== undefined) headers["content-type"] = "application/json";
 
