@@ -23,7 +23,7 @@ async function verifyJWT(req, res, next) {
     return res.status(401).json(TOKEN_RUIM);
   }
 
-  const { jti, cpf } = decodificado;
+  const { jti } = decodificado;
 
   if (await redis.exists(`revogado:${jti}`)) {
     return res.status(401).json(TOKEN_RUIM);

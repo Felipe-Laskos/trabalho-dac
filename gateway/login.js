@@ -26,7 +26,12 @@ async function login(req, res) {
   } catch (erro) {
     if (indisponivel(erro)) return responderErro(erro, res);
 
-    return res.status(401).json(LOGIN_INVALIDO);
+    if (erro.response?.status === 401) return res.status(401).json(LOGIN_INVALIDO);
+
+    console.error(`[login] MS Auth respondeu ${erro.response?.status ?? erro.code}: ${erro.message}`);
+    return res.status(500).json({
+      status: 500, erro: "Internal Server Error", mensagem: "Erro interno"
+    });
   }
 
   if (!credencial || credencial.ativo === false) {

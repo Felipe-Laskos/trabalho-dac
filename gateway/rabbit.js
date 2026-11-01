@@ -78,4 +78,4 @@ async function publicar(fila, mensagem) {
   }
 }
 
-module.exports = { BrokerIndisponivel, conectar, publicar, obterCanal: () => canal };
+module.exports = { BrokerIndisponivel, conectar, publicar };
