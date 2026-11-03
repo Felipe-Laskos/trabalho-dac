@@ -56,7 +56,7 @@
             <div class="field field-cpf">
               <label for="cpf">CPF<span>*</span></label>
               <p-inputmask
-                id="cpf"
+                inputId="cpf"
                 formControlName="cpf"
                 mask="999.999.999-99"
                 placeholder="111.222.333-44"
@@ -100,7 +100,7 @@
             <div class="field field-telefone">
               <label for="telefone">Telefone<span>*</span></label>
               <p-inputmask
-                id="telefone"
+                inputId="telefone"
                 formControlName="telefone"
                 mask="(99) 99999-9999"
                 placeholder="(41) 99999-0000"
@@ -210,7 +210,7 @@
             <div class="field field-cep">
               <label for="cep">CEP<span>*</span></label>
               <p-inputmask
-                id="cep"
+                inputId="cep"
                 formControlName="cep"
                 mask="99999-999"
                 placeholder="80000-000"
@@ -247,28 +247,31 @@
             </div>
 
             <div class="field field-uf">
-              <label for="uf">UF<span>*</span></label>
-              <p-select
-                formControlName="uf"
-                [options]="ufs"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Selecione"
-                [filter]="true"
-                filterBy="label"
-                fluid
-              />
+            <label id="uf-label">UF<span>*</span></label>
 
-              @if (campoComErro('endereco.uf', 'required')) {
-                <small class="field-error">UF é obrigatória.</small>
-              }
-              @if (campoComErro('endereco.uf', 'pattern')) {
-                <small class="field-error">UF inválida.</small>
-              }
-              @if (campoComErro('endereco.uf', 'servidor')) {
-                <small class="field-error">{{ form.get('endereco.uf')?.getError('servidor') }}</small>
-              }
-            </div>
+            <p-select
+              inputId="uf"
+              ariaLabelledBy="uf-label"
+              formControlName="uf"
+              [options]="ufs"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione"
+              [filter]="true"
+              filterBy="label"
+              fluid
+            />
+
+            @if (campoComErro('endereco.uf', 'required')) {
+              <small class="field-error">UF é obrigatória.</small>
+            }
+            @if (campoComErro('endereco.uf', 'pattern')) {
+              <small class="field-error">UF inválida.</small>
+            }
+            @if (campoComErro('endereco.uf', 'servidor')) {
+              <small class="field-error">{{ form.get('endereco.uf')?.getError('servidor') }}</small>
+            }
+          </div>
           </div>
         </div>
 

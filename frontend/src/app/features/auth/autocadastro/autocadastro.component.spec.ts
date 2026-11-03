@@ -4,6 +4,13 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { tokenInterceptor } from '../../../core/interceptors/token.interceptor';
 import { erroInterceptor } from '../../../core/interceptors/erro.interceptor';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
 
 import { AutocadastroComponent } from './autocadastro.component';
 
@@ -236,4 +243,47 @@ describe('AutocadastroComponent', () => {
 
     httpMock.expectNone('http://localhost:8000/solicitacoes');
   });
+
+  it('8. toda label[for] aponta para um input existente', async () => {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+
+  const tela: HTMLElement = fixture.nativeElement;
+
+  const labels = Array.from(
+    tela.querySelectorAll<HTMLLabelElement>('label[for]'),
+  );
+
+  expect(labels.length).toBeGreaterThan(0);
+
+  for (const label of labels) {
+    const id = label.htmlFor;
+
+    const elementos = Array.from(
+      tela.querySelectorAll<HTMLElement>('[id]'),
+    ).filter(elemento => elemento.id === id);
+
+    expect(elementos.length).toBe(1);
+    expect(
+    elementos[0]?.tagName,
+    `A label "${label.textContent?.trim()}" aponta para #${id}, que não é um input.`,
+    ).toBe('INPUT');
+    }
+});
+
+  it('9. seletor de UF deve estar associado à sua label', async () => {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+
+  const tela: HTMLElement = fixture.nativeElement;
+
+  const label = tela.querySelector('#uf-label');
+  const seletor = tela.querySelector<HTMLElement>('#uf[role="combobox"]');
+
+  expect(label).toBeTruthy();
+  expect(seletor).toBeTruthy();
+  expect(seletor?.getAttribute('aria-labelledby')).toBe('uf-label');
+});
 });

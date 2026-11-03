@@ -1,3 +1,4 @@
+
 <div class="login-page">
 
   <section class="login-brand">
@@ -40,75 +41,82 @@
         <p> Use o e-mail e a senha da sua conta BANTADS. </p>
       </div>
 
-    @if (sessaoEncerrada()) {
-      <div class="sessao-aviso" role="status">
-        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-        <div>
-          <strong>Sua sessão terminou</strong>
-          <p>Entre novamente para continuar. Acontece quando a sessão expira ou o acesso é encerrado por um gerente.</p>
+      <form class="login-form" (ngSubmit)="fazerLogin()">
+
+        @if (sessaoEncerrada()) {
+          <div class="sessao-aviso" role="status">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            <div>
+              <strong>Sua sessão terminou</strong>
+              <p>Entre novamente para continuar. Acontece quando a sessão expira ou o acesso é encerrado por um gerente.</p>
+            </div>
+          </div>
+        }
+
+        @if (hasLoginError() && credencialInvalida()) {
+          <div class="erro-credencial" role="alert">
+            <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+            <div>
+              <strong>Login inválido</strong>
+              <p>{{ mensagemErro() }}</p>
+            </div>
+          </div>
+        } @else if (hasLoginError()) {
+          <div class="login-error">
+            <app-message type="error" [message]="mensagemErro()" />
+          </div>
+        }
+
+        <div class="login-fields">
+          <div class="field">
+            <label for="email">
+              E-mail
+            </label>
+
+            <input
+              pInputText
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Digite seu e-mail"
+              fluid
+              class="p-inputtext-lg"
+              [ngModel]="emailValue()"
+              (ngModelChange)="emailValue.set($event); esconderErro()"
+            />
+          </div>
+
+          <div class="field">
+            <label for="password">
+              Senha
+            </label>
+
+            <p-password
+              inputId="password"
+              name="password"
+              placeholder="Digite sua senha"
+              [feedback]="false"
+              [toggleMask]="true"
+              fluid
+              inputStyleClass="w-full p-inputtext-lg"
+              [ngModel]="passwordValue()"
+              (ngModelChange)="passwordValue.set($event); esconderErro()"
+            />
+          </div>
         </div>
-      </div>
-    }
-
-    @if (hasLoginError() && credencialInvalida()) {
-      <div class="erro-credencial" role="alert">
-        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
-        <div>
-          <strong>Login inválido</strong>
-          <p>{{ mensagemErro() }}</p>
-        </div>
-      </div>
-    } @else if (hasLoginError()) {
-      <div class="login-error">
-        <app-message type="error" [message]="mensagemErro()" />
-      </div>
-    }
-
-      <div class="login-fields">
-        <div class="field">
-          <label for="email">
-            E-mail
-          </label>
-
-          <input
-            pInputText
-            id="email"
-            type="email"
-            placeholder="Digite seu e-mail"
-            fluid
-            class="p-inputtext-lg"
-            [ngModel]="emailValue()"
-            (ngModelChange)="emailValue.set($event); esconderErro()"/>
-        </div>
-
-        <div class="field">
-          <label for="password">
-            Senha
-          </label>
-
-          <p-password
-            inputId="password"
-            placeholder="Digite sua senha"
-            [feedback]="false"
-            [toggleMask]="true"
-            fluid
-            inputStyleClass="w-full p-inputtext-lg"
-            [ngModel]="passwordValue()"
-            (ngModelChange)="passwordValue.set($event); esconderErro()">
-          </p-password>
-
-        </div>
-      </div>
 
         <p-button
-        [label]="isLoading() ? 'Entrando...' : 'Entrar'"
-        [loading]="isLoading()"
-        severity="primary"
-        size="large"
-        fluid
-        (onClick)="fazerLogin()">
-        </p-button>
-      
+          type="submit"
+          [label]="isLoading() ? 'Entrando...' : 'Entrar'"
+          [loading]="isLoading()"
+          [disabled]="isLoading()"
+          severity="primary"
+          size="large"
+          fluid
+        />
+
+      </form>
+
       <div class="divider">
         <span>ainda não tem conta?</span>
       </div>
@@ -120,7 +128,8 @@
         size="large"
         styleClass="btn-abrir-conta"
         routerLink="/autocadastro"
-        fluid/>
+        fluid
+      />
 
       <p class="account-info">
         A abertura passa pela análise de um gerente. Você recebe a senha por e-mail assim que for aprovada.
