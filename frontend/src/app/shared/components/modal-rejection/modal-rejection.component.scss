@@ -103,7 +103,7 @@
       border-color: var(--color-error);
     }
 
-    &:focus {
+    &:focus-visible {
       outline: none;
       box-shadow: none;
     }

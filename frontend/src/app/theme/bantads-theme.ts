@@ -1,3 +1,4 @@
+
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
@@ -14,7 +15,25 @@ export const BantadsTheme = definePreset(Aura, {
       700: '{cyan.700}',
       800: '{cyan.800}',
       900: '{cyan.900}',
-      950: '{cyan.950}'
+      950: '{cyan.950}',
+    },
+
+    focusRing: {
+      width: '2px',
+      style: 'solid',
+      color: 'var(--color-focus-ring)',
+      offset: '1px',
+      shadow: 'none',
+    },
+
+    formField: {
+      focusRing: {
+        width: '2px',
+        style: 'solid',
+        color: 'var(--color-focus-ring)',
+        offset: '1px',
+        shadow: 'none',
+      },
     },
 
     colorScheme: {
@@ -22,7 +41,7 @@ export const BantadsTheme = definePreset(Aura, {
         surface: {
           0: 'var(--color-surface)',
           50: 'var(--color-background)',
-          100: 'var(--color-surface)'
+          100: 'var(--color-surface)',
         },
 
         formField: {
@@ -31,105 +50,131 @@ export const BantadsTheme = definePreset(Aura, {
           hoverBorderColor: 'var(--color-primary)',
           focusBorderColor: 'var(--color-focus)',
           color: 'var(--color-text)',
-          placeholderColor: 'var(--color-text-secondary)'
+          placeholderColor: 'var(--color-text-secondary)',
         },
 
         text: {
           color: 'var(--color-text)',
-          mutedColor: 'var(--color-text-secondary)'
+          mutedColor: 'var(--color-text-secondary)',
         },
 
         highlight: {
           background: 'var(--color-highlight)',
-          focusBackground: 'var(--color-highlight-focus)'
+          focusBackground: 'var(--color-highlight-focus)',
         },
-
-        focusRing: {
-          width: '2px',
-          style: 'solid',
-          color: 'var(--color-focus)',
-          offset: '1px'
-        }
-      }
-    }
+      },
+    },
   },
-    components: {
+
+  components: {
     toolbar: {
       root: {
         background: 'var(--color-primary)',
         color: 'var(--color-surface)',
         borderColor: 'var(--color-primary)',
-        borderRadius: '0'
-      }
+        borderRadius: '0',
+      },
     },
+
     menu: {
-    root: {
-      background: 'transparent',
-      borderColor: 'transparent',
-      color: 'var(--color-text)',
-      borderRadius: '0',
-      shadow: 'none'
-    },
-
-    list: {
-      padding: '0',
-      gap: '4px'
-    },
-
-    item: {
-      color: 'var(--color-text-secondary)',
-      padding: '10px 12px',
-      borderRadius: 'var(--border-radius)',
-      gap: '10px',
-      focusBackground: 'var(--color-highlight)',
-      focusColor: 'var(--color-primary)',
-
-      icon: {
-        color: 'var(--color-text-secondary)',
-        focusColor: 'var(--color-primary)',
-        size: '18px'
+      root: {
+        background: 'transparent',
+        borderColor: 'transparent',
+        color: 'var(--color-text)',
+        borderRadius: '0',
+        shadow: 'none',
       },
 
-      label: {
-        fontWeight: '500',
-        fontSize: '14px'
-      }
+      list: {
+        padding: '0',
+        gap: '4px',
+      },
+
+      item: {
+        color: 'var(--color-text-secondary)',
+        padding: '10px 12px',
+        borderRadius: 'var(--border-radius)',
+        gap: '10px',
+        focusBackground: 'var(--color-primary)',
+        focusColor: 'var(--color-surface)',
+
+        icon: {
+          color: 'var(--color-text-secondary)',
+          focusColor: 'var(--color-surface)',
+          size: '18px',
+        },
+
+        label: {
+          fontWeight: '500',
+          fontSize: '14px',
+        },
+      },
+
+      separator: {
+        borderColor: 'var(--color-border)',
+      },
     },
-    separator: {
-      borderColor: 'var(--color-border)'
-    }
-    },
+
     progressspinner: {
       root: {
-      colorOne: 'var(--color-secondary)',
-      colorTwo: 'var(--color-secondary-dark)',
-      colorThree: 'var(--color-secondary)',
-      colorFour: 'var(--color-secondary-dark)'
-    }
-  },
-   button: {
+        colorOne: 'var(--color-secondary)',
+        colorTwo: 'var(--color-secondary-dark)',
+        colorThree: 'var(--color-secondary)',
+        colorFour: 'var(--color-secondary-dark)',
+      },
+    },
+
+    button: {
       colorScheme: {
         light: {
-         root: {
-          primary: {
-            background: 'var(--color-primary)',
-            hoverBackground: 'var(--color-third)',
-            borderColor: 'var(--color-primary)',
-            hoverBorderColor: 'var(--color-third)',
-            color: 'var(--color-surface)',
-            hoverColor: 'var(--color-surface)'
+          root: {
+            primary: {
+              background: 'var(--color-primary)',
+              hoverBackground: 'var(--color-third)',
+              borderColor: 'var(--color-primary)',
+              hoverBorderColor: 'var(--color-third)',
+              color: 'var(--color-surface)',
+              hoverColor: 'var(--color-surface)',
+
+              focusRing: {
+                color: 'var(--color-focus-ring)',
+              },
+            },
+
+            secondary: {
+              background: 'transparent',
+              hoverBackground: 'var(--color-background)',
+              borderColor: 'var(--color-border)',
+              hoverBorderColor: 'var(--color-primary)',
+              color: 'var(--color-text)',
+              hoverColor: 'var(--color-primary)',
+            },
+            danger: {
+              background: 'var(--color-error)',
+              hoverBackground: 'var(--color-error-hover)',
+              activeBackground: 'var(--color-error-hover)',
+              borderColor: 'var(--color-error)',
+              hoverBorderColor: 'var(--color-error-hover)',
+              activeBorderColor: 'var(--color-error-hover)',
+              color: 'var(--color-surface)',
+              hoverColor: 'var(--color-surface)',
+              activeColor: 'var(--color-surface)',
+
+              focusRing: {
+                color: 'var(--color-focus-ring-danger)',
+              },
+            },
           },
-          secondary: {
-            background: 'transparent',
-            hoverBackground: 'var(--color-background)', 
-            borderColor: 'var(--color-border)',
-            hoverBorderColor: 'var(--color-primary)',
-            color: 'var(--color-text)',
-            hoverColor: 'var(--color-primary)'
-          }
-        }
-      }
-    }
-  }
-  }
+          outlined: {
+            danger: {
+              color: 'var(--color-error)',
+              borderColor: 'var(--color-error)',
+              hoverBackground: 'var(--color-error-background)',
+              activeBackground: 'var(--color-error-background)',
+            },
+          },
+        },
+      },
+    },
+  },
 });
