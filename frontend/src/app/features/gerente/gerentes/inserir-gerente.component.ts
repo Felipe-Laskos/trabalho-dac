@@ -131,3 +131,63 @@ export class InserirGerenteComponent {
     };
   }
 }
+/* comentando groselha
+ * Inserir gerente. Esta tela pertence ao perfil gerente e o envio so
+ * segue quando nome, CPF, e-mail, telefone e senha passam na validacao
+ * local. O CPF precisa ter 11 digitos, sem digito verificador. O telefone
+ * precisa ter 10 ou 11 digitos. A mascara e removida com soDigitos antes
+ * do POST. O nome vai trimado. O e-mail tambem vai trimado e vira o login.
+ * A senha e definida neste formulario. Ela nao e disparada por e-mail.
+ * Se o formulario esta invalido, tentouEnviar fica verdadeiro. Os controles
+ * sao marcados como touched e como dirty, e enviar retorna sem chamar a
+ * API. O rodape troca o texto para "Corrija os campos destacados". A borda
+ * vermelha e do PrimeNG, que usa dirty. O texto de erro de cada campo usa
+ * touched. Por isso o clique marca os dois estados de uma vez.
+ * enviando bloqueia um segundo submit enquanto o primeiro ainda espera.
+ * Cancelar tambem fica desabilitado nesse intervalo. O POST sai de
+ * GerenteService.criar para /gerentes, sempre pelo gateway local, na
+ * porta 8000. O corpo leva cpf, nome, email, telefone e senha.
+ * A resposta imediata e 202 Accepted, com um jobId. O gerente ainda nao
+ * esta pronto nesse momento. O orquestrador abre a saga de tipo
+ * inserir-gerente, no dominio gerentes, e o recurso dela e o CPF.
+ * A tela fica em jobs.aguardar. O componente app-job-progress mostra
+ * "Cadastrando gerente…" enquanto enviando e verdadeiro. A conclusao
+ * nao e um saldo recalculado na tela: ela chega pelo status do job.
+ * A saga executa seis passos, cada um na fila de comando do seu MS.
+ * 1. MS Gerente grava cpf, nome, email e telefone. Se um passo seguinte
+ * falhar, compensar-inserir-gerente apaga esse cadastro pelo CPF.
+ * 2. MS Auth cria o usuario. O login e o e-mail, o tipo e GERENTE e a
+ * senha e a digitada aqui. compensar-criar-usuario remove esse CPF.
+ * 3. MS Conta consulta conta-a-transferir. A regra recolhe uma conta do
+ * gerente que ja tem mais contas, e somente se ele tiver mais de uma.
+ * Sem conta elegivel, transferir fica falso e os passos 4, 5 e 6 param.
+ * 4. MS Conta executa atribuir-conta, ligando numeroConta ao CPF novo.
+ * A compensacao devolve a conta ao cpfGerenteAnterior.
+ * 5. MS Cliente faz obter-clientes-por-cpf, com o CPF do dono da conta
+ * que acabou de mudar de gerente. So roda se houve transferencia.
+ * 6. MS Email manda email.gerente-alterado para esse cliente, citando o
+ * nome do gerente novo. A saga nao tem e-mail de falha.
+ * Se o job fecha com FALHA, a tela mostra a mensagem do resultado e
+ * permanece nesta rota. Se a espera estoura, o catch reconhece
+ * TempoEsgotadoError e grava o status TIMEOUT. Outra excecao vira
+ * FALHA, com o texto de mensagemDeErro. O finally zera enviando, entao
+ * o botao Cadastrar gerente solta o loading nos tres desfechos.
+ * No sucesso, jobs.resultado le o Gerente gravado. A frase exibida e
+ * "O gerente {nome} foi cadastrado." Fechar o aviso navega para
+ * /gerente/gerentes e manda state aguardarProjecao verdadeiro. A lista
+ * reconsulta ate a projecao de leitura mostrar o registro inserido.
+ * Ao terminar, o cache cache:gerente:{cpf} e invalidado. Se uma conta
+ * trocou de dono, cache:gerente:{cpfGerenteAnterior} tambem e removido,
+ * para a carteira antiga nao seguir exibindo essa conta.
+ * O card ao lado da tela resume os tres efeitos visiveis: gravar o
+ * gerente, criar o login e, quando couber, redistribuir uma conta com
+ * aviso por e-mail. Os passos 3 a 6 da saga sao o detalhe desse terceiro
+ * efeito. Nenhum deles soma saldo no navegador.
+ * A listagem so muda depois da projecao. Por isso o state
+ * aguardarProjecao existe: o insert responde antes da leitura atualizar.
+ * Sem essa reconsulta, o gerente novo pode faltar na tabela por um
+ * instante, mesmo com a saga ja concluida em SUCESSO.
+ * CPF e telefone invalidos nem chegam ao gateway. E-mail duplicado e
+ * falha de saga passam pelo job, depois do 202, e aparecem no aviso
+ * de FALHA desta mesma tela.
+ */
