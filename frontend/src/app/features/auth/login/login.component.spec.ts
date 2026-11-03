@@ -22,4 +22,16 @@ describe('Login', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('Enter na senha envia o formulário e chama o login', () => {
+    const fazerLogin = vi.spyOn(component, 'fazerLogin').mockResolvedValue();
+    fixture.detectChanges();
+    const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+
+    expect(form.querySelector('#password')).toBeTruthy();
+    expect(form.querySelector('button[type="submit"]')).toBeTruthy();
+
+    form.dispatchEvent(new Event('submit'));
+    expect(fazerLogin).toHaveBeenCalledTimes(1);
+  });
 });

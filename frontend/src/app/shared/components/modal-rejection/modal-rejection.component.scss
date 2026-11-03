@@ -102,11 +102,6 @@
     &.vazio {
       border-color: var(--color-error);
     }
-
-    &:focus-visible {
-      outline: none;
-      box-shadow: none;
-    }
   }
 }
 
