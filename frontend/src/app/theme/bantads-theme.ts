@@ -166,6 +166,10 @@ export const BantadsTheme = definePreset(Aura, {
             },
           },
           outlined: {
+            secondary: {
+              color: 'var(--color-text-secondary)',
+            },
+
             danger: {
               color: 'var(--color-error)',
               borderColor: 'var(--color-error)',
