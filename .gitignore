@@ -35,3 +35,6 @@ HELP.md
 
 # Override local do Compose
 docker-compose.override.yml
+
+# ZIP de entrega gerado por tools/gerar-entrega.sh
+entrega*.zip
