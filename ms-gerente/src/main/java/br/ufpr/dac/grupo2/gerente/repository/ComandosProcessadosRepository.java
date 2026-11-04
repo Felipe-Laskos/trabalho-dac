@@ -1,7 +1,6 @@
 package br.ufpr.dac.grupo2.gerente.repository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import br.ufpr.dac.grupo2.gerente.model.ComandoProcessado;
@@ -12,4 +11,7 @@ public interface ComandosProcessadosRepository extends JpaRepository<ComandoProc
     @Modifying
     @Query(value = "DELETE FROM gerente.comandos_processados", nativeQuery = true)
     void deleteAll();
+
+    @Query("SELECT COUNT(c) > 0 FROM ComandoProcessado c WHERE c.id.sagaId = :sagaId AND c.id.tipo = :tipo")
+    boolean existsBySagaIdAndTipo(String sagaId, String tipo);
 }

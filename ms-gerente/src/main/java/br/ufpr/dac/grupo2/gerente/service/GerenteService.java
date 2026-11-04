@@ -179,6 +179,7 @@ public class GerenteService {
             return new ResultadoSaga(resposta);
 
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return registrarFalha(cmd, "Erro interno ao processar inserção: " + e.getMessage());
         }
     }
@@ -186,9 +187,23 @@ public class GerenteService {
     @Transactional
     public ResultadoSaga compensarInserirGerente (MensagemSaga cmd, String cpf) {
         try {
-            if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), "inserir-gerente"))) {
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), "compensar-inativar-gerente");
+
+            if (comandosProcessadosRepository.existsById(chave)) {
+                Map<String, Object> payloadMap = Map.of("cpf", cpf);
+                ResultadoSaga.Resposta resposta = new ResultadoSaga.Resposta(
+                        cmd.sagaId(), cmd.tipo(),
+                        LocalDateTime.now().toString(),
+                        payloadMap, "SUCESSO", null
+                );
+                return new ResultadoSaga(resposta);
+            }
+
+            if (gerenteRepository.existsById(cpf)) {
                 gerenteRepository.deleteById(cpf);
             }
+
+            comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
 
             Map<String, Object> payloadMap = Map.of("cpf", cpf);
 
@@ -204,6 +219,7 @@ public class GerenteService {
             return new ResultadoSaga(resposta);
 
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return registrarFalha(cmd, "Erro interno ao inserir gerente: " + e.getMessage());
         }
     }
@@ -275,6 +291,7 @@ public class GerenteService {
             return new ResultadoSaga(resposta);
 
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return registrarFalha(cmd, "Erro interno ao processar remoção: " + e.getMessage());
         }
     }
