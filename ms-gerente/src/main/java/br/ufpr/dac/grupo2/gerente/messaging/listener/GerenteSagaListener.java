@@ -7,6 +7,7 @@ import br.ufpr.dac.grupo2.gerente.messaging.config.SagaRabbitConfig;
 import br.ufpr.dac.grupo2.gerente.messaging.dto.ResultadoSaga;
 import br.ufpr.dac.grupo2.gerente.messaging.service.SagaMessagePublisher;
 import br.ufpr.dac.grupo2.gerente.service.GerenteService;
+import br.ufpr.dac.grupo2.gerente.repository.ComandosProcessadosRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +25,16 @@ public class GerenteSagaListener {
     private final ObjectMapper json;
     private final GerenteService command;
     private final SagaMessagePublisher publisher;
+    private final ComandosProcessadosRepository comandosProcessadosRepository;
 
     public GerenteSagaListener(ObjectMapper json,
                                GerenteService command,
-                               SagaMessagePublisher publisher) {
+                               SagaMessagePublisher publisher,
+                               ComandosProcessadosRepository comandosProcessadosRepository) {
         this.json = json;
         this.command = command;
         this.publisher = publisher;
+        this.comandosProcessadosRepository = comandosProcessadosRepository;
     }
 
     @RabbitListener(queues = SagaRabbitConfig.FILA_COMANDOS, concurrency = "1")
@@ -41,6 +45,11 @@ public class GerenteSagaListener {
             validarEnvelope(cmd);
         } catch (Exception e) {
             log.warn("comando descartado em {}: {}", SagaRabbitConfig.FILA_COMANDOS, e.getMessage());
+            return;
+        }
+        
+        if (comandosProcessadosRepository.existsBySagaIdAndTipo(cmd.sagaId(), cmd.tipo())) {
+            log.warn("Comando já processado anteriormente para sagaId: {} e tipo: {}", cmd.sagaId(), cmd.tipo());
             return;
         }
 
