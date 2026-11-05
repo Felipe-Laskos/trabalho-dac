@@ -182,6 +182,51 @@ class OperacoesContaIntegracaoTest {
     }
 
     @Test
+    void rejeitaCreditoAcimaDoTetoSemCongelarAProjecao() throws Exception {
+        long quantidade = eventos.count();
+        for (String valor : new String[]{"999999999999999.00", "1000000000000000.00"}) {
+            mvc.perform(post("/contas/1291/deposito")
+                            .header("X-User-CPF", CPF)
+                            .contentType("application/json")
+                            .content("{\"valor\":\"" + valor + "\"}"))
+                    .andExpect(status().isUnprocessableEntity());
+        }
+        assertEquals(quantidade, eventos.count());
+        verifyNoInteractions(rabbit);
+
+        mvc.perform(post("/contas/1291/deposito")
+                        .header("X-User-CPF", CPF)
+                        .contentType("application/json")
+                        .content("{\"valor\":\"1.00\"}"))
+                .andExpect(status().isCreated());
+        ArgumentCaptor<Object> mensagens = ArgumentCaptor.forClass(Object.class);
+        verify(rabbit).convertAndSend(eq("ms.conta.events"), mensagens.capture());
+        projecao.projetar((String) mensagens.getValue());
+        assertEquals("801.00", query.buscarPorNumero("1291").orElseThrow().saldo());
+        assertEquals(quantidade + 1, eventos.count());
+    }
+
+    @Test
+    void aceitaUltimoSaldoComQuinzeDigitosInteiros() throws Exception {
+        mvc.perform(post("/contas/1291/deposito")
+                        .header("X-User-CPF", CPF)
+                        .contentType("application/json")
+                        .content("{\"valor\":\"999999999999199.99\"}"))
+                .andExpect(status().isCreated());
+        ArgumentCaptor<Object> mensagens = ArgumentCaptor.forClass(Object.class);
+        verify(rabbit).convertAndSend(eq("ms.conta.events"), mensagens.capture());
+        projecao.projetar((String) mensagens.getValue());
+        assertEquals("999999999999999.99",
+                query.buscarPorNumero("1291").orElseThrow().saldo());
+
+        mvc.perform(post("/contas/1291/deposito")
+                        .header("X-User-CPF", CPF)
+                        .contentType("application/json")
+                        .content("{\"valor\":\"0.01\"}"))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
     void rejeitaSaldoInsuficienteContaAlheiaEDestinoInvalido() throws Exception {
         long quantidade = eventos.count();
         mvc.perform(post("/contas/1291/saque").header("X-User-CPF", CPF)
