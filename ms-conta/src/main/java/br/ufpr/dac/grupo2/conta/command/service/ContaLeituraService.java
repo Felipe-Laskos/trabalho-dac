@@ -10,18 +10,24 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 @Service
 public class ContaLeituraService {
+
+    private static final BigDecimal MAIOR_VALOR_MONETARIO =
+            new BigDecimal("999999999999999.9999");
     private static final Set<String> EVENTOS_COM_DINHEIRO = Set.of(
             "Depósito",
             "Saque",
             "TransferênciaOrigem",
             "TransferênciaDestino"
     );
+    
     private final EventoRepository eventoRepository;
     public ContaLeituraService(EventoRepository eventoRepository) {
         this.eventoRepository = eventoRepository;
     }
+
     @Transactional(
             transactionManager = "commandTransactionManager",
             readOnly = true
@@ -29,6 +35,7 @@ public class ContaLeituraService {
     public EstadoConta replay(String numeroConta) {
         List<Evento> eventos = eventoRepository
                 .findByObjetoIdOrderByVersaoAsc(numeroConta);
+
         if (eventos.isEmpty()) {
             throw new ContaNaoEncontradaException(numeroConta);
         }
@@ -36,12 +43,15 @@ public class ContaLeituraService {
                 e.getTipo().equals("CriacaoCompensada"))) {
             throw new ContaNaoEncontradaException(numeroConta);
         }
+
         return fold(numeroConta, eventos);
     }
+
     public void validar(
             String tipo,
             Map<String, Object> payload,
             EstadoConta estado) {
+
         if (EVENTOS_COM_DINHEIRO.contains(tipo)) {
             String textoValor = texto(payload, "valor");
             BigDecimal valor = dinheiro(payload);
@@ -55,6 +65,15 @@ public class ContaLeituraService {
                             != textoValor.length()) {
                 throw new EventoInvalidoException(
                         "O valor deve ter no máximo duas casas decimais"
+                );
+            }
+            if (valor.compareTo(MAIOR_VALOR_MONETARIO) > 0
+                    || ((tipo.equals("Depósito")
+                    || tipo.equals("TransferênciaDestino"))
+                    && estado.getSaldo().add(valor)
+                            .compareTo(MAIOR_VALOR_MONETARIO) > 0)) {
+                throw new EventoInvalidoException(
+                        "Valor ou saldo resultante excede 15 dígitos inteiros"
                 );
             }
             if ((tipo.equals("Saque")
@@ -82,6 +101,7 @@ public class ContaLeituraService {
             );
         }
     }
+
     private EstadoConta fold(
             String numeroConta,
             List<Evento> eventos) {
@@ -101,6 +121,7 @@ public class ContaLeituraService {
         }
         return estado;
     }
+
     private void aplicar(
             EstadoConta estado,
             Evento evento) {
@@ -135,9 +156,11 @@ public class ContaLeituraService {
             );
         }
     }
+
     private BigDecimal dinheiro(Map<String, Object> payload) {
         return dinheiro(payload, "valor");
     }
+    
     private BigDecimal dinheiro(
             Map<String, Object> payload,
             String campo) {
@@ -156,6 +179,7 @@ public class ContaLeituraService {
             );
         }
     }
+
     private String texto(
             Map<String, Object> payload,
             String campo) {

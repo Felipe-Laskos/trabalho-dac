@@ -1,4 +1,3 @@
-TRUNCATE TABLE conta_command.comandos_processados;
 TRUNCATE TABLE conta_command.eventos RESTART IDENTITY CASCADE;
 TRUNCATE TABLE conta_command.comandos_processados;
 

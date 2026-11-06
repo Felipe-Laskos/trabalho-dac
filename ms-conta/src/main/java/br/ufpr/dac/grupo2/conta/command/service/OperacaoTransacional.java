@@ -55,7 +55,7 @@ public class OperacaoTransacional {
                 LocalDateTime.now()
         );
 
-        salvarUm(evento);
+        salvarEvento(evento);
         eventoPublisher.publicarDepoisDoCommit(evento);
         return evento;
     }
@@ -71,7 +71,6 @@ public class OperacaoTransacional {
 
         Map<String, Object> payload = Map.of("valor", valor);
 
-        // ContaLeituraService valida o saldo reconstruído pelo replay.
         leitura.validar("Saque", payload, estado);
 
         Evento evento = novoEvento(
@@ -82,7 +81,7 @@ public class OperacaoTransacional {
                 LocalDateTime.now()
         );
 
-        salvarUm(evento);
+        salvarEvento(evento);
         eventoPublisher.publicarDepoisDoCommit(evento);
         return evento;
     }
@@ -232,7 +231,7 @@ public class OperacaoTransacional {
         );
     }
 
-    private void salvarUm(Evento evento) {
+    private void salvarEvento(Evento evento) {
         try {
             eventoRepository.saveAndFlush(evento);
         } catch (DataIntegrityViolationException e) {

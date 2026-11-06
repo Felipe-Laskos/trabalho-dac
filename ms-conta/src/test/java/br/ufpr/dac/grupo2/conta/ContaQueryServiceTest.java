@@ -11,6 +11,8 @@ import br.ufpr.dac.grupo2.conta.query.repository.ContaQueryRepository;
 import br.ufpr.dac.grupo2.conta.query.service.ContaQueryService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +46,12 @@ class ContaQueryServiceTest {
         assertEquals("2000-01-01", resultado.dataCriacao());
         assertEquals("/contas/1291", resultado._links().get("self").href());
         assertEquals("/clientes/" + CPF, resultado._links().get("cliente").href());
+        assertEquals("/contas/1291/deposito", resultado._links().get("deposito").href());
+        assertEquals("/contas/1291/saque", resultado._links().get("saque").href());
+        assertEquals("/contas/1291/transferencia", resultado._links().get("transferencia").href());
         assertEquals("/contas/1291/extrato", resultado._links().get("extrato").href());
+        assertEquals(List.of("self", "cliente", "deposito", "saque",
+                "transferencia", "extrato"), new ArrayList<>(resultado._links().keySet()));
         verify(repository).findByCpfCliente(CPF);
     }
 

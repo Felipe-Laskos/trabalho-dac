@@ -97,9 +97,9 @@ class ContaSagaListenerTest {
 
     @Test
     void contaNaoEncontradaGeraRespostaDeFalha() {
-        ComandoSaga cmd = comando("saga-conta-inexistente", "sacar", Map.of(
+        ComandoSaga cmd = comando("saga-conta-inexistente", "atribuir-conta", Map.of(
                 "numeroConta", "9999",
-                "valor", "100.00"));
+                "cpfGerente", "40501740066"));
         ContaNaoEncontradaException excecao =
                 new ContaNaoEncontradaException("9999");
         ResultadoSaga falha = new ResultadoSaga(new ResultadoSaga.Resposta(
