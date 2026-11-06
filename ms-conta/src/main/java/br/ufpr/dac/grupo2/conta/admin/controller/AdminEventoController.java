@@ -1,6 +1,6 @@
 package br.ufpr.dac.grupo2.conta.admin.controller;
 
-import br.ufpr.dac.grupo2.conta.admin.dto.AppendEventoRequest;
+import br.ufpr.dac.grupo2.conta.admin.dto.AdicionarEventoRequest;
 import br.ufpr.dac.grupo2.conta.admin.dto.ReplayContaDTO;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.service.ContaCommandService;
@@ -35,7 +35,7 @@ public class AdminEventoController {
 
     @PostMapping("/eventos")
     public ResponseEntity<EventoPublicado> append(
-            @Valid @RequestBody AppendEventoRequest request) {
+            @Valid @RequestBody AdicionarEventoRequest request) {
 
         Evento evento = contaCommandService.append(
                 request.objetoId(),

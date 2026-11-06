@@ -5,7 +5,7 @@ import java.util.Map;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record AppendEventoRequest(
+public record AdicionarEventoRequest(
         @NotBlank String objetoId,
         @NotBlank String tipo,
         @NotNull Map<String, Object> payload) {
