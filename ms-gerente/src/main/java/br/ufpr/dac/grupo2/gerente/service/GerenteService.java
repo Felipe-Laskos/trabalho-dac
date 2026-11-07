@@ -199,7 +199,7 @@ public class GerenteService {
                 return new ResultadoSaga(resposta);
             }
 
-            if (gerenteRepository.existsById(cpf)) {
+            if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), "inserir-gerente"))) {
                 gerenteRepository.deleteById(cpf);
             }
 
@@ -299,7 +299,7 @@ public class GerenteService {
     @Transactional
     public ResultadoSaga compensarInativarGerente(MensagemSaga cmd, String cpf) {
         try {
-            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), "compensar-inativar-gerente");
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
 
             if (comandosProcessadosRepository.existsById(chave)) {
                Map<String, Object> payloadMap = Map.of("cpf", cpf);

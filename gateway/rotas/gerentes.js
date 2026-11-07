@@ -124,7 +124,7 @@ router.get("/",
   listarGerentes);
 
 router.post("/",
-  exigirPerfil("GERENTE"), injetarIdentidade,
+  exigirPerfil("GERENTE"),
   inserirGerente);
 
 router.get("/:cpf",
