@@ -19,7 +19,7 @@ Este microsserviço consome mensagens da fila de comandos (`ms.gerente.cmd`) e p
 
 O sistema foi desenhado para garantir resiliência contra falhas transitórias e efeito único (idempotência):
 
-1. **Reentrega (Retry):** Caso ocorra um erro de infraestrutura ou banco de dados durante o consumo de uma mensagem, o listener lança uma exceção controlada, instruindo o broker (RabbitMQ) a realizar a reentrega (*redelivery*).
+1. **Retentativa e DLQ:** erro de negócio vira resposta `FALHA` ao Orquestrador. Erro que escapa do listener é retentado 3 vezes pelo próprio serviço, a cada 5 s, e depois a mensagem vai para a DLQ, que o Orquestrador escuta para iniciar a compensação.
 2. **Idempotência:** Para evitar efeitos colaterais duplicados em caso de mensagens reentregadas, o serviço utiliza uma tabela de controle de comandos processados (`comandos_processados`), validando a chave composta baseada no `sagaId` e no `tipo` do comando. Se a mensagem chegar duplicada, o processamento de negócio é ignorado e o resultado anterior é retornado com segurança.
 
 
