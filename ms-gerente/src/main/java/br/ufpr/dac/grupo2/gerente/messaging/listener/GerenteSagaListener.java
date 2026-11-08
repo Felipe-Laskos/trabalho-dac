@@ -7,7 +7,6 @@ import br.ufpr.dac.grupo2.gerente.messaging.config.SagaRabbitConfig;
 import br.ufpr.dac.grupo2.gerente.messaging.dto.ResultadoSaga;
 import br.ufpr.dac.grupo2.gerente.messaging.service.SagaMessagePublisher;
 import br.ufpr.dac.grupo2.gerente.service.GerenteService;
-import br.ufpr.dac.grupo2.gerente.repository.ComandosProcessadosRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +24,13 @@ public class GerenteSagaListener {
     private final ObjectMapper json;
     private final GerenteService command;
     private final SagaMessagePublisher publisher;
-    private final ComandosProcessadosRepository comandosProcessadosRepository;
 
     public GerenteSagaListener(ObjectMapper json,
                                GerenteService command,
-                               SagaMessagePublisher publisher,
-                               ComandosProcessadosRepository comandosProcessadosRepository) {
+                               SagaMessagePublisher publisher) {
         this.json = json;
         this.command = command;
         this.publisher = publisher;
-        this.comandosProcessadosRepository = comandosProcessadosRepository;
     }
 
     @RabbitListener(queues = SagaRabbitConfig.FILA_COMANDOS, concurrency = "1")

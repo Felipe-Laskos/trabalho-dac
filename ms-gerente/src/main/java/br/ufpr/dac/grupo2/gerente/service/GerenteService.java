@@ -187,7 +187,7 @@ public class GerenteService {
     @Transactional
     public ResultadoSaga compensarInserirGerente (MensagemSaga cmd, String cpf) {
         try {
-            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), "compensar-inativar-gerente");
+            ComandoProcessadoId chave = new ComandoProcessadoId(cmd.sagaId(), cmd.tipo());
 
             if (comandosProcessadosRepository.existsById(chave)) {
                 Map<String, Object> payloadMap = Map.of("cpf", cpf);
@@ -314,10 +314,12 @@ public class GerenteService {
                 return new ResultadoSaga(resposta);
             }
 
-            Gerente gerente = gerenteRepository.findById(cpf).orElse(null);
-            if (gerente != null) {
-                gerente.setAtivo(true);
-                gerenteRepository.save(gerente);
+            if (comandosProcessadosRepository.existsById(new ComandoProcessadoId(cmd.sagaId(), "inativar-gerente"))) {
+                Gerente gerente = gerenteRepository.findById(cpf).orElse(null);
+                if (gerente != null) {
+                    gerente.setAtivo(true);
+                    gerenteRepository.save(gerente);
+                }
             }
 
             comandosProcessadosRepository.save(new ComandoProcessado(chave, LocalDateTime.now()));
