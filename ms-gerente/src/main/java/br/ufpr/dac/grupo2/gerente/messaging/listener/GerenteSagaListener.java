@@ -92,9 +92,22 @@ public class GerenteSagaListener {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("O nome é obrigatório.");
         }
+        if (nome.length() > 120) {
+            throw new IllegalArgumentException("O nome pode ter no máximo 120 caracteres.");
+        }
         String email = cmd.texto("email");
         if (email == null || !email.contains("@")) {
             throw new IllegalArgumentException("O e-mail deve ser válido.");
+        }
+        if (email.length() > 120) {
+            throw new IllegalArgumentException("O e-mail pode ter no máximo 120 caracteres.");
+        }
+        String telefone = cmd.texto("telefone");
+        if (telefone == null || telefone.isBlank()) {
+            throw new IllegalArgumentException("O telefone é obrigatório.");
+        }
+        if (telefone.length() > 20) {
+            throw new IllegalArgumentException("O telefone pode ter no máximo 20 caracteres.");
         }
     }
 

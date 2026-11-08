@@ -75,6 +75,18 @@ class GerenteRESTIntegracaoTest {
     }
 
     @Test
+    void gerenteInativoSaiSoComLinkSelf() throws Exception {
+        alterar(GODOPHREDO, g -> g.setAtivo(false));
+
+        mvc.perform(get("/gerentes/" + GODOPHREDO))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ativo").value(false))
+                .andExpect(jsonPath("$._links.self.href").value("/gerentes/" + GODOPHREDO))
+                .andExpect(jsonPath("$._links.atualizacao").doesNotExist())
+                .andExpect(jsonPath("$._links.remocao").doesNotExist());
+    }
+
+    @Test
     void atualizaSoNomeETelefone() throws Exception {
         mvc.perform(put("/gerentes/" + GODOPHREDO).contentType("application/json")
                         .content("{\"nome\":\"X\",\"telefone\":\"41999\"}"))

@@ -77,8 +77,10 @@ public class GerenteService {
 
         String base = "/gerentes/" + gerente.getCpf();
         dto.addLink("self", base);
-        dto.addLink("atualizacao", base);
-        dto.addLink("remocao", base);
+        if (Boolean.TRUE.equals(gerente.getAtivo())) {
+            dto.addLink("atualizacao", base);
+            dto.addLink("remocao", base);
+        }
 
         return dto;
     }

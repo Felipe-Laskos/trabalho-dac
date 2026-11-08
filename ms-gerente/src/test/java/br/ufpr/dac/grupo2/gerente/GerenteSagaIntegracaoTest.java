@@ -107,6 +107,30 @@ class GerenteSagaIntegracaoTest {
     }
 
     @Test
+    void inserirComNomeDe200CaracteresFalhaComFraseParaOGerente() {
+        Map<String, Object> payload = Map.of("cpf", NOVO, "nome", "a".repeat(200),
+                "email", EMAIL_NOVO, "telefone", "41900000010");
+
+        Resposta r = enviar("saga-1", "inserir-gerente", payload);
+
+        assertEquals("FALHA", r.status());
+        assertEquals("O nome pode ter no máximo 120 caracteres.", r.erro());
+        assertFalse(gerentes.existsById(NOVO));
+        assertEquals(0, processados.count());
+    }
+
+    @Test
+    void inserirComNomeDe120CaracteresEntra() {
+        Map<String, Object> payload = Map.of("cpf", NOVO, "nome", "a".repeat(120),
+                "email", EMAIL_NOVO, "telefone", "41900000010");
+
+        Resposta r = enviar("saga-1", "inserir-gerente", payload);
+
+        assertEquals("SUCESSO", r.status());
+        assertEquals(120, gerentes.findById(NOVO).orElseThrow().getNome().length());
+    }
+
+    @Test
     void compensarInserirApagaOGerenteDestaSagaEGravaAPropriaChave() {
         enviar("saga-1", "inserir-gerente", novoGerente(NOVO, EMAIL_NOVO));
 
