@@ -273,4 +273,72 @@ describe('ListaGerentesComponent', () => {
     liberarLista(respostaMock);
     await remocao;
   });
+
+  it('espera o CPF novo e só o encontra na terceira leitura', async () => {
+    const cpf = '12345678901';
+    const novo: Gerente = {
+      ...gerentesMock[0],
+      cpf,
+      nome: 'Novo Gerente',
+      quantidadeClientes: 1,
+      _links: {
+        self: { href: `/gerentes/${cpf}` },
+        atualizacao: { href: `/gerentes/${cpf}` },
+        remocao: { href: `/gerentes/${cpf}` },
+      },
+    };
+    const comNovo: GerentesList = {
+      ...respostaMock,
+      gerentes: [...respostaMock.gerentes, novo],
+    };
+    gerenteServiceMock.listar
+      .mockResolvedValueOnce(respostaMock)
+      .mockResolvedValueOnce(respostaMock)
+      .mockResolvedValue(comNovo);
+
+    history.replaceState({ gerenteInserido: cpf }, '');
+    component.ngOnInit();
+    await vi.waitFor(
+      () => expect(component.gerentes().some((item) => item.cpf === cpf)).toBe(true),
+      { timeout: 4000 },
+    );
+
+    expect(gerenteServiceMock.listar).toHaveBeenCalledTimes(4);
+    expect(history.state).toEqual({});
+  });
+
+  it('mantém Remover bloqueado enquanto a lista ainda traz o gerente removido', async () => {
+    const atualizada: GerentesList = {
+      ...respostaMock,
+      gerentes: respostaMock.gerentes
+        .filter((gerente) => gerente.cpf !== '98574307084')
+        .map((gerente) =>
+          gerente.cpf === '40501740066' ? { ...gerente, quantidadeClientes: 2 } : gerente,
+        ),
+    };
+    let consultasDaRemocao = 0;
+    gerenteServiceMock.listar.mockImplementation(async () => {
+      consultasDaRemocao += 1;
+      if (consultasDaRemocao === 1) {
+        return respostaMock;
+      }
+      return atualizada;
+    });
+    gerenteServiceMock.remover.mockResolvedValue(pendente);
+    jobs.aguardar.mockResolvedValue({ ...pendente, status: 'CONCLUIDO', resultType: 'inline' });
+    jobs.resultado.mockResolvedValue({ mensagem: 'Gerente removido' });
+
+    const gerente = component.gerentes()[1];
+    component.confirmarRemocao(gerente);
+    const remocao = component.confirmarRemocaoGerente();
+    await vi.waitFor(() => expect(consultasDaRemocao).toBe(1));
+
+    expect(component.removendo()).toBe(true);
+    expect(component.gerentes().some((item) => item.cpf === '98574307084')).toBe(true);
+
+    await remocao;
+
+    expect(component.removendo()).toBe(false);
+    expect(component.gerentes().some((item) => item.cpf === '98574307084')).toBe(false);
+  });
 });

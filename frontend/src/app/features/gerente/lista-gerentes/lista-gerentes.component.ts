@@ -55,10 +55,10 @@ export class ListaGerentesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const estado = history.state as { aguardarProjecao?: boolean } | null;
-    if (estado?.aguardarProjecao) {
+    const estado = history.state as { gerenteInserido?: string } | null;
+    if (estado?.gerenteInserido) {
       history.replaceState({}, '');
-      void this.aguardarContagensEstaveis();
+      void this.aguardarGerenteInserido(estado.gerenteInserido);
       return;
     }
     void this.carregarGerentes();
@@ -139,12 +139,12 @@ export class ListaGerentesComponent implements OnInit {
         mensagem: mensagemDeErro(erro),
       });
     } finally {
-      this.removendo.set(false);
       if (concluido) {
         await this.aguardarListaAposRemocao(gerente.cpf, tinhaClientes, contagens);
       } else {
         await this.carregarGerentes(true);
       }
+      this.removendo.set(false);
     }
   }
 
@@ -177,25 +177,27 @@ export class ListaGerentesComponent implements OnInit {
     }
   }
 
-  private async aguardarContagensEstaveis(): Promise<void> {
+  private async aguardarGerenteInserido(cpf: string): Promise<void> {
     const inicio = Date.now();
     let intervalo = 300;
-    let anterior: string | null = null;
+    let primeira = true;
 
     while (true) {
-      await this.carregarGerentes(anterior !== null);
-      const atual = this.gerentes()
-        .map((item) => `${item.cpf}:${item.quantidadeClientes ?? 0}`)
-        .join('|');
+      await this.carregarGerentes(!primeira);
+      primeira = false;
+      const lista = this.gerentes();
+      const novo = lista.find((item) => item.cpf === cpf);
+      const algumComMaisDeUm = lista.some(
+        (item) => item.cpf !== cpf && (item.quantidadeClientes ?? 0) > 1,
+      );
 
-      if (anterior !== null && anterior === atual) {
+      if (novo && ((novo.quantidadeClientes ?? 0) > 0 || !algumComMaisDeUm)) {
         return;
       }
       if (Date.now() - inicio >= 15_000) {
         return;
       }
 
-      anterior = atual;
       await esperar(intervalo);
       intervalo = Math.min(intervalo * 1.5, 2000);
     }
