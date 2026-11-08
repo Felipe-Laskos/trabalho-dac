@@ -11,7 +11,4 @@ public interface ComandosProcessadosRepository extends JpaRepository<ComandoProc
     @Modifying
     @Query(value = "DELETE FROM gerente.comandos_processados", nativeQuery = true)
     void deleteAll();
-
-    @Query("SELECT COUNT(c) > 0 FROM ComandoProcessado c WHERE c.id.sagaId = :sagaId AND c.id.tipo = :tipo")
-    boolean existsBySagaIdAndTipo(String sagaId, String tipo);
 }
