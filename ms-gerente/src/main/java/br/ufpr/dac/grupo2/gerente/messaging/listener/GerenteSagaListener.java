@@ -47,11 +47,6 @@ public class GerenteSagaListener {
             log.warn("comando descartado em {}: {}", SagaRabbitConfig.FILA_COMANDOS, e.getMessage());
             return;
         }
-        
-        if (comandosProcessadosRepository.existsBySagaIdAndTipo(cmd.sagaId(), cmd.tipo())) {
-            log.warn("Comando já processado anteriormente para sagaId: {} e tipo: {}", cmd.sagaId(), cmd.tipo());
-            return;
-        }
 
         ResultadoSaga resultado = switch (cmd.tipo()) {
             case "inserir-gerente" -> inserirGerente(cmd);
