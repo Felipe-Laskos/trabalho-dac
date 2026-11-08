@@ -17,9 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class ProjecaoContaListener {
+
     private final ObjectMapper objectMapper;
     private final ContaQueryRepository contaRepository;
     private final MovimentacaoRepository movimentacaoRepository;
+
     public ProjecaoContaListener(
             ObjectMapper objectMapper,
             ContaQueryRepository contaRepository,
@@ -40,7 +42,9 @@ public class ProjecaoContaListener {
                 mensagem,
                 EventoPublicado.class
         );
+
         contaRepository.bloquearProjecao();
+
         if (evento.tipo().equals("CriacaoCompensada")) {
             contaRepository.marcarCompensada(evento.objetoId());
             contaRepository.apagarMovimentacoes(evento.objetoId());
@@ -50,7 +54,7 @@ public class ProjecaoContaListener {
         }
         if (contaRepository.compensada(evento.objetoId())) return;
 
-        // barreira 1: movimentação já gravada
+        // movimentação já gravada
         if (movimentacaoRepository.existsByEventoId(evento.id())) {
             return;
         }
@@ -59,7 +63,7 @@ public class ProjecaoContaListener {
                 .findById(evento.objetoId())
                 .orElse(null);
 
-        // barreira 2: evento antigo ou repetido
+        // evento antigo ou repetido
         if (conta != null && evento.versao() <= conta.getUltimaVersao()) {
             return;
         }
@@ -199,14 +203,17 @@ conta.getSaldo(),
                 textoOpcional(destino, "nome")
         );
     }
+
     private BigDecimal dinheiro(Map<String, Object> payload) {
         return dinheiro(payload, "valor");
     }
+
     private BigDecimal dinheiro(
             Map<String, Object> payload,
             String campo) {
         return new BigDecimal(texto(payload, campo));
     }
+
     private String texto(
             Map<String, Object> payload,
             String campo) {
@@ -219,6 +226,7 @@ conta.getSaldo(),
         }
         return texto;
     }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> parte(
             Map<String, Object> payload,
@@ -234,6 +242,7 @@ conta.getSaldo(),
         }
         return (Map<String, Object>) valor;
     }
+    
     private String textoOpcional(
             Map<String, Object> mapa,
             String campo) {
