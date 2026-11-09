@@ -111,23 +111,25 @@ describe('SessaoService', () => {
   });
 
   it('deve ignorar o usuário quando seus campos forem inválidos', () => {
-    localStorage.setItem('bantads.token', token);
-    localStorage.setItem('bantads.tipo', 'GERENTE');
+  localStorage.setItem('bantads.token', token);
+  localStorage.setItem('bantads.tipo', 'GERENTE');
 
-    localStorage.setItem(
-      'bantads.usuario',
-      JSON.stringify({
-        cpf: '12345678900',
-        nome: 'Gabriela da paz',
-        email: 'gabriela@email.com',
-      }),
-    );
+  const usuarioInvalido = {
+    cpf: '12345678900',
+    nome: 'Gabriela da paz',
+    email: 12345, 
+  };
 
-    service = TestBed.inject(SessaoService);
+  localStorage.setItem(
+    'bantads.usuario',
+    JSON.stringify(usuarioInvalido),
+  );
 
-    expect(service.token()).toBe(token);
-    expect(service.tipo()).toBe('GERENTE');
-    expect(service.usuario()).toBeNull();
-    expect(service.autenticado()).toBe(false);
-  });
+  service = TestBed.inject(SessaoService);
+
+  expect(service.token()).toBe(token);
+  expect(service.tipo()).toBe('GERENTE');
+  expect(service.usuario()).toBeNull();
+  expect(service.autenticado()).toBe(false);
+});
 });
