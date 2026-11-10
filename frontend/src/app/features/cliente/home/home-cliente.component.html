@@ -50,7 +50,12 @@
               <span class="dark-label">
                 {{ atualizandoSaldo() ? 'Atualizando saldo…' : 'Saldo disponível' }}
               </span>
-              <span class="dark-balance">{{ contaAtual.saldo | dinheiro }}</span>
+              <span
+                class="dark-balance"
+                [style.--caracteres]="(contaAtual.saldo | dinheiro).length"
+              >
+                {{ contaAtual.saldo | dinheiro }}
+              </span>
             </div>
 
             <div class="dark-card-footer">
