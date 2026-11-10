@@ -44,14 +44,21 @@ jobs:
             "novos_clientes": ["cliente.novo1@bantads.com.br", "cliente.novo2@bantads.com.br"],
             "novos_gerentes": ["gerente.novo1@bantads.com.br", "gerente.novo2@bantads.com.br"],
             "job_timeout": 150,
-            "read_timeout": 40
+            "read_timeout": 40,
+            "automatic_password": true,
+            "senha_recente_path": "senha_recente.fifo"
           }
           JSON
       - name: pytest
         id: pytest
         continue-on-error: true
+        timeout-minutes: 20
         working-directory: suite
-        run: pytest -v --junitxml=resultado.xml
+        run: |
+          python3 ../.github/senha_cliente_novo.py config.json senha_recente.fifo > ../senha.log 2>&1 &
+          timeout 30 bash -c 'until grep -q "^pronto" ../senha.log; do sleep 0.5; done' \
+            || echo "::warning::senha_cliente_novo.py nao ficou pronto, veja o senha.log"
+          pytest -v --junitxml=resultado.xml
 
       - name: portao dos intocaveis
         run: python3 .github/intocaveis.py
@@ -67,4 +74,5 @@ jobs:
           path: |
             suite/resultado.xml
             frota.log
+            senha.log
           if-no-files-found: ignore
