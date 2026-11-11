@@ -106,10 +106,11 @@ h1 {
   flex-direction: column;
   gap: 4px;
   margin-bottom: var(--spacing-lg, 1.5rem);
+  container-type: inline-size;
 }
 
 .dark-balance {
-  font-size: 36px; 
+  font-size: min(36px, 100cqi / (var(--caracteres) * 0.6));
   font-weight: var(--font-weight-heading);
   line-height: 1;
 }

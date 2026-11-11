@@ -82,7 +82,9 @@
             Saldo disponível
           }
         </span>
-        <strong class="conta-saldo">{{ contaAtual.saldo | dinheiro }}</strong>
+        <strong class="conta-saldo" [style.--caracteres]="(contaAtual.saldo | dinheiro).length">
+          {{ contaAtual.saldo | dinheiro }}
+        </strong>
         <p class="conta-nota">
           Depois de cada operação, o saldo mostrado é o que o banco confirmou.
         </p>

@@ -80,6 +80,7 @@ h1 {
   background: var(--color-primary);
   color: var(--color-surface);
   border-radius: var(--border-radius-lg, 12px);
+  container-type: inline-size;
 }
 
 .conta-rotulo {
@@ -105,7 +106,7 @@ h1 {
 }
 
 .conta-saldo {
-  font-size: 32px;
+  font-size: min(32px, 100cqi / (var(--caracteres) * 0.6));
   line-height: 1.1;
 }
 
