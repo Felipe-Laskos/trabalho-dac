@@ -29,8 +29,11 @@ foi feita antes do clique e não registra a confirmação de roteamento.
 
    Na base usada na prova, o evento `2` é um depósito de `1000.00` na conta
    `1291`, versão `2`. Se a sua base não contiver esse evento **nas duas
-   tabelas**, escolha outro evento de movimentação já aplicado e adapte o
-   payload, a conta e o ID nos passos seguintes.
+   tabelas**, escolha outro evento de movimentação já aplicado e anote `id`,
+   `objeto_id`, `tipo`, `payload`, `versao` e `timestamp` reais. Substitua o ID
+   e a conta nas consultas dos passos 4 e 10, todos os campos do JSON no passo
+   6 e os valores conferidos nos passos 7 e 8. Não publique o exemplo do evento
+   `2` para representar outro evento.
 
    ![Evidência 01: evento 2 nas tabelas de eventos e movimentações](evidencias-reprocessamento/evidencia-01.png)
 
@@ -48,17 +51,19 @@ foi feita antes do clique e não registra a confirmação de roteamento.
 
 ## Colocar uma cópia na DLQ
 
-5. Em **Queues and Streams**, abra `ms.conta.events.dlq`. Confira se há
-   mensagens. Se houver, não consuma nem substitua mensagens desconhecidas:
-   examine a causa da falha e escolha uma mensagem já projetada. Se a DLQ
-   estiver vazia, crie uma cópia controlada do evento `2` como nos passos 6–7.
+5. Em **Queues and Streams**, abra `ms.conta.events.dlq` e confira **Ready=0**
+   e **Unacked=0**. Se houver mensagens, interrompa este ensaio: não retire
+   mensagens de outra falha nem publique a cópia por cima delas. Investigue a
+   causa e execute o roteiro em uma DLQ vazia. Com a DLQ vazia, crie a cópia
+   controlada do evento `2` nos passos 6–7.
 
    ![Evidência 03: DLQ vazia antes da cópia controlada](evidencias-reprocessamento/evidencia-03.png)
 
 6. Em **Exchanges**, abra **(AMQP default)** e a seção **Publish message**.
    Use a routing key `ms.conta.events.dlq`, propriedades vazias e o payload
    abaixo. O `\u00f3` representa o `ó` de `Depósito` em JSON e evita erro de
-   codificação. Copie o JSON integralmente, sem trocar `id` ou `versao`:
+   codificação. Se estiver usando o evento `2`, copie o JSON integralmente.
+   Para outro evento, monte o JSON com os valores reais anotados no passo 3:
 
    ```json
    {"id":2,"objetoId":"1291","tipo":"Dep\u00f3sito","payload":{"valor":"1000.00"},"versao":2,"timestamp":"2020-01-01T10:00:00"}
@@ -69,23 +74,37 @@ foi feita antes do clique e não registra a confirmação de roteamento.
 
    ![Evidência 04: formulário da cópia controlada direcionada à DLQ](evidencias-reprocessamento/evidencia-04.png)
 
-7. Volte a `ms.conta.events.dlq`. Em **Get messages**, peça **1** mensagem
-   com a opção de **requeue** ativada e clique em **Get Message(s)**. Confira
-   `id=2`, `objetoId=1291`, `versao=2`, tipo `Depósito` e valor `1000.00`.
+7. Volte a `ms.conta.events.dlq`. Em **Get messages**, peça **1** mensagem,
+   selecione **Ack Mode: Reject requeue true** e clique em **Get Message(s)**. Confira
+   `id=2`, `objetoId=1291`, `versao=2`, tipo `Depósito` e valor `1000.00`
+   (ou os valores anotados no passo 3, se escolheu outro evento).
    Copie o payload exatamente como aparece e tire o primeiro print. A opção
-   de requeue mantém a mensagem na DLQ.
+   **Reject requeue true** mantém a mensagem na DLQ. Confirme que **Ready=1**
+   e **Unacked=0** antes de continuar.
 
    ![Evidência 05: consulta do evento 2 na DLQ com requeue ativado](evidencias-reprocessamento/evidencia-05.png)
 
 ## Reinjetar e provar a idempotência
 
 8. Para reproduzir a retirada feita na prova, use **Get messages** novamente
-   com quantidade **1** e confirmação/ack **sem requeue**. Antes de confirmar,
+   com quantidade **1** e **Ack Mode: Automatic ack**. Antes de confirmar,
    mantenha uma cópia local do payload: a retirada da DLQ e a publicação na
    fila original são duas ações separadas. Confira que a mensagem retirada
-   possui o mesmo `id` e payload do passo 7.
+   possui o mesmo `id` e payload do passo 7. Confirme que a DLQ voltou a
+   **Ready=0** e **Unacked=0**.
 
-9. Em **Exchanges → (AMQP default) → Publish message**, use a routing key
+9. Antes de publicar, registre o contador de confirmações do consumidor da
+   fila original pelo [HTTP API do RabbitMQ Management](https://www.rabbitmq.com/docs/http-api-reference)
+   (`message_stats.ack`):
+
+   ```powershell
+   $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('guest:guest'))
+   $headers = @{ Authorization = "Basic $auth" }
+   $filaAntes = Invoke-RestMethod -Uri 'http://localhost:15672/api/queues/%2F/ms.conta.events' -Headers $headers
+   $ackAntes = [int]$filaAntes.message_stats.ack
+   ```
+
+   Em **Exchanges → (AMQP default) → Publish message**, use a routing key
    `ms.conta.events`. Cole o payload retirado da DLQ, sem alterar campos,
    e publique **uma vez**. Tire um print da confirmação de roteamento.
 
@@ -95,8 +114,18 @@ foi feita antes do clique e não registra a confirmação de roteamento.
    o payload e a routing key preparados, mas não a confirmação de roteamento.
    Na defesa, capture também essa confirmação.
 
-10. Aguarde `ms-conta` consumir a mensagem e execute a mesma consulta SQL do
-    passo 4. Tire um print da saída **depois**. Os quatro valores — `saldo`,
+10. Consulte novamente a fila original até o contador `ack` aumentar em 1
+    e **Ready=0**, **Unacked=0**. Isso confirma que o consumidor recebeu e
+    confirmou a mensagem; se o contador não aumentar, verifique os logs do
+    `ms-conta` e não publique outra cópia.
+
+    ```powershell
+    $filaDepois = Invoke-RestMethod -Uri 'http://localhost:15672/api/queues/%2F/ms.conta.events' -Headers $headers
+    "ack antes=$ackAntes; ack depois=$($filaDepois.message_stats.ack); ready=$($filaDepois.messages_ready); unacked=$($filaDepois.messages_unacknowledged)"
+    ```
+
+    Depois, execute a mesma consulta SQL do passo 4 e tire um print da saída
+    **depois**. Os quatro valores — `saldo`,
     `ultima_versao`, `count(*)` e `saldo_apos` — devem ser iguais aos de antes.
     No ensaio registrado, permaneceram `800.0000`, `10`, `17` e `1000.0000`.
 

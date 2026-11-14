@@ -15,7 +15,7 @@ import org.testcontainers.junit.jupiter.*;
 import tools.jackson.databind.ObjectMapper;
 import br.ufpr.dac.grupo2.conta.command.service.*;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.messaging.dto.*;
 import br.ufpr.dac.grupo2.conta.query.listener.ProjecaoContaListener;
 import br.ufpr.dac.grupo2.conta.query.repository.ContaQueryRepository;

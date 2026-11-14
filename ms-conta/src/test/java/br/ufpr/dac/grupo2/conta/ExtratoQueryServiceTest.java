@@ -1,6 +1,8 @@
 package br.ufpr.dac.grupo2.conta;
 
-import br.ufpr.dac.grupo2.conta.command.exception.*;
+import br.ufpr.dac.grupo2.conta.exception.AcessoNegadoException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.query.model.*;
 import br.ufpr.dac.grupo2.conta.query.repository.*;
 import br.ufpr.dac.grupo2.conta.query.service.ExtratoQueryService;

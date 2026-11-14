@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.service.SagaContaTransacional;
 import br.ufpr.dac.grupo2.conta.messaging.config.SagaRabbitConfig;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
@@ -59,7 +59,10 @@ public class ContaSagaListener {
     private ResultadoSaga transferirContas(ComandoSaga cmd) {
         try {
             String removido = cpfDoPayload(cmd, "cpfGerente");
-            String destino = query.escolher(cpfsDoPayload(cmd, "cpfsAtivos"));
+            List<String> ativos = cpfsDoPayload(cmd, "cpfsAtivos").stream()
+                    .filter(cpf -> !removido.equals(cpf))
+                    .toList();
+            String destino = query.escolher(ativos);
             return command.transferirContasDoGerente(cmd, removido, destino);
         } catch (IllegalArgumentException e) {
             return command.registrarFalha(cmd, e.getMessage());
