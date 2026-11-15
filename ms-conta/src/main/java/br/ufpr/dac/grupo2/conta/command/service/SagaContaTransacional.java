@@ -134,12 +134,10 @@ public class SagaContaTransacional {
         }
 
         List<ContaACompensar> validadas = new ArrayList<>();
-        List<String> naoRevertidas = new ArrayList<>();
 
         for (EventoPublicado transferido : transferencia.eventos()) {
             String original = texto(transferido.payload(), "cpfGerenteAnterior");
             if (!gerenteRemovido.equals(original)) {
-                naoRevertidas.add(transferido.objetoId());
                 continue;
             }
 
@@ -147,29 +145,15 @@ public class SagaContaTransacional {
             try {
                 estado = leitura.replay(transferido.objetoId());
             } catch (ContaNaoEncontradaException e) {
-                naoRevertidas.add(transferido.objetoId());
                 continue;
             }
 
             String destino = texto(transferido.payload(), "cpfGerente");
             if (!destino.equals(estado.getCpfGerente())) {
-                naoRevertidas.add(transferido.objetoId());
                 continue;
             }
             validadas.add(new ContaACompensar(transferido, estado,
                     original, destino));
-        }
-
-        if (!naoRevertidas.isEmpty()) {
-            List<String> contasSemReversao = transferencia.eventos().stream()
-                    .map(EventoPublicado::objetoId)
-                    .toList();
-            return ResultadoSaga.lote(new ResultadoSaga.Resposta(
-                    cmd.sagaId(), cmd.tipo(), agora().toString(),
-                    Map.of("contas", List.of(),
-                            "contasNaoRevertidas", contasSemReversao),
-                    "FALHA", "Compensação não realizada; contas inválidas: "
-                            + String.join(", ", naoRevertidas)), List.of());
         }
 
         List<EventoPublicado> reversoes = new ArrayList<>();
