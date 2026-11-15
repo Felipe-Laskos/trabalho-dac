@@ -9,12 +9,12 @@ import {
 } from '@angular/forms';
 import { Button } from 'primeng/button';
 import { InputMask } from 'primeng/inputmask';
-import { InputNumber } from 'primeng/inputnumber';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { KeyFilter } from 'primeng/keyfilter';
 import { MessageComponent } from '../../../shared/components/message/message.component';
-import { paraContrato, paraDecimal } from '../../../shared/util/dinheiro.util';
+import { MoneyInputComponent } from '../../../shared/components/money-input/money-input.component';
+import type { Dinheiro } from '../../../core/models/dinheiro';
 
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import { AutocadastroInput } from '../../../core/models/cliente.model';
@@ -30,10 +30,10 @@ type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
     RouterLink,
     Button,
     InputMask,
-    InputNumber,
     InputText,
     Select,
     MessageComponent,
+    MoneyInputComponent,
     KeyFilter,
   ],
   templateUrl: './autocadastro.component.html',
@@ -84,7 +84,7 @@ export class AutocadastroComponent implements OnInit {
     cpf: ['', [Validators.required, this.quantidadeDigitos(11)]],
     email: ['', [Validators.required, Validators.email]],
     telefone: ['', [Validators.required, this.quantidadeDigitosEntre(10, 11)]],
-    salario: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    salario: [null as Dinheiro | null],
     endereco: this.fb.group({
       logradouro: ['', [Validators.required]],
       numero: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
@@ -177,7 +177,7 @@ export class AutocadastroComponent implements OnInit {
       nome: this.form.controls.nome.value!,
       email: this.form.controls.email.value!,
       telefone: this.somenteDigitos(this.form.controls.telefone.value),
-      salario: valor !== null ? paraContrato(paraDecimal(valor.toString())) : '',
+      salario: valor ?? '',
       endereco: {
         logradouro: this.form.controls.endereco.controls.logradouro.value!,
         numero: this.form.controls.endereco.controls.numero.value!,

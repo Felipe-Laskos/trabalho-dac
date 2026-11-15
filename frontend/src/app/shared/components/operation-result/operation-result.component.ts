@@ -57,7 +57,7 @@ export class OperationResultComponent {
       case 'ERRO_PERMISSAO':
         return 'Operação não permitida';
       case 'ERRO_TECNICO':
-        return 'Não foi possível falar com o servidor';
+        return 'Não foi possível concluir a operação';
       default:
         return 'Resultado da operação';
     }

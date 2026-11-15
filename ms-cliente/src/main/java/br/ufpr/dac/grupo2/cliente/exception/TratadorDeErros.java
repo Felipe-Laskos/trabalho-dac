@@ -1,6 +1,9 @@
 package br.ufpr.dac.grupo2.cliente.exception;
 
 import br.ufpr.dac.grupo2.cliente.dto.ErroDTO;
+
+import java.sql.SQLException;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +28,21 @@ public class TratadorDeErros {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErroDTO> conflitoNoBanco(DataIntegrityViolationException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErroDTO(409, "Conflict", "CPF ou e-mail já cadastrado"));
+        if (violouUnicidade(e)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErroDTO(409, "Conflict", "CPF ou e-mail já cadastrado"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErroDTO(400, "Bad Request", "Requisição malformada"));
+    }
+
+    private static boolean violouUnicidade(Throwable erro) {
+        for (Throwable causa = erro; causa != null; causa = causa.getCause()) {
+            if (causa instanceof SQLException sql && "23505".equals(sql.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

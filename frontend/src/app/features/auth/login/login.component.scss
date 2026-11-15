@@ -4,9 +4,9 @@
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-md);
   background: var(--color-warning-background);
-  border: 1px solid #f3d7a1;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 15%, var(--color-warning-background));
   border-radius: var(--border-radius);
-  color: #8a5a12;
+  color: var(--color-warning);
 
   strong {
     display: block;
@@ -26,7 +26,7 @@
   padding: var(--spacing-md);
   background: var(--color-error-background);
   border-radius: var(--border-radius);
-  color: #b42318;
+  color: var(--color-error);
 
   i {
     margin-top: 2px;

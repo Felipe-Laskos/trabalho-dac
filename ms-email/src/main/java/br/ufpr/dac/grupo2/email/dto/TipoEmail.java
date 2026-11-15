@@ -23,8 +23,6 @@ public enum TipoEmail {
 			Não foi possível concluir sua solicitação de abertura de conta.
 			Nenhuma alteração foi realizada em seu cadastro.
 
-			Você pode tentar novamente a qualquer momento.
-
 			Atenciosamente,
 			Equipe BANTADS"""),
 

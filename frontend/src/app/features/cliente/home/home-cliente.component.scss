@@ -206,12 +206,12 @@ h1 {
 }
 
 .icon-blue {
-  background-color: #d3e0fc; 
+  background-color: color-mix(in srgb, var(--color-focus) 20%, var(--color-surface));
   color: var(--color-focus); 
 }
 
 .icon-red {
-  background-color:#fadbdd; 
+  background-color: var(--color-error-background);
   color: var(--color-error); 
 }
 
@@ -233,7 +233,7 @@ h1 {
   border-radius: var(--border-radius-lg, 12px);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  background-color: var(--bg-surface);
+  background-color: var(--color-surface);
 }
 
 .info-footer-grid {

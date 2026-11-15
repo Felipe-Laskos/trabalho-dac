@@ -6,7 +6,7 @@ import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { MessageComponent } from '../../../shared/components/message/message.component';
 import { AuthService } from '../../../core/services/auth.service';
-import { mensagemDeErro } from '../../../core/services/erro.util';
+import { tratarErro } from '../../../core/services/erro.util';
 
 @Component({
   selector: 'app-login',
@@ -61,7 +61,8 @@ export class LoginComponent {
       await this.router.navigateByUrl(this.auth.rotaInicial(sessao.tipo));
     } catch (erro) {
       const padrao = 'Login inválido. Confira o e-mail e a senha e tente de novo.';
-      this.falhou(mensagemDeErro(erro) || padrao);
+      const { status, mensagem } = tratarErro(erro);
+      this.falhou(mensagem || padrao, status === 401);
     } finally {
       this.isLoading.set(false);
     }
@@ -72,8 +73,7 @@ export class LoginComponent {
     this.credencialInvalida.set(false);
   }
 
-  private falhou(mensagem: string): void {
-    const credencial = /login inválido/i.test(mensagem);
+  private falhou(mensagem: string, credencial = false): void {
     this.sessaoEncerrada.set(false);
     this.hasLoginError.set(true);
     this.credencialInvalida.set(credencial);
