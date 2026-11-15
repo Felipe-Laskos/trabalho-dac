@@ -59,6 +59,7 @@ public class ContaSagaListener {
     private ResultadoSaga transferirContas(ComandoSaga cmd) {
         try {
             String removido = cpfDoPayload(cmd, "cpfGerente");
+            // escolher o gerente de destino entre os ativos
             List<String> ativos = cpfsDoPayload(cmd, "cpfsAtivos").stream()
                     .filter(cpf -> !removido.equals(cpf))
                     .toList();

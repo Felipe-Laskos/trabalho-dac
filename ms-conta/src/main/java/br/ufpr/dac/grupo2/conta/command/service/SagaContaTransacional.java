@@ -93,6 +93,7 @@ public class SagaContaTransacional {
             return falha;
         }
 
+        // buscar as contas atuais do gerente removido
         List<Object[]> contas = contasAtuaisDoGerente(gerenteRemovido);
         List<EventoPublicado> publicados = new ArrayList<>();
         List<Map<String, Object>> respostaContas = new ArrayList<>();
@@ -133,6 +134,7 @@ public class SagaContaTransacional {
             return sucessoLote(cmd, Map.of("contas", List.of()), List.of());
         }
 
+        // validar quais contas ainda pertencem ao gerente removido e quais já foram transferidas
         List<ContaACompensar> validadas = new ArrayList<>();
 
         for (EventoPublicado transferido : transferencia.eventos()) {
@@ -271,6 +273,7 @@ public class SagaContaTransacional {
         String cliente = cpf(cmd.payload(), "cpfCliente");
         String gerente = cpf(cmd.payload(), "cpfGerente");
 
+        // validar se o cliente já possui conta 
         Number existentes = (Number) entityManager.createNativeQuery("""
                 SELECT count(*) FROM conta_command.eventos c
                 WHERE c.tipo = 'Criado' AND c.payload->>'cpfCliente' = :cpf
@@ -287,6 +290,7 @@ public class SagaContaTransacional {
             throw new IllegalArgumentException("Cliente já possui conta ativa");
         }
 
+        // gerar número de conta
         String numero = numeros.livre(candidato -> !eventos
                 .findByObjetoIdOrderByVersaoAsc(candidato)
                 .isEmpty());

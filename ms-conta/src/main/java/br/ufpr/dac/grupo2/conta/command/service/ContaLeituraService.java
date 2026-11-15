@@ -102,6 +102,7 @@ public class ContaLeituraService {
         }
     }
 
+    //percorrer a lista de eventos e aplicar cada evento no estado da conta
     private EstadoConta fold(
             String numeroConta,
             List<Evento> eventos) {

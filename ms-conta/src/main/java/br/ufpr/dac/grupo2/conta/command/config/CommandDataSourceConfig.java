@@ -24,6 +24,7 @@ import java.util.Map;
 )
 public class CommandDataSourceConfig {
 
+    //configuração da conexão do dotasource do command
     @Bean(name = "commandDataSource")
     @ConfigurationProperties(prefix = "app.datasource.command")
     public DataSource commandDataSource() {
@@ -32,6 +33,8 @@ public class CommandDataSourceConfig {
                 .build();
     }
 
+
+    //configuração acesso ao banco de dados do command
     @Bean(name = "commandEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean commandEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
@@ -48,6 +51,7 @@ public class CommandDataSourceConfig {
                 .build();
     }
 
+    //controla as transações do command
     @Bean(name = "commandTransactionManager")
     public PlatformTransactionManager commandTransactionManager(
             @Qualifier("commandEntityManagerFactory") EntityManagerFactory entityManagerFactory) {

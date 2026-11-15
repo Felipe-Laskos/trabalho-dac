@@ -44,6 +44,7 @@ public class ExtratoQueryService {
             throw new AcessoNegadoException();
         }
 
+        //valida datas e calcula limites
         LocalDate finalPeriodo = fim == null ? LocalDate.now(clock) : fim;
         if (finalPeriodo.equals(LocalDate.MAX)
                 || (inicio == null && finalPeriodo.isBefore(LocalDate.MIN.plusDays(29)))) {
@@ -60,6 +61,7 @@ public class ExtratoQueryService {
         var limiteInicial = inicialPeriodo.atStartOfDay();
         var limiteFinal = finalPeriodo.plusDays(1).atStartOfDay();
 
+        //calcula saldo inicial e lista de movimentações
         BigDecimal abertura = movimentos
                 .findFirstByNumeroContaAndDataHoraBeforeOrderByDataHoraDescIdDesc(numero, limiteInicial)
                 .map(Movimentacao::getSaldoApos).orElse(BigDecimal.ZERO);
