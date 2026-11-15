@@ -122,6 +122,7 @@ public class OperacaoTransacional {
                 request.destino().nome()
         );
 
+        //validar se os cpfs da origem e destino batem com os cpfs das contas
         validarCpfsDosParticipantes(
                 origem,
                 destino,
@@ -135,11 +136,13 @@ public class OperacaoTransacional {
                 "destino", parteDestino.comoMap()
         );
 
+        //validar se a origem tem saldo suficiente e se os cpfs batem com as contas
         leitura.validar(
                 "TransferênciaOrigem",
                 payload,
                 origem
         );
+        //validar se o destino tem saldo suficiente e se os cpfs batem com as contas
         leitura.validar(
                 "TransferênciaDestino",
                 payload,
@@ -164,6 +167,7 @@ public class OperacaoTransacional {
                 instante
         );
 
+        //ordenar os eventos por objetoId 
         List<Evento> eventosOrdenados = Stream.of(
                         eventoOrigem,
                         eventoDestino

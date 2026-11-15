@@ -28,6 +28,7 @@ public class TransferenciaNovoGerenteService {
     public Optional<ContaParaTransferir> escolher(String cpfNovoGerente) {
         validarCpf(cpfNovoGerente);
 
+        // agrupar as contas por gerente
         Map<String, List<ContaQuery>> porGerente = contas.findAll().stream()
                 .filter(conta -> !cpfNovoGerente.equals(conta.getCpfGerente()))
                 .collect(Collectors.groupingBy(ContaQuery::getCpfGerente));
@@ -41,6 +42,7 @@ public class TransferenciaNovoGerenteService {
             return Optional.empty();
         }
 
+        // escolher o gerente com menor saldo total e, em caso de empate, o de menor CPF
         Map.Entry<String, List<ContaQuery>> gerente = porGerente.entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().size() == maiorQuantidade)
@@ -50,6 +52,7 @@ public class TransferenciaNovoGerenteService {
                         .thenComparing(Map.Entry::getKey))
                 .orElseThrow();
 
+        // escolher a conta com menor saldo e, em caso de empate, a de menor número
         ContaQuery conta = gerente.getValue().stream()
                 .min(Comparator.comparing(ContaQuery::getSaldo)
                         .thenComparing(ContaQuery::getNumero))
