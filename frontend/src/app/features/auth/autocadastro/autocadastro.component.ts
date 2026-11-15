@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import {
   AbstractControl,
   FormBuilder,
@@ -15,6 +15,7 @@ import { KeyFilter } from 'primeng/keyfilter';
 import { MessageComponent } from '../../../shared/components/message/message.component';
 import { MoneyInputComponent } from '../../../shared/components/money-input/money-input.component';
 import type { Dinheiro } from '../../../core/models/dinheiro';
+import { ModalConfirmationComponent } from '../../../shared/components/modal-confirmation/modal-confirmation.component';
 
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import { AutocadastroInput } from '../../../core/models/cliente.model';
@@ -34,7 +35,8 @@ type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
     Select,
     MessageComponent,
     MoneyInputComponent,
-    KeyFilter,
+    KeyFilter,  
+    ModalConfirmationComponent,
   ],
   templateUrl: './autocadastro.component.html',
   styleUrl: './autocadastro.component.scss',
@@ -48,6 +50,10 @@ export class AutocadastroComponent implements OnInit {
   private readonly solicitacaoService = inject(SolicitacaoService);
 
   protected readonly estado = signal<TelaEstado>('preenchendo');
+
+  private readonly router = inject(Router);
+
+  protected readonly modalCancelarVisivel = signal(false);
 
   readonly ufs = [
     { label: 'AC', value: 'AC' },
@@ -250,9 +256,39 @@ export class AutocadastroComponent implements OnInit {
   private somenteDigitos(valor: string | null): string {
     return (valor ?? '').replace(/\D/g, '');
   }
-  cancelar(): void {
-    this.form.reset();
-    this.hasFormError.set(false);
-    this.estado.set('preenchendo');
+
+ protected solicitarCancelamento(): void {
+  if (this.enviando || this.sucesso) {
+    return;
+  }
+
+  if (!this.form.dirty) {
+    void this.sairDoCadastro();
+    return;
+  }
+
+  this.modalCancelarVisivel.set(true);
+}
+
+protected fecharModalCancelamento(): void {
+  this.modalCancelarVisivel.set(false);
+}
+
+protected confirmarCancelamento(): void {
+  if (this.enviando) {
+    return;
+  }
+
+  this.modalCancelarVisivel.set(false);
+  void this.sairDoCadastro();
+}
+
+private sairDoCadastro(): void {
+  this.form.reset();
+  this.hasFormError.set(false);
+  this.mensagemErro.set(null);
+  this.estado.set('preenchendo');
+
+  void this.router.navigateByUrl('/login');
   }
 }

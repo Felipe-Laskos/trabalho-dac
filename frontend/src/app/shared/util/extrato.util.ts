@@ -58,7 +58,9 @@ export function montarLinhaDoTempo(extrato: Extrato, cpfUsuario: string): DiaExt
       continue;
     }
 
-    const doDia = (porDia.get(chave) ?? []).sort((a, b) => a.dataHora.localeCompare(b.dataHora));
+    const doDia = [...(porDia.get(chave) ?? [])].sort((a, b) =>
+      a.dataHora.localeCompare(b.dataHora),
+    );
 
     const movimentacoes: LinhaMovimentacao[] = doDia.map((movimentacao) => {
       const entrada = ehEntrada(movimentacao, cpfUsuario);
@@ -76,5 +78,10 @@ export function montarLinhaDoTempo(extrato: Extrato, cpfUsuario: string): DiaExt
     });
   }
 
-  return dias;
+  return dias
+    .reverse()
+    .map((dia) => ({
+      ...dia,
+      movimentacoes: [...dia.movimentacoes].reverse(),
+    }));
 }
