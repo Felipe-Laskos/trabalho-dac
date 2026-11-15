@@ -277,8 +277,8 @@
               label="Cancelar"
               severity="secondary"
               variant="outlined"
-              [disabled]="enviando"
-              (onClick)="cancelar()"
+              [disabled]="enviando || sucesso"
+              (onClick)="solicitarCancelamento()"
             />
 
             <p-button
@@ -328,5 +328,17 @@
         </p-button>
       </div>
     }
+    <app-modal-confirmation
+      [visivel]="modalCancelarVisivel()"
+      titulo="Cancelar cadastro?"
+      subtitulo="Os dados preenchidos serão perdidos. Deseja realmente sair do autocadastro?"
+      textoCancelar="Continuar preenchendo"
+      textoConfirmar="Sair do cadastro"
+      severidadeConfirmar="danger"
+      icone="pi pi-sign-out"
+      varianteIcone="danger"
+      (cancelar)="fecharModalCancelamento()"
+      (confirmar)="confirmarCancelamento()"
+    />
   </main>
 </div>
