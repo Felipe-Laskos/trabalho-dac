@@ -3,6 +3,8 @@ package br.ufpr.dac.grupo2.cliente.dto.request;
 import br.ufpr.dac.grupo2.cliente.dto.EnderecoDTO;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +42,8 @@ public class SolicitacaoRequestDTO {
     private String telefone;
 
     @NotNull(message = "O salário é obrigatório.")
+    @DecimalMin(value = "0.01", message = "O salário deve ser maior que zero.")
+    @Digits(integer = 15, fraction = 2, message = "O salário deve ter no máximo 2 casas decimais.")
     private BigDecimal salario;
 
     @NotNull(message = "O endereço é obrigatório.")

@@ -67,9 +67,9 @@
 .header-texts {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-xs);
   min-width: 0;
-  padding-top: var(--spacing-4);
+  padding-top: var(--spacing-xs);
 
   h2 {
     margin: 0;

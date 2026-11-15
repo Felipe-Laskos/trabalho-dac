@@ -95,6 +95,10 @@ public class SolicitacaoService {
             throw new SolicitacaoException("Solicitação já existe para o email: " + request.getEmail());
         }
 
+        if (clienteRepository.existsByEmail(request.getEmail())) {
+            throw new SolicitacaoException("E-mail já cadastrado: " + request.getEmail());
+        }
+
         Solicitacao solicitacao = new Solicitacao();
 
         solicitacao.setCpf(request.getCpf());
@@ -130,7 +134,7 @@ public class SolicitacaoService {
         solicitacao.setMotivo(motivo);
         solicitacao.setDataHoraProcessamento(LocalDateTime.now());
 
-        Solicitacao salva = solicitacaoRepository.save(solicitacao);
+        Solicitacao salva = solicitacaoRepository.saveAndFlush(solicitacao);
 
         SolicitacaoResponseDTO salvaDTO = paraDTO(salva);
         

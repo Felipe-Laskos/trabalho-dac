@@ -147,7 +147,7 @@
 :host ::ng-deep .btn-recusar-modal.p-button:disabled,
 :host ::ng-deep .btn-recusar-modal.p-button.p-disabled {
   opacity: 1;
-  background: #d5dee3;
-  border-color: #d5dee3;
-  color: #f7fbfc;
+  background: color-mix(in srgb, var(--color-focus-ring) 30%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-focus-ring) 30%, var(--color-surface));
+  color: var(--color-surface);
 }

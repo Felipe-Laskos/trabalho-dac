@@ -120,23 +120,16 @@
 
             <div class="field field-salario">
               <label for="salario">Salário<span>*</span></label>
-              <p-inputnumber
+              <app-money-input
                 inputId="salario"
                 formControlName="salario"
-                mode="currency"
-                currency="BRL"
-                locale="pt-BR"
-                [min]="0.01"
-                [minFractionDigits]="2"
-                [maxFractionDigits]="2"
-                placeholder="R$ 2.300,00"
-                fluid
+                placeholder="2.300,00"
               />
 
-              @if (campoComErro('salario', 'required')) {
+              @if (campoComErro('salario', 'moneyRequired')) {
                 <small class="field-error">Salário é obrigatório.</small>
               }
-              @if (campoComErro('salario', 'min')) {
+              @if (campoComErro('salario', 'moneyPositive')) {
                 <small class="field-error">Salário deve ser maior que zero.</small>
               }
               @if (campoComErro('salario', 'servidor')) {
