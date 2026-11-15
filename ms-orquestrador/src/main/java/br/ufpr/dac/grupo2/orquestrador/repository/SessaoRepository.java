@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.data.redis.connection.DataType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -30,17 +29,9 @@ public class SessaoRepository {
 		return chaves.size() - 1;
 	}
 
-	// a reversa era uma string com o último jti antes da S9; o login a regrava como SET
 	private Set<String> jtisDe(String reversa) {
-		DataType tipo = redis.type(reversa);
-		if (tipo == DataType.SET) {
-			return redis.opsForSet().members(reversa);
-		}
-		if (tipo == DataType.STRING) {
-			String jti = redis.opsForValue().get(reversa);
-			return jti == null ? Set.of() : Set.of(jti);
-		}
-		return Set.of();
+		Set<String> jtis = redis.opsForSet().members(reversa);
+		return jtis == null ? Set.of() : jtis;
 	}
 
 }

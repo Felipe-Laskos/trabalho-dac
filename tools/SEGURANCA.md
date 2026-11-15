@@ -21,12 +21,11 @@ do histórico.** Os únicos resultados são:
 - uma linha gerando `SECRET` aleatório em tempo de execução no workflow de
   CI (`echo "SECRET=$(openssl rand -hex 32)" >> .env`) — efêmero, não
   commitado
-- `private static final String SENHA = "Xk7pQ2mZ";` em
-  `ms-orquestrador/src/test/java/.../SagaAprovarClienteTest.java` (e
-  equivalentes em `MotorSagaTest.java`, `UsuarioSagaServiceTest.java`) —
-  investigado: é um valor fixo usado só em testes unitários pra simular a
-  senha aleatória gerada pelo MS Auth durante o SAGA R9, igual aos CPFs e
-  e-mails falsos usados no resto da suíte. Não é credencial de nada real.
+- `private static final String SENHA = "Xk7pQ2mZ";` nos testes unitários do
+  Orquestrador e do MS Auth, que saíram do repositório em 15/11 e ficaram só no
+  histórico do git: era um valor fixo pra simular a senha aleatória gerada pelo
+  MS Auth na SAGA R9, igual aos CPFs e e-mails falsos dos testes. Não é
+  credencial de nada real.
 
 **Conclusão: não houve necessidade de trocar segredo nenhum.** Se algum dia
 aparecer um resultado real nessa varredura, o procedimento é: apagar o

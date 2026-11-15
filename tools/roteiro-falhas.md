@@ -16,6 +16,9 @@ material direto da defesa. Cada cenário traz o estado dos bancos **antes**,
 | 3 | Inserir gerente | DLQ de comando: o handler falha 4 vezes, a mensagem cai na `ms.auth.cmd.dlq` e o Orquestrador compensa a partir dela | Nathaly, 10/11 |
 | 4 | Inserir gerente | Dupla notificação: timeout **e** DLQ no mesmo passo, e a compensação roda uma vez só | Nathaly, 10/11 |
 | 5 | — (evento) | DLQ de eventos: evento malformado fica parado na `ms.conta.events.dlq`, não gera compensação, e o reprocessamento pelo `dlq.sh` não duplica movimentação | Nathaly, 10/11 |
+| R15-1 | Remover gerente | MS Conta fora no passo 5: compensação `[5, 2, 1]`, gerente e login voltam a valer, e as contas ficam com o gerente original quando o MS Conta volta | Felipe, 15/11 |
+| 6 | (infra) | RabbitMQ derrubado e religado: início de SAGA dá 503 durante a queda, as consultas REST seguem, e Gateway e Orquestrador reconectam sozinhos | Felipe, 15/11 |
+| 7 | (infra) | MS Cliente fora do ar: o cliente que está no cache responde 200, o que não está dá 503 em menos de 1 s | Felipe, 15/11 |
 
 Os cenários 3 e 4 foram rodados duas vezes, com resultados idênticos, e o 5
 uma vez; a duração de cada um está medida em "Reprodutibilidade e tempo" — na
@@ -932,6 +935,108 @@ ms.conta.events.dlq               0
   estatísticas da Management API atualizam a cada ~5 s. Não reinjete de novo
   por causa disso (duplicaria a mensagem na fila original).
 
+## R15, Cenário 1: MS Conta fora no passo 5 (15/11)
+
+Rodado numa frota isolada com a `main` de 15/11, logado como Geniéve
+(`ger1`), removendo o Godophredo (`ger2`, contas 0950 e 7617), com uma
+sessão aberta do próprio Godophredo.
+
+Como provocar:
+
+```bash
+docker compose stop ms-conta
+# na tela de Gerentes: Remover o Godophredo, ou
+curl -X DELETE localhost:8000/gerentes/64065268052 -H "x-access-token: $TOKEN_GER1"
+# esperar o job FALHA (~32 s) e religar
+docker compose start ms-conta
+```
+
+Log do Orquestrador (15:48):
+
+```
+15:48:07.275 passo=3 encerrar-sessoes (local)
+15:48:07.284 passo=4 listar-ativos SUCESSO
+15:48:07.285 passo=5 transferir-contas-do-gerente -> ms.conta.cmd
+15:48:38.050 passo=5 falha técnica: timeout de 30 s no passo 5
+15:48:38.051 passo=5 compensar-transferir-contas -> ms.conta.cmd (sem esperar resposta)
+15:48:38.067 passo=2 compensar-desativar-usuario status=SUCESSO
+15:48:38.087 passo=1 compensar-inativar-gerente status=SUCESSO
+15:48:38.091 tipo=remover-gerente COMPENSADA
+```
+
+| | Antes | Depois (MS Conta de volta) |
+|---|---|---|
+| Godophredo na lista de ativos | sim, 2 clientes | sim, 2 clientes |
+| Login do Godophredo | 200 | 200 |
+| Sessão aberta antes da remoção | válida | 401 (o logout forçado não é desfeito) |
+| Gerente das contas 0950 e 7617 | Godophredo | Godophredo |
+| Job | | `FALHA` em 31,7 s, com a frase para o usuário |
+
+Os passos 3 (sessões, local) e 4 (consulta) não têm compensação. O passo 5
+ficou incerto, então o Orquestrador mandou também a compensação dele; quando
+o MS Conta voltou e consumiu a transferência e a compensação, nessa ordem,
+as contas terminaram com o Godophredo. O event store mostra os dois
+movimentos, com o `sagaId` da remoção:
+
+```
+select objeto_id, versao, tipo, payload->>'cpfGerente', timestamp
+  from conta_command.eventos where objeto_id in ('0950','7617') and tipo = 'GerenteAlterado';
+
+0950|8|GerenteAlterado|40501740066|2026-11-15 15:48:51.010   -- transferência para o Gadamântio
+0950|9|GerenteAlterado|64065268052|2026-11-15 15:48:51.149   -- compensação, de volta ao Godophredo
+7617|3|GerenteAlterado|40501740066|2026-11-15 15:48:51.010
+7617|4|GerenteAlterado|64065268052|2026-11-15 15:48:51.149
+```
+
+## Cenário 6: RabbitMQ derrubado e religado (15/11)
+
+```bash
+docker compose stop rabbitmq
+# ... testar ...
+docker compose start rabbitmq
+```
+
+| Durante a queda (15:47:15 a 15:47:49) | Resultado |
+|---|---|
+| `POST /solicitacoes/{cpf}/aprovacao` | 503 "Serviço indisponível no momento", em 0,02 s, sem job pendurado |
+| `GET /health` | 200 `{"status":"UP"}` |
+| `GET /clientes/{cpf}` (REST, sem fila) | 200 |
+
+Na volta, o Gateway tentou reconectar a cada 3 s e voltou sozinho:
+
+```
+RabbitMQ: reconexão 9 falhou: connect ECONNREFUSED 172.28.0.4:5672
+RabbitMQ: reconectado na tentativa 10
+```
+
+O Orquestrador reiniciou os consumidores pelo Spring AMQP, sem intervenção:
+
+```
+15:47:46.581 Restarting Consumer@49b2f2fc ... channel=null
+15:47:46.582 Attempting to connect to: [rabbitmq:5672]
+15:47:46.587 Created new connection: rabbitConnectionFactory#1d2d8846
+```
+
+A primeira aprovação depois da volta concluiu em 1 s (`CONCLUIDO`,
+`resultType=resource`).
+
+## Cenário 7: MS Cliente fora do ar (15/11)
+
+```bash
+curl localhost:8000/clientes/12912861012 -H "x-access-token: $TOKEN"   # aquece o cache da Catharyna
+docker compose stop ms-cliente
+```
+
+| Chamada com o MS Cliente parado | Resultado |
+|---|---|
+| `GET /clientes/12912861012` (Catharyna, no cache) | 200, "Catharyna", servido do Redis |
+| `GET /clientes/09506382000` (Cleuddônio, fora do cache) | 503 padronizado, em 0,2 s |
+| `GET /clientes` (R11, composição) | 503, em 0,01 s |
+
+Depois do `docker compose start ms-cliente`, o Cleuddônio voltou a responder
+200. O cenário mostra o cache-aside cobrindo a queda e o 503 saindo bem antes
+do timeout do front.
+
 ## Reprodutibilidade e tempo
 
 Segunda execução dos cenários 3 e 4, logo depois da primeira, com `/reboot`
@@ -947,6 +1052,9 @@ cenário 4, 2ª execução: 50,0 s até a 2ª notificação | notificações: 2 
 | 3 | ~16 s até o job `FALHA` | ~25 s |
 | 4 | ~50 s até a 2ª notificação | ~60 s |
 | 5 | ~15 s por ida à DLQ | ~2 min (com reinjeção e reprocessamento) |
+| R15-1 | ~32 s até o job `FALHA` | ~1 min (com religar o MS Conta) |
+| 6 | o tempo que o broker ficar fora; a 1ª SAGA depois da volta conclui em ~1 s | ~1 min |
+| 7 | 503 na hora | ~40 s (com religar o MS Cliente) |
 
 ## Ainda pendente
 

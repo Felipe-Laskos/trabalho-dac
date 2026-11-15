@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import type { Job } from '../models/job.model';
-import { ApiService } from './api.service';
+import { JobService } from './job.service';
 
 @Injectable({ providedIn: 'root' })
 export class RelatorioService {
-  private readonly api = inject(ApiService);
+  private readonly jobs = inject(JobService);
 
   /** 202 + job. O resultado inline vem depois, em GET /jobs/{id}/result. */
   gerarClientes(): Promise<Job> {
-    return this.api.get<Job>('/relatorios/clientes');
+    return this.jobs.iniciar('GET', '/relatorios/clientes');
   }
 }

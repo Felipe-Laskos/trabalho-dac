@@ -68,6 +68,45 @@ o host em si ser menor que os 8 GB que o enunciado assume para a máquina
 da defesa, sobrando pouco depois do SO + outros processos do sistema. Como
 dito acima, **este item específico precisa ser remedido na máquina real**.
 
+## Remedição na máquina da defesa (15/11/2026)
+
+Notebook do Felipe: WSL2 com 7,6 GiB, Docker enxergando 8,16 GB e 12 CPUs
+(o cenário de 8 GB do §5.12.1). Frota completa de 12 contêineres, com a
+suíte oficial rodando duas vezes (81/81) e a bateria inteira (60/60). O
+`docker stats` foi lido a cada 3 a 5 s durante a carga; a tabela traz o pico
+de cada contêiner.
+
+| Contêiner | `mem_limit` | Pico medido | % do limite |
+|---|---:|---:|---:|
+| postgres | 384 MiB | 119,9 MiB | 31,2% |
+| mongo | 384 MiB | 162,1 MiB | 42,2% |
+| redis | 128 MiB | 16,2 MiB | 12,7% |
+| rabbitmq | 512 MiB | 218,8 MiB | 42,7% |
+| ms-auth | 512 MiB | 245,9 MiB | 48,0% |
+| ms-orquestrador | 512 MiB | 186,9 MiB | 36,5% |
+| ms-email | 512 MiB | 142,1 MiB | 27,8% |
+| ms-cliente | 512 MiB | 251,9 MiB | 49,2% |
+| ms-gerente | 512 MiB | 262,4 MiB | 51,3% |
+| ms-conta | 512 MiB | 283,5 MiB | 55,4% |
+| gateway | 256 MiB | 61,2 MiB | 23,9% |
+| front | 64 MiB | 13,4 MiB | 20,9% |
+| **Soma dos picos** | **4800 MiB** | **≈ 1964 MiB** | **40,9%** |
+
+Nenhum contêiner chegou perto do teto; o mais alto foi o `ms-conta`, com
+55%. O host é que ficou apertado:
+
+```
+free -m (15/11/2026, durante a suíte)
+               total        used        free      shared  buff/cache   available
+Mem:            7787        6538         274          55        1322        1248
+```
+
+Os ~1,2 GiB disponíveis não vêm da frota (ela somou menos de 2 GB): no
+momento da medição havia, dentro do mesmo WSL, outras sessões de terminal e
+de IDE abertas, cada uma com algumas centenas de MiB. **Na defesa, deixar no
+WSL só a frota**: fechar o que mais estiver rodando dentro dele, já que o
+Firefox, a IDE e o cliente de banco rodam do lado do Windows.
+
 ## Decisão: watermark do RabbitMQ — testado `relative`, revertido pra `absolute`
 
 A ideia inicial era trocar `vm_memory_high_watermark.absolute = 307MiB`

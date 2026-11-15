@@ -11,6 +11,8 @@ const gerente = express.Router();
 // os status de negocio do POST publico e da rejeicao
 const REPASSAR = [400, 409];
 
+const TIMEOUT_DESTINATARIO_MS = 2_000;
+
 async function criarSolicitacao(req, res) {
   try {
     const { corpo, location } = await criar(
@@ -40,9 +42,25 @@ async function rejeitarSolicitacao(req, res) {
   }
 }
 
+async function destinatarioPendente(req) {
+  try {
+    const solicitacao = await consultar(
+      montarUrl(process.env.MS_CLIENTE_URL, "solicitacoes", req.params.cpf),
+      identidadeDe(req), undefined, TIMEOUT_DESTINATARIO_MS
+    );
+
+    if (solicitacao?.status !== "PENDENTE") return {};
+
+    return { nome: solicitacao.nome, email: solicitacao.email };
+  } catch {
+    return {};
+  }
+}
+
 async function aprovarSolicitacao(req, res) {
   const job = await iniciarSaga("aprovar-cliente", "clientes", {
-    cpf: req.params.cpf, cpfGerenteSolicitante: req.usuario.cpf
+    cpf: req.params.cpf, cpfGerenteSolicitante: req.usuario.cpf,
+    ...(await destinatarioPendente(req))
   });
 
   return responderAceito(res, job);
@@ -89,7 +107,7 @@ gerente.get("/:cpf",
   buscarSolicitacao);
 
 gerente.post("/:cpf/aprovacao",
-  exigirPerfil("GERENTE"), exigirFormato("cpf", CPF),
+  exigirPerfil("GERENTE"), exigirFormato("cpf", CPF), injetarIdentidade,
   aprovarSolicitacao);
 
 gerente.post("/:cpf/rejeicao",

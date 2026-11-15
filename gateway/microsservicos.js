@@ -53,8 +53,8 @@ const DE_NEGOCIO = {
   422: { erro: "Unprocessable Entity", mensagem: "Operação não permitida" }
 };
 
-async function consultar(url, headers = {}, params) {
-  const resposta = await axios.get(url, { headers, params, timeout: TIMEOUT_MS });
+async function consultar(url, headers = {}, params, timeout = TIMEOUT_MS) {
+  const resposta = await axios.get(url, { headers, params, timeout });
 
   return resposta.data;
 }

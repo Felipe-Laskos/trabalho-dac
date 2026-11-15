@@ -1,9 +1,7 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ApiService } from '../../../core/services/api.service';
 import { JobService, TempoEsgotadoError } from '../../../core/services/job.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
 import { mensagemDeErro } from '../../../core/services/erro.util';
-import type { Job } from '../../../core/models/job.model';
 import type { Cliente } from '../../../core/models/cliente.model';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -42,7 +40,6 @@ type Filtro = 'TODAS' | StatusSolicitacao;
   styleUrls: ['./home-gerente.component.scss'],
 })
 export class HomeGerenteComponent implements OnInit, OnDestroy {
-  private readonly api = inject(ApiService);
   private readonly jobService = inject(JobService);
   private readonly solicitacaoService = inject(SolicitacaoService);
 
@@ -124,7 +121,7 @@ export class HomeGerenteComponent implements OnInit, OnDestroy {
     this.iniciarCronometro();
 
     try {
-      const job = await this.api.post<Job>(caminhoDoHref(href));
+      const job = await this.jobService.iniciar('POST', caminhoDoHref(href));
       const jobFinal = await this.jobService.aguardar(job.jobId);
 
       if (jobFinal.status === 'FALHA') {

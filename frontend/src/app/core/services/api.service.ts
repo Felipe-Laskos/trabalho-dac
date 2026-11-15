@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -33,6 +33,12 @@ export class ApiService {
 
   delete<T>(caminho: string): Promise<T> {
     return firstValueFrom(this.http.delete<T>(this.url(caminho)));
+  }
+
+  iniciar<T>(metodo: 'GET' | 'POST' | 'DELETE', caminho: string, corpo?: unknown): Promise<HttpResponse<T>> {
+    return firstValueFrom(
+      this.http.request<T>(metodo, this.url(caminho), { body: corpo, observe: 'response' }),
+    );
   }
 
   private url(caminho: string): string {

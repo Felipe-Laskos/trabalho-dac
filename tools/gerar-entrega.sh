@@ -59,7 +59,7 @@ if [ "$PDFS" -gt 0 ]; then
 elif [ "$SEM_DOCS" = 1 ]; then
   aviso "docs/entrega/ não tem PDF em $REF — este ZIP é só PRÉVIA, não entregar assim"
 else
-  falha "docs/entrega/ não tem nenhum PDF em $REF (PDF de suposições e Relatório de Atividades). Use --sem-docs só para gerar uma prévia."
+  falha "docs/entrega/ não tem nenhum PDF em $REF (o PDF de suposições). Use --sem-docs só para gerar uma prévia."
 fi
 
 rm -f "$SAIDA"

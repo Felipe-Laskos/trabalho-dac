@@ -16,7 +16,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, String> {
 
     @Query(value = """
             SELECT * FROM cliente.clientes
-             WHERE strpos(cpf, :busca) > 0
+             WHERE (regexp_replace(:busca, '\\D', '', 'g') <> ''
+                    AND strpos(cpf, regexp_replace(:busca, '\\D', '', 'g')) > 0)
                 OR strpos(
                        lower(translate(nome,   'áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ',
                                                'aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC')),

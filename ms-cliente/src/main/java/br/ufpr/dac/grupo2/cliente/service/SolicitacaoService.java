@@ -52,7 +52,7 @@ public class SolicitacaoService {
 
     @Transactional(readOnly = true)
     public List<SolicitacaoResponseDTO> listarTodasSolicitacoes() {
-        List<Solicitacao> solicitacoes = solicitacaoRepository.findAll();
+        List<Solicitacao> solicitacoes = solicitacaoRepository.listarPendentesPrimeiro();
         return solicitacoes.stream().map(this::paraDTO).toList();
     }
 

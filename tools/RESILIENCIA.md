@@ -32,9 +32,10 @@ Configurado em:
 | Serviço | Consumidor(es) | Status |
 |---|---|---|
 | `ms-orquestrador` | `OrquestradorSaga` (`saga.cmd`, `orquestrador.reply`, e as 4 DLQs de comando — ver nota abaixo) | configurado desde a S2, consumidores chegaram na S7 (SAGA #1) |
-| `ms-conta` | `ProjecaoContaListener` (`ms.conta.events`) | configurado nesta tarefa (S5) |
+| `ms-conta` | `ProjecaoContaListener` (`ms.conta.events`) e `ContaSagaListener` (`ms.conta.cmd`) | configurado nesta tarefa (S5); o listener de comando entrou com as SAGAs |
 | `ms-email` | `EmailListener` (`ms.email.cmd`) | configurado nesta tarefa (S5), mas inerte: o listener captura toda exceção e descarta (§5.9), então nenhuma falha chega a ser retentada |
-| `ms-cliente`, `ms-gerente`, `ms-auth` | nenhum `@RabbitListener` ainda | não se aplica |
+| `ms-auth` | `AuthSagaListener` (`ms.auth.cmd`) | configurado; uma falha técnica passa pela retentativa e vai para a `ms.auth.cmd.dlq` |
+| `ms-cliente`, `ms-gerente` | `ClienteSagaListener` (`ms.cliente.cmd`), `GerenteSagaListener` (`ms.gerente.cmd`) | configurado; uma exceção dentro do processamento do comando vira resposta de FALHA, então só o que falha fora desse ponto chega à retentativa e à DLQ |
 
 ⚠️ **Nota (S7, SAGA #1):** `OrquestradorSaga.falhaTecnica` agora é `@RabbitListener` de
 `ms.cliente.cmd.dlq`, `ms.gerente.cmd.dlq`, `ms.conta.cmd.dlq` e `ms.auth.cmd.dlq` (não de

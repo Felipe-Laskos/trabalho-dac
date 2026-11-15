@@ -61,6 +61,18 @@ async function montarRelatorio(identidade) {
   return { clientes: linhas };
 }
 
+async function concluirRelatorio(jobId, identidade) {
+  try {
+    await concluirJob(jobId, await montarRelatorio(identidade));
+  } catch (erro) {
+    console.error(`[relatorios] jobId=${jobId} falhou: ${erro.message}`);
+
+    try {
+      await falharJob(jobId, FALHA_PARA_HUMANO);
+    } catch {}
+  }
+}
+
 async function gerarRelatorio(req, res) {
   // capturada antes de responder: a composição continua depois do 202
   const identidade = identidadeDe(req);
@@ -69,13 +81,7 @@ async function gerarRelatorio(req, res) {
 
   responderAceito(res, job);
 
-  montarRelatorio(identidade)
-    .then((resultado) => concluirJob(job.jobId, resultado))
-    .catch(async (erro) => {
-      console.error(`[relatorios] jobId=${job.jobId} falhou: ${erro.message}`);
-
-      await falharJob(job.jobId, FALHA_PARA_HUMANO).catch(() => {});
-    });
+  concluirRelatorio(job.jobId, identidade);
 }
 
 router.get("/clientes",

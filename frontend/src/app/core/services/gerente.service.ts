@@ -3,12 +3,14 @@ import type { Job } from '../models/job.model';
 import type { Gerente, GerenteInput, GerenteUpdate, GerentesList } from '../models/gerente.model';
 import { caminhoDoHref } from '../../shared/util/hateoas.util';
 import { ApiService } from './api.service';
+import { JobService } from './job.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GerenteService {
   private readonly api = inject(ApiService);
+  private readonly jobs = inject(JobService);
 
   listar(): Promise<GerentesList> {
     return this.api.get<GerentesList>('/gerentes');
@@ -19,7 +21,7 @@ export class GerenteService {
   }
 
   criar(dados: GerenteInput): Promise<Job> {
-    return this.api.post<Job>('/gerentes', dados);
+    return this.jobs.iniciar('POST', '/gerentes', dados);
   }
 
   atualizar(href: string, dados: GerenteUpdate): Promise<Gerente> {
@@ -28,6 +30,6 @@ export class GerenteService {
   }
 
   remover(href: string): Promise<Job> {
-    return this.api.delete<Job>(caminhoDoHref(href));
+    return this.jobs.iniciar('DELETE', caminhoDoHref(href));
   }
 }

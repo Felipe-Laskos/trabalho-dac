@@ -12,8 +12,6 @@ public enum TipoEmail {
 
 			Sua senha de acesso é: %s
 
-			Recomendamos que você a altere no primeiro acesso.
-
 			Atenciosamente,
 			Equipe BANTADS"""),
 
