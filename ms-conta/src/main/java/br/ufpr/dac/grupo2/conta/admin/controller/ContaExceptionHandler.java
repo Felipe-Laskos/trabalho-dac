@@ -2,11 +2,11 @@ package br.ufpr.dac.grupo2.conta.admin.controller;
 
 import java.util.Map;
 
-import br.ufpr.dac.grupo2.conta.command.exception.AcessoNegadoException;
 import br.ufpr.dac.grupo2.conta.command.exception.ConflitoDeVersaoException;
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
-import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.exception.TentativasEsgotadasException;
+import br.ufpr.dac.grupo2.conta.exception.AcessoNegadoException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;

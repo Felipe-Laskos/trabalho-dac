@@ -1,6 +1,7 @@
 package br.ufpr.dac.grupo2.conta.command.service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -8,10 +9,10 @@ import java.util.stream.Stream;
 
 import br.ufpr.dac.grupo2.conta.command.dto.ParteTransferencia;
 import br.ufpr.dac.grupo2.conta.command.dto.TransferenciaRequest;
-import br.ufpr.dac.grupo2.conta.command.exception.AcessoNegadoException;
 import br.ufpr.dac.grupo2.conta.command.exception.ConflitoDeVersaoException;
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
-import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
+import br.ufpr.dac.grupo2.conta.exception.AcessoNegadoException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
@@ -52,7 +53,7 @@ public class OperacaoTransacional {
                 "Depósito",
                 payload,
                 estado.getVersao() + 1,
-                LocalDateTime.now()
+                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)
         );
 
         salvarEvento(evento);
@@ -78,7 +79,7 @@ public class OperacaoTransacional {
                 "Saque",
                 payload,
                 estado.getVersao() + 1,
-                LocalDateTime.now()
+                LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)
         );
 
         salvarEvento(evento);
@@ -145,7 +146,7 @@ public class OperacaoTransacional {
                 destino
         );
 
-        LocalDateTime instante = LocalDateTime.now();
+        LocalDateTime instante = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
         Evento eventoOrigem = novoEvento(
                 contaOrigem,

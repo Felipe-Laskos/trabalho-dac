@@ -1,6 +1,6 @@
 package br.ufpr.dac.grupo2.conta.command.service;
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
-import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;

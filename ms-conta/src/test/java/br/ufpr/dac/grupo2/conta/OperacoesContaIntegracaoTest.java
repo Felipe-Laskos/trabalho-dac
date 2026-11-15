@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 
 import br.ufpr.dac.grupo2.conta.admin.service.SeedService;
-import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
 import br.ufpr.dac.grupo2.conta.command.service.ContaLeituraService;

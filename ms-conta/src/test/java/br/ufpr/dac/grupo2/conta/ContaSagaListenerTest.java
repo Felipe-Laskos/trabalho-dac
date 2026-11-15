@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import br.ufpr.dac.grupo2.conta.command.exception.ContaNaoEncontradaException;
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.service.SagaContaTransacional;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ComandoSaga;
 import br.ufpr.dac.grupo2.conta.messaging.dto.ContaParaTransferir;

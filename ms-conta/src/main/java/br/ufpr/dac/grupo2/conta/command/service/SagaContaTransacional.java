@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import br.ufpr.dac.grupo2.conta.exception.ContaNaoEncontradaException;
 import br.ufpr.dac.grupo2.conta.command.model.EstadoConta;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
@@ -80,6 +81,12 @@ public class SagaContaTransacional {
         if (anterior != null) {
             return anterior;
         }
+        if (gerenteRemovido.equals(gerenteDestino)) {
+            ResultadoSaga falha = falha(cmd,
+                    "O gerente de destino deve ser diferente do gerente removido");
+            persistirResultado(cmd, falha);
+            return falha;
+        }
         if (resultado(cmd.sagaId(), "compensar-transferir-contas") != null) {
             ResultadoSaga falha = falha(cmd, "SAGA já compensada");
             persistirResultado(cmd, falha);
@@ -127,17 +134,23 @@ public class SagaContaTransacional {
         }
 
         List<ContaACompensar> validadas = new ArrayList<>();
+
         for (EventoPublicado transferido : transferencia.eventos()) {
             String original = texto(transferido.payload(), "cpfGerenteAnterior");
             if (!gerenteRemovido.equals(original)) {
-                throw new IllegalArgumentException(
-                        "Gerente original não corresponde à transferência da SAGA");
+                continue;
             }
-            EstadoConta estado = leitura.replay(transferido.objetoId());
+
+            EstadoConta estado;
+            try {
+                estado = leitura.replay(transferido.objetoId());
+            } catch (ContaNaoEncontradaException e) {
+                continue;
+            }
+
             String destino = texto(transferido.payload(), "cpfGerente");
             if (!destino.equals(estado.getCpfGerente())) {
-                throw new IllegalArgumentException(
-                        "Conta não pertence mais ao gerente definido pela SAGA");
+                continue;
             }
             validadas.add(new ContaACompensar(transferido, estado,
                     original, destino));
@@ -257,6 +270,7 @@ public class SagaContaTransacional {
 
         String cliente = cpf(cmd.payload(), "cpfCliente");
         String gerente = cpf(cmd.payload(), "cpfGerente");
+
         Number existentes = (Number) entityManager.createNativeQuery("""
                 SELECT count(*) FROM conta_command.eventos c
                 WHERE c.tipo = 'Criado' AND c.payload->>'cpfCliente' = :cpf
@@ -276,7 +290,9 @@ public class SagaContaTransacional {
         String numero = numeros.livre(candidato -> !eventos
                 .findByObjetoIdOrderByVersaoAsc(candidato)
                 .isEmpty());
+
         LocalDateTime instante = agora();
+
         Evento criado = eventos.saveAndFlush(new Evento(
                 numero,
                 "Criado",
@@ -361,6 +377,7 @@ public class SagaContaTransacional {
                     "numeroConta", numero,
                     "revertida", false), null);
         }
+
         if (!numero.equals(atribuicao.evento().objetoId())) {
             throw new IllegalArgumentException(
                     "Atribuição da SAGA não encontrada para a conta");

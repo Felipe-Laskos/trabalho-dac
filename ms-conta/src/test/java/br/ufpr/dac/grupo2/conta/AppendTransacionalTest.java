@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import br.ufpr.dac.grupo2.conta.command.exception.ConflitoDeVersaoException;
-import br.ufpr.dac.grupo2.conta.command.exception.EventoInvalidoException;
+import br.ufpr.dac.grupo2.conta.exception.EventoInvalidoException;
 import br.ufpr.dac.grupo2.conta.command.model.Evento;
 import br.ufpr.dac.grupo2.conta.command.repository.EventoRepository;
 import br.ufpr.dac.grupo2.conta.command.service.AppendTransacional;
