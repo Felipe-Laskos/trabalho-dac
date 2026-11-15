@@ -8,8 +8,7 @@
     "node": ">=24.14.0"
   },
   "scripts": {
-    "start": "node index.js",
-    "test": "node --test test/*.test.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "amqplib": "^0.10.9",
