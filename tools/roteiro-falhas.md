@@ -24,9 +24,6 @@ Os cenários 3 e 4 foram rodados duas vezes, com resultados idênticos, e o 5
 uma vez; a duração de cada um está medida em "Reprodutibilidade e tempo" — na
 defesa isso conta contra os 20 minutos da equipe.
 
-Ainda falta um item: **o print da caixa de entrada** com os e-mails do
-cenário C (ver "Ainda pendente", no fim).
-
 ## R9 — Cenário A: Gmail fora do ar não trava a SAGA (27/10)
 
 O passo 7 do R9 (`email.senha-nova`) é fire-and-forget: o Orquestrador
@@ -326,8 +323,8 @@ corrigida e a mesma credencial (o resto da saída é igual à do cenário B):
 **Como ler:** `resultado=ENVIADO` é o Gmail aceitando a mensagem no SMTP. A
 senha gerada no passo 5 abre a sessão do cliente novo (`POST /login` → 200) e
 não aparece em nenhuma linha de log dos 12 contêineres. A procura foi pelo
-valor exato da senha, não pela palavra "senha". Falta só o print da caixa de
-entrada com os dois e-mails (ver "Ainda pendente").
+valor exato da senha, não pela palavra "senha". A chegada dos e-mails na caixa
+da equipe é mostrada ao vivo na defesa, com a caixa aberta.
 
 ## R13 — Cenário 1: derrubar o MS Conta no meio da SAGA (20/10)
 
@@ -1055,13 +1052,6 @@ cenário 4, 2ª execução: 50,0 s até a 2ª notificação | notificações: 2 
 | R15-1 | ~32 s até o job `FALHA` | ~1 min (com religar o MS Conta) |
 | 6 | o tempo que o broker ficar fora; a 1ª SAGA depois da volta conclui em ~1 s | ~1 min |
 | 7 | 503 na hora | ~40 s (com religar o MS Cliente) |
-
-## Ainda pendente
-
-- **Print da caixa de entrada:** o cenário C prova que o Gmail aceitou os
-  dois e-mails (`resultado=ENVIADO`) e que a senha gerada loga. Falta o print
-  dos dois na caixa da equipe (destinos `+r9` e `+r9b`, 27/10 às 23:08 e às
-  23:10), que é a parte da evidência que só se tira com a caixa aberta.
 
 ## Histórico
 
