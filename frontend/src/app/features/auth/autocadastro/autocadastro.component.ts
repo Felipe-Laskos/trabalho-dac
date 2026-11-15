@@ -35,7 +35,7 @@ type TelaEstado = 'preenchendo' | 'enviando' | 'sucesso' | 'erro';
     Select,
     MessageComponent,
     MoneyInputComponent,
-    KeyFilter,  
+    KeyFilter,
     ModalConfirmationComponent,
   ],
   templateUrl: './autocadastro.component.html',
@@ -257,38 +257,38 @@ export class AutocadastroComponent implements OnInit {
     return (valor ?? '').replace(/\D/g, '');
   }
 
- protected solicitarCancelamento(): void {
-  if (this.enviando || this.sucesso) {
-    return;
+  protected solicitarCancelamento(): void {
+    if (this.enviando || this.sucesso) {
+      return;
+    }
+
+    if (!this.form.dirty) {
+      void this.sairDoCadastro();
+      return;
+    }
+
+    this.modalCancelarVisivel.set(true);
   }
 
-  if (!this.form.dirty) {
+  protected fecharModalCancelamento(): void {
+    this.modalCancelarVisivel.set(false);
+  }
+
+  protected confirmarCancelamento(): void {
+    if (this.enviando) {
+      return;
+    }
+
+    this.modalCancelarVisivel.set(false);
     void this.sairDoCadastro();
-    return;
   }
 
-  this.modalCancelarVisivel.set(true);
-}
+  private sairDoCadastro(): void {
+    this.form.reset();
+    this.hasFormError.set(false);
+    this.mensagemErro.set(null);
+    this.estado.set('preenchendo');
 
-protected fecharModalCancelamento(): void {
-  this.modalCancelarVisivel.set(false);
-}
-
-protected confirmarCancelamento(): void {
-  if (this.enviando) {
-    return;
-  }
-
-  this.modalCancelarVisivel.set(false);
-  void this.sairDoCadastro();
-}
-
-private sairDoCadastro(): void {
-  this.form.reset();
-  this.hasFormError.set(false);
-  this.mensagemErro.set(null);
-  this.estado.set('preenchendo');
-
-  void this.router.navigateByUrl('/login');
+    void this.router.navigateByUrl('/login');
   }
 }

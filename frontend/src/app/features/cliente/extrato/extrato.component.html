@@ -92,7 +92,7 @@
               <span class="summary-label"> SALDO EM {{ formatarData(extratoAtual.dataFim) }} </span>
               <span class="summary-value">
                 @if (dias().length > 0) {
-                  {{ dias()[dias().length - 1].saldoConsolidado.toFixed(2) | dinheiro }}
+                  {{ dias()[0].saldoConsolidado.toFixed(2) | dinheiro }}
                 } @else {
                   {{ extratoAtual.saldoAbertura | dinheiro }}
                 }
